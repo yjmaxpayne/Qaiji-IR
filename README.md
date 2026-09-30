@@ -75,14 +75,15 @@ print(canonical)
 
 ## 文档
 
+在线文档：<https://yjmaxpayne.github.io/Qaiji-IR/>（`main` 分支每次推送后自动构建并发布到 GitHub Pages）。
+
 本地构建专业中文文档：
 
 ```bash
 uv sync --group docs && uv run poe docs
 ```
 
-生成的 HTML 位于 `doc/build/html/`。当前切片只保证本地可复现构建，尚未配置
-Read the Docs 或 GitHub Pages 发布。
+生成的 HTML 位于 `doc/build/html/`。
 
 ## 许可证
 
