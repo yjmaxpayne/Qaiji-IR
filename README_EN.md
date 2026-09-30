@@ -94,8 +94,9 @@ Build the professional Chinese documentation locally:
 uv sync --group docs && uv run poe docs
 ```
 
-The generated HTML is written to `doc/build/html/`. This slice guarantees a reproducible local
-build only; Read the Docs and GitHub Pages deployment are not configured yet.
+The generated HTML is written to `doc/build/html/`. The online documentation at
+<https://yjmaxpayne.github.io/Qaiji-IR/> is rebuilt and published to GitHub Pages on every push
+to `main`.
 
 ## License
 

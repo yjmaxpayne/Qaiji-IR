@@ -3,6 +3,9 @@
 # 以 -W 严格模式构建：docstring 交叉引用失效、rst 语法错误、孤立页面等
 # 都会让流水线变红。宽松模式下文档腐烂无人察觉，该 job 也就失去信号价值。
 # --keep-going 让 Sphinx 收集完所有问题再退出，便于一次性修复。
+#
+# 只有推送到 main 的构建会发布到 GitHub Pages；PR 只构建并上传 artifact，
+# 避免未合并的改动覆盖线上文档。部署拆成独立 job，只有它持有 pages 写权限。
 name: Docs
 
 on:
@@ -59,3 +62,35 @@ jobs:
           name: documentation-html
           path: doc/build/html/
           retention-days: 14
+
+      - name: Configure GitHub Pages
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/configure-pages@v5
+
+      - name: Upload GitHub Pages artifact
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: doc/build/html/
+
+  deploy-pages:
+    name: deploy GitHub Pages
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: build-docs
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    # 部署串行执行且不取消进行中的发布，避免两次推送互相打断导致站点半更新。
+    concurrency:
+      group: github-pages
+      cancel-in-progress: false
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
