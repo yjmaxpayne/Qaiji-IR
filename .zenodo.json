@@ -1,0 +1,35 @@
+{
+  "title": "Qaiji-IR (开济IR): A Cross-Layer Quantum-Classical Digital-Twin Intermediate Representation",
+  "description": "<p>Qaiji-IR is a cross-layer intermediate representation for hybrid quantum-classical computing. It keeps semantic authority inside the IR and treats OpenQASM 3, QIR and MLIR as adapter, target and bridge rather than as parents.</p><p>The code base provides a circuit-level front-end model, a bidirectional OpenQASM 2/3 codec that loudly rejects unsupported constructs, executable basis and phase convention checks, an L4 semantic-preservation core, an L5 program IR, and an L2 native-schedule IR with independent certification.</p>",
+  "license": "apache-2.0",
+  "upload_type": "software",
+  "access_right": "open",
+  "creators": [
+    {
+      "name": "Ye, Jun",
+      "affiliation": "Independent",
+      "orcid": "0000-0003-1963-0865"
+    }
+  ],
+  "keywords": [
+    "quantum computing",
+    "intermediate representation",
+    "hybrid quantum-classical",
+    "digital twin",
+    "OpenQASM",
+    "quantum compiler",
+    "pulse-level control"
+  ],
+  "related_identifiers": [
+    {
+      "relation": "isSupplementTo",
+      "identifier": "https://github.com/yjmaxpayne/Qaiji-IR",
+      "resource_type": "software"
+    },
+    {
+      "relation": "isDocumentedBy",
+      "identifier": "https://yjmaxpayne.github.io/Qaiji-IR/",
+      "resource_type": "publication-softwaredocumentation"
+    }
+  ]
+}

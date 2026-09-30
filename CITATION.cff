@@ -1,0 +1,36 @@
+# YAML 1.2
+# Citation File Format -- https://citation-file-format.github.io/
+# GitHub renders a "Cite this repository" button from this file.
+cff-version: 1.2.0
+title: "Qaiji-IR (开济IR): A Cross-Layer Quantum-Classical Digital-Twin Intermediate Representation"
+message: >-
+  If you use Qaiji-IR in your research, please cite it using the metadata
+  from this file. After the first Zenodo release, prefer the
+  version-specific DOI to reference the exact code used.
+type: software
+authors:
+  - given-names: Jun
+    family-names: Ye
+    email: yjmaxpayne@hotmail.com
+    affiliation: Independent
+    orcid: "https://orcid.org/0000-0003-1963-0865"
+repository-code: "https://github.com/yjmaxpayne/Qaiji-IR"
+url: "https://yjmaxpayne.github.io/Qaiji-IR/"
+abstract: >-
+  Qaiji-IR is a cross-layer intermediate representation for hybrid
+  quantum-classical computing. It keeps semantic authority inside the IR and
+  treats OpenQASM 3, QIR and MLIR as adapter, target and bridge rather than as
+  parents. The code base provides a circuit-level front-end model, a
+  bidirectional OpenQASM 2/3 codec that loudly rejects unsupported constructs,
+  executable basis and phase convention checks, an L4 semantic-preservation
+  core, an L5 program IR, and an L2 native-schedule IR with independent
+  certification.
+keywords:
+  - quantum computing
+  - intermediate representation
+  - hybrid quantum-classical
+  - digital twin
+  - OpenQASM
+  - quantum compiler
+  - pulse-level control
+license: Apache-2.0

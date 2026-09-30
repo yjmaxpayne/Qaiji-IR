@@ -6,6 +6,14 @@
 
 **English** | [简体中文](README.md)
 
+[![Python 3.12–3.14](https://img.shields.io/badge/python-3.12%E2%80%933.14-blue.svg)](https://www.python.org/downloads/)
+[![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![CI](https://github.com/yjmaxpayne/Qaiji-IR/actions/workflows/ci.yml/badge.svg)](https://github.com/yjmaxpayne/Qaiji-IR/actions/workflows/ci.yml)
+[![Documentation](https://github.com/yjmaxpayne/Qaiji-IR/actions/workflows/docs.yml/badge.svg)](https://github.com/yjmaxpayne/Qaiji-IR/actions/workflows/docs.yml)
+[![Docs](https://img.shields.io/badge/docs-latest-blue)](https://yjmaxpayne.github.io/Qaiji-IR/)
+[![codecov](https://codecov.io/gh/yjmaxpayne/Qaiji-IR/graph/badge.svg?token=M9NQqTSx08)](https://codecov.io/gh/yjmaxpayne/Qaiji-IR)
+[![OpenQASM 3](https://img.shields.io/badge/OpenQASM-3.0-6929C4)](https://openqasm.com/)
+
 > **QaiJiIR** — a cross-layer quantum–classical **digital-twin** intermediate representation.
 
 A cross-layer IR spine for hybrid quantum-classical computing, with **semantic preservation,
@@ -94,9 +102,8 @@ Build the professional Chinese documentation locally:
 uv sync --group docs && uv run poe docs
 ```
 
-The generated HTML is written to `doc/build/html/`. The online documentation at
-<https://yjmaxpayne.github.io/Qaiji-IR/> is rebuilt and published to GitHub Pages on every push
-to `main`.
+The generated HTML is written to `doc/build/html/`. Online documentation:
+<https://yjmaxpayne.github.io/Qaiji-IR/>.
 
 ## License
 
