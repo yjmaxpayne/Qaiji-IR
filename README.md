@@ -6,6 +6,14 @@
 
 [英文](README_EN.md) | **简体中文**
 
+[![Python 3.12–3.14](https://img.shields.io/badge/python-3.12%E2%80%933.14-blue.svg)](https://www.python.org/downloads/)
+[![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![CI](https://github.com/yjmaxpayne/Qaiji-IR/actions/workflows/ci.yml/badge.svg)](https://github.com/yjmaxpayne/Qaiji-IR/actions/workflows/ci.yml)
+[![Documentation](https://github.com/yjmaxpayne/Qaiji-IR/actions/workflows/docs.yml/badge.svg)](https://github.com/yjmaxpayne/Qaiji-IR/actions/workflows/docs.yml)
+[![Docs](https://img.shields.io/badge/docs-latest-blue)](https://yjmaxpayne.github.io/Qaiji-IR/)
+[![codecov](https://codecov.io/gh/yjmaxpayne/Qaiji-IR/graph/badge.svg?token=M9NQqTSx08)](https://codecov.io/gh/yjmaxpayne/Qaiji-IR)
+[![OpenQASM 3](https://img.shields.io/badge/OpenQASM-3.0-6929C4)](https://openqasm.com/)
+
 > **开济IR · Qaiji-IR** —— 一个跨层的量子-经典**数字孪生**中间表示（IR）。
 
 开济IR · Qaiji-IR 面向混合量子-经典计算，计划以一条跨层 IR 主干承载**语义保持、反馈运行时、
