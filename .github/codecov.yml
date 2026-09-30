@@ -7,6 +7,9 @@ codecov:
   require_ci_to_pass: yes
 
 coverage:
+  # 默认取整会把 99.58% 显示成 100%；保留两位小数并向下取整，徽章不夸大覆盖率。
+  precision: 2
+  round: down
   status:
     project:
       default:
