@@ -1,0 +1,33 @@
+# Codecov 配置参考：https://docs.codecov.com/docs/codecovyml-reference
+#
+# pyproject 的 --cov-fail-under=90 是本地与 CI 共用的硬闸；这里的 status
+# 额外守住「不要让某次改动把覆盖率往下拽」这一增量维度。
+
+codecov:
+  require_ci_to_pass: yes
+
+coverage:
+  status:
+    project:
+      default:
+        target: 90%
+        threshold: 0.5%
+      # 语义权威所在层，门槛高于仓库整体。
+      core-and-codec:
+        target: 95%
+        threshold: 0.5%
+        paths:
+          - src/qaiji/core
+          - src/qaiji/codec
+    patch:
+      default:
+        target: 90%
+        threshold: 0.5%
+
+comment:
+  layout: "reach,diff,flags,tree"
+  behavior: default
+  require_changes: no
+
+github_checks:
+  annotations: false

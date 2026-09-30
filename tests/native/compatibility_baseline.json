@@ -1,0 +1,366 @@
+{
+  "public": {
+    "qaiji": [
+      "IR_SCHEMA_VERSION",
+      "Circuit",
+      "ClassicalBit",
+      "ClassicalRegister",
+      "Conditional",
+      "ConventionViolationError",
+      "Gate",
+      "GateType",
+      "Measure",
+      "QaijiIRError",
+      "Qasm3ParseError",
+      "Qasm3UnsupportedConstructError",
+      "Qasm3UnsupportedGateError",
+      "UnsupportedEquivLevelError",
+      "__version__",
+      "from_qasm3",
+      "to_qasm3"
+    ],
+    "qaiji.core": [
+      "CANONICAL_ALIASES",
+      "PARAM_REQUIREMENTS",
+      "SINGLE_QUBIT_GATES",
+      "TWO_QUBIT_GATES",
+      "Circuit",
+      "ClassicalBit",
+      "ClassicalRegister",
+      "Conditional",
+      "Gate",
+      "GateType",
+      "Measure"
+    ],
+    "qaiji.codec": [
+      "GateSpec",
+      "from_qasm3",
+      "to_qasm3"
+    ],
+    "qaiji.core.semantics": [
+      "GATE_COVERAGE_TOTAL",
+      "SUMMARY_SCHEMA_VERSION",
+      "CartanRole",
+      "ClassicalEdge",
+      "ConditionModel",
+      "EquivLevel",
+      "HandleStatus",
+      "JSONValue",
+      "MeasurementHandle",
+      "MorphismType",
+      "PreservationSummary",
+      "SemanticAnnotation",
+      "SemanticIRHandle",
+      "annotate_circuit",
+      "build_dataflow_summary",
+      "build_semantic_summary",
+      "canonical_summary_hash",
+      "check_preservation",
+      "classify_operation",
+      "freeze_summary"
+    ],
+    "qaiji.core.program": [
+      "PROGRAM_SCHEMA_VERSION",
+      "ExperimentMetadata",
+      "ProgramIR",
+      "ProgramValidationError",
+      "QuantumInvocation",
+      "ResultOutput",
+      "compute_kernel_ref",
+      "validate_program"
+    ],
+    "qaiji.core.native": [
+      "NATIVE_RULESET_VERSION",
+      "NATIVE_SCHEDULE_SCHEMA_VERSION",
+      "CheckResult",
+      "ConditionRead",
+      "ConditionRegion",
+      "GroupEvidence",
+      "MeasurementEvent",
+      "NativeInputError",
+      "NativeIssue",
+      "NativeOperation",
+      "NativeProjection",
+      "NativeScheduleIR",
+      "NativeValidationError",
+      "NativeValidationReport",
+      "OperationSpec",
+      "ProjectedOperation",
+      "QubitResource",
+      "RegisterDecl",
+      "ScheduleConfig",
+      "SourceGroup",
+      "SourceLocation",
+      "lower_to_native",
+      "qubic_mapping",
+      "validate_native_schedule"
+    ],
+    "qaiji.core.program_native": [
+      "FinalBitBinding",
+      "InvocationEventRef",
+      "NativeBinding",
+      "OutputMeasurementBinding",
+      "ProgramNativeIssue",
+      "ProgramNativeMap",
+      "ProgramNativeValidationError",
+      "bridge_program_native"
+    ]
+  },
+  "schemas": {
+    "qaiji.IR_SCHEMA_VERSION": "qaiji.ir.v0",
+    "qaiji.core.semantics.SUMMARY_SCHEMA_VERSION": "qaiji.semantic_summary.v0",
+    "qaiji.core.program.PROGRAM_SCHEMA_VERSION": "qaiji.program.v0"
+  },
+  "kernel_goldens": [
+    "sha256:afe9bc2fd0c5ae8b243a4a8615bbe457adde36c1753835884557bc2d31e043d1",
+    "sha256:82687501ff4b7e29c24778be0577d11d4b1a6c194df2f9041158e4fa589eae2d",
+    "sha256:fc6d626b106f4203029114e068bdbb581e92b3f0d03d00294824c57b80606396"
+  ],
+  "frozen_sources": {
+    "src/qaiji/__init__.py": "93fc5646dd76bb1e18e35e861df09811aca3d798bf793deea330393710693667",
+    "src/qaiji/codec/__init__.py": "ec466fa1f5033b27937afb9801a6197547ff22dd2901e0fa01b9ef5346d8d22f",
+    "src/qaiji/codec/qasm3.py": "b2a0a922492035debeb2f735f40a4fc4dd4d5e9242878818ff73c92e35b69dca",
+    "src/qaiji/constants.py": "c38d491059de235ae71c4351e9dc355a87b6eb450fe46c8a46055f0c365aadd0",
+    "src/qaiji/core/__init__.py": "af33db4a43be455b0394cde31526b9506e3574a2043bf3b26cf921c00bd3ea19",
+    "src/qaiji/core/circuit.py": "71a6d94dba9aca5c66cb668c96401bdf98b04ebc9f97d7595ffd13914df954e9",
+    "src/qaiji/core/classical.py": "db07b191897426d34b6ba7e44780d1a45a228420e08b4d19bf0e3370440976e3",
+    "src/qaiji/core/conventions.py": "1e2334251a1fd414d47746715041aa4e2f60fde6471d228d7d852b0d2b1e4cc4",
+    "src/qaiji/core/program/__init__.py": "5e1e1bcbacb85d3034c4b093a3fb129feef8481b84891b13b7a71754c8e38ca2",
+    "src/qaiji/core/program/model.py": "7ee988d7e8ee5c87e04c39ed5e63aa005eb5e630270c28fe6c9f34ffdf073f95",
+    "src/qaiji/core/program/validation.py": "9da3c91089a0945e252151ba732a54cdfac7786514de4cbe9ab2ee83d3431f19",
+    "src/qaiji/core/semantics/__init__.py": "f5715a714dd3e79cb61592a587a7b0a7db988cb13022b55e00ff5af9fbc9c5c1",
+    "src/qaiji/core/semantics/annotation.py": "ca3f8fea48d01d87611e5cb7e476976d85ff94b403a0526d0ad0dabfa31834d3",
+    "src/qaiji/core/semantics/dataflow.py": "ef8ccb0ccfede1d88e25b7efbfa39ee8f3c73427cf6a8d3e8bd8e3a72e3e1b21",
+    "src/qaiji/core/semantics/handle.py": "4aad5a694292022a0922d74e803df65c1715eb7ad97e2ed0f7a34683b7acfec8",
+    "src/qaiji/core/semantics/preservation.py": "ed8c912cc533a931aa5540c00223069db021ee090049238855b6738e9f4edfda",
+    "src/qaiji/core/semantics/registry.py": "04f8cc635e04e2db6f53338cc1f96eb61f4b05808f89a1e6d275da75f5730201",
+    "src/qaiji/core/semantics/summary.py": "1f049c343b017377b232099050df1635bbc12356e2f480bb66a9fb659694f8a6",
+    "src/qaiji/core/semantics/types.py": "990effb63a98f75cd7bba34d567904a008ce3f9e070b091aca060fea325dd415",
+    "src/qaiji/exceptions.py": "20256139b7f3361989e7be1985ba870a08ae587f73f028bb24fcda50cdae56f8",
+    "src/qaiji/version.py": "39a2fa1ba47a0d4e301aa1c241a6add1e95296a1b484947f0af4c14eec2b5adf",
+    "src/qaiji/codec/_stdgates.py": "b1738a3335907d5475279edd952c98a91ffb254193cbeab867700909137fcda7"
+  },
+  "origin": {
+    "src/qaiji/codec/qasm3.py": "231237a1bee5a2a480e90dde0a662fdec6753312f921a6e5d96a3886f63964ac",
+    "src/qaiji/codec/_stdgates.py": "b1738a3335907d5475279edd952c98a91ffb254193cbeab867700909137fcda7"
+  },
+  "ledger": [
+    {
+      "id": "L6-01",
+      "kind": "narrow",
+      "surface": "OPENQASM",
+      "decision": "D6-14",
+      "before": "Missing version headers are rejected by test_missing_version_header_is_rejected.",
+      "after": "A missing version header is accepted. Major versions 2 and 3, including minor versions 2.5 and 3.1, keep their existing behavior.",
+      "tests_rewritten": [
+        "tests/codec/test_rejection.py::test_missing_version_header_is_accepted"
+      ],
+      "guard_tests": [
+        "tests/codec/test_acceptance_m1.py::test_header_optional_programs_match_explicit_headers",
+        "tests/codec/test_rejection.py::test_major_version_outside_two_and_three_is_rejected"
+      ],
+      "sources": {
+        "src/qaiji/codec/qasm3.py": {
+          "before": "231237a1bee5a2a480e90dde0a662fdec6753312f921a6e5d96a3886f63964ac",
+          "after": "33cc3f42499e600a8b85cffc70f20924739c2b675e3434e63d65a6a057ef03a2"
+        }
+      }
+    },
+    {
+      "id": "L6-05",
+      "kind": "narrow",
+      "surface": "qubit",
+      "decision": "F6-04-3",
+      "before": "Only one qubit declaration is accepted; test_second_qubit_declaration_is_rejected rejects any second declaration. Bounds use whole-circuit messages; foreign operands report operand-register mismatch.",
+      "after": "Qubit registers flatten in declaration order with per-register bounds; only previously visited declarations are visible. Duplicate declarations preserve a ValueError cause. Bounds detail is index {i} is outside qubit register {name!r} of size {n}; undeclared detail is qubit register {name!r} is not declared. Statement precedence and construct/location remain unchanged; conditional body bounds errors are deferred until every gate has been checked.",
+      "tests_rewritten": [
+        "tests/codec/test_rejection.py::test_duplicate_qubit_declaration_is_rejected"
+      ],
+      "guard_tests": [
+        "tests/codec/test_acceptance_m1.py::test_qubit_registers_flatten_in_declaration_order",
+        "tests/codec/test_rejection.py::test_gate_index_outside_its_register_is_rejected",
+        "tests/codec/test_rejection.py::test_zero_size_register_among_others_is_rejected",
+        "tests/codec/test_rejection.py::test_register_used_before_declaration_is_rejected",
+        "tests/codec/test_rejection.py::test_statement_error_precedence_matches_slice_a",
+        "tests/codec/test_rejection.py::test_declaration_errors_are_reported_in_source_order",
+        "tests/codec/test_rejection.py::test_rejection_construct_tokens_are_exact"
+      ],
+      "sources": {
+        "src/qaiji/codec/qasm3.py": {
+          "before": "33cc3f42499e600a8b85cffc70f20924739c2b675e3434e63d65a6a057ef03a2",
+          "after": "3794a32860d4b66c3f61c7a324216e108d859e02a5523e5661ebe2ccadfc1ffd"
+        }
+      }
+    },
+    {
+      "id": "L6-10",
+      "kind": "fix",
+      "surface": "to_qasm3 qubit register name",
+      "decision": "D6-15",
+      "before": "Serializer always emits q as the quantum register name, even when a classical register is also named q.",
+      "after": "Serializer chooses the first unoccupied name in the deterministic sequence q, q0, q1, q2, ... . Every gate, measurement and conditional body uses that same name. When q is free, output bytes match three origin goldens.",
+      "tests_rewritten": [],
+      "guard_tests": [
+        "tests/codec/test_acceptance_m1.py::test_to_qasm3_avoids_classical_register_names",
+        "tests/codec/test_acceptance_m1.py::test_to_qasm3_output_is_unchanged_when_q_is_free"
+      ],
+      "sources": {
+        "src/qaiji/codec/qasm3.py": {
+          "before": "3794a32860d4b66c3f61c7a324216e108d859e02a5523e5661ebe2ccadfc1ffd",
+          "after": "e736abfe642ab8ff82b3a8c4462fc34c5bdab5e2c648b5f1747c83c4b8dddcc3"
+        }
+      }
+    },
+    {
+      "id": "L6-07",
+      "kind": "fix",
+      "surface": "declaration",
+      "decision": "ADR-604",
+      "before": "Quantum and classical registers may share a name.",
+      "after": "The later declaration rejects a shared name with detail name {name!r} is already declared as a {kind} register, where kind is the earlier register kind, and a ValueError cause. OpenQASM 2 and 3 declaration syntax share the rule.",
+      "tests_rewritten": [],
+      "guard_tests": [
+        "tests/codec/test_rejection.py::test_quantum_and_classical_register_names_must_differ",
+        "tests/codec/test_acceptance_m1.py::test_to_qasm3_avoids_classical_register_names"
+      ],
+      "sources": {
+        "src/qaiji/codec/qasm3.py": {
+          "before": "e736abfe642ab8ff82b3a8c4462fc34c5bdab5e2c648b5f1747c83c4b8dddcc3",
+          "after": "8b55cd06a4b393fbf4b6a351a8b698b91e89c8e3a4ecc080c12ae4b076b8b192"
+        }
+      }
+    },
+    {
+      "id": "L6-03",
+      "kind": "narrow",
+      "surface": "gate operand",
+      "decision": "F6-04-1",
+      "before": "Whole register gate operands are rejected.",
+      "after": "Equal-width register operands broadcast in index order; indexed qubits are reused. Width-one registers retain register identity. Typed duplicate checks and deferred conditional bounds preserve precedence.",
+      "tests_rewritten": [
+        "tests/codec/test_rejection.py::test_gate_broadcast_size_mismatch_is_rejected"
+      ],
+      "guard_tests": [
+        "tests/codec/test_acceptance_m1.py::test_gate_broadcast_orders_applications_by_index",
+        "tests/codec/test_rejection.py::test_size_one_register_is_not_a_single_qubit_operand",
+        "tests/codec/test_rejection.py::test_broadcast_duplicate_qubit_is_wrapped"
+      ],
+      "sources": {
+        "src/qaiji/codec/qasm3.py": {
+          "before": "8b55cd06a4b393fbf4b6a351a8b698b91e89c8e3a4ecc080c12ae4b076b8b192",
+          "after": "84836eb37b0d291b329014973510a514ae2b61947d54b523b7f673441b6c18de"
+        }
+      }
+    },
+    {
+      "id": "L6-04",
+      "kind": "narrow",
+      "surface": "measure",
+      "decision": "F6-04-1",
+      "before": "Whole register measurement operands are rejected.",
+      "after": "Both measurement syntaxes pair equal-length operands in index order. Mixed indexed/register forms require equal length one. Target bounds precede source bounds and length checks.",
+      "tests_rewritten": [
+        "tests/codec/test_rejection.py::test_measurement_broadcast_size_mismatch_is_rejected"
+      ],
+      "guard_tests": [
+        "tests/codec/test_acceptance_m1.py::test_measurement_broadcast_pairs_by_index",
+        "tests/codec/test_rejection.py::test_mixed_measurement_forms_follow_length_rule"
+      ],
+      "sources": {
+        "src/qaiji/codec/qasm3.py": {
+          "before": "84836eb37b0d291b329014973510a514ae2b61947d54b523b7f673441b6c18de",
+          "after": "22788fcafa3b03af731ab558c99f64deb25fdcb8c99ecf86c1c3ff9031015105"
+        }
+      }
+    },
+    {
+      "id": "L6-02",
+      "kind": "narrow",
+      "surface": "gate name",
+      "decision": "D6-7, D6-13, D6-19",
+      "before": "Only the 14 registered native names are accepted; sx is rejected.",
+      "after": "Nineteen additional standard names resolve after lowercasing via the immutable expansion table; each broadcast application expands before the next. Shape errors retain ValueError causes. T2 expansion source is frozen at its delivered bytes.",
+      "tests_rewritten": [
+        "tests/codec/test_rejection.py::test_unregistered_gate_name_is_rejected"
+      ],
+      "guard_tests": [
+        "tests/codec/test_acceptance_m1.py::test_standard_gate_names_expand_through_frontend",
+        "tests/codec/test_acceptance_m1.py::test_uppercase_gate_names_follow_lowercasing",
+        "tests/codec/test_acceptance_m1.py::test_broadcast_happens_before_expansion",
+        "tests/codec/test_rejection.py::test_expansion_arity_and_parameter_errors_are_wrapped",
+        "tests/native/test_compatibility.py::test_stdgates_origin_is_pinned_to_the_t2_delivery"
+      ],
+      "sources": {
+        "src/qaiji/codec/qasm3.py": {
+          "before": "22788fcafa3b03af731ab558c99f64deb25fdcb8c99ecf86c1c3ff9031015105",
+          "after": "367cc2b813b4a4980a6e24afdac9f9ff28e666e93bf17f3f4cb54fc2097a2415"
+        }
+      }
+    },
+    {
+      "id": "L6-06",
+      "kind": "narrow",
+      "surface": "if",
+      "decision": "F6-04-4",
+      "before": "Indexed bit conditions are rejected after literal-index validation.",
+      "after": "Indexed conditions on a one-bit register lower to its whole-register Conditional for values 0 and 1. Validation order is index shape, declaration, width, index bounds, value. Multi-bit conditions retain a dedicated rejection; bounds wrap ClassicalBit ValueError. Existing whole-register behavior and earlier body/rhs checks remain unchanged.",
+      "tests_rewritten": [
+        "tests/codec/test_rejection.py::test_multi_bit_register_bit_condition_is_rejected"
+      ],
+      "guard_tests": [
+        "tests/codec/test_rejection.py::test_bit_condition_value_must_be_zero_or_one",
+        "tests/codec/test_rejection.py::test_bit_condition_index_outside_register_is_rejected",
+        "tests/codec/test_rejection.py::test_bit_condition_on_undeclared_register_is_rejected",
+        "tests/codec/test_rejection.py::test_bit_condition_check_order_is_contractual",
+        "tests/codec/test_rejection.py::test_statement_error_precedence_matches_slice_a",
+        "tests/codec/test_acceptance_m1.py::test_single_bit_register_condition_lowers_to_register_conditional",
+        "tests/codec/test_acceptance_m1.py::test_bit_condition_body_allows_broadcast_and_expansion"
+      ],
+      "sources": {
+        "src/qaiji/codec/qasm3.py": {
+          "before": "367cc2b813b4a4980a6e24afdac9f9ff28e666e93bf17f3f4cb54fc2097a2415",
+          "after": "1c1329f2405429c73615ecc29bc6035d8d38390cbadc613b606d274e25f581f8"
+        }
+      }
+    },
+    {
+      "id": "L6-08",
+      "kind": "fix",
+      "surface": "source",
+      "decision": "ADR-607",
+      "before": "Parser and parameter-evaluation recursion failures escape as RecursionError.",
+      "after": "RecursionError from parsing or any AST traversal/evaluation becomes Qasm3ParseError with source at 1:1: expression nesting exceeds parser limit and the original RecursionError cause.",
+      "tests_rewritten": [],
+      "guard_tests": [
+        "tests/codec/test_rejection.py::test_parser_recursion_limit_is_a_parse_error",
+        "tests/codec/test_rejection.py::test_evaluator_recursion_limit_is_a_parse_error"
+      ],
+      "sources": {
+        "src/qaiji/codec/qasm3.py": {
+          "before": "1c1329f2405429c73615ecc29bc6035d8d38390cbadc613b606d274e25f581f8",
+          "after": "a3673d5894d4d221eb56a09af34096c52a64d2d68e77717fe0b7ba1cb5dab36f"
+        }
+      }
+    },
+    {
+      "id": "L6-09",
+      "kind": "fix",
+      "surface": "source",
+      "decision": "D6-16",
+      "before": "Empty or comment-only sources escape as library AttributeError; unexpected parser AttributeError also escapes.",
+      "after": "Empty or comment-only sources reject as Qasm3UnsupportedConstructError with qubit declaration at 1:1: program has no qubit declaration and no cause, matching an empty versioned program. Other parse-only AttributeError becomes Qasm3ParseError with source at 1:1: invalid OpenQASM syntax and its original cause. Traversal AttributeError still escapes unchanged.",
+      "tests_rewritten": [],
+      "guard_tests": [
+        "tests/codec/test_rejection.py::test_empty_or_comment_only_source_has_no_qubit_declaration",
+        "tests/codec/test_rejection.py::test_unexpected_parser_attribute_error_is_a_parse_error",
+        "tests/codec/test_rejection.py::test_attribute_error_during_traversal_is_not_a_syntax_error"
+      ],
+      "sources": {
+        "src/qaiji/codec/qasm3.py": {
+          "before": "a3673d5894d4d221eb56a09af34096c52a64d2d68e77717fe0b7ba1cb5dab36f",
+          "after": "b2a0a922492035debeb2f735f40a4fc4dd4d5e9242878818ff73c92e35b69dca"
+        }
+      }
+    }
+  ]
+}

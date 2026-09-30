@@ -1,0 +1,53 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+*.egg
+
+# Unit test / coverage reports
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+doc/build/
+.pytest_cache/
+.hypothesis/
+
+# Type checkers / linters
+.mypy_cache/
+.ruff_cache/
+
+# Environments
+.venv
+env/
+venv/
+ENV/
+
+# Editors / tooling
+.vscode
+.idea
+.DS_Store
+*.swp
+
+# Local planning, development protocols, and evidence tools
+.plan
+tmp/
+/dev/
+/scripts/
+/.gitmodules
+/tests/native/contract_cases.json
+/tests/native/mutations.json
+/tests/native/test_contract_inventory.py
+/tests/native/test_evidence_tools.py
+.claude
+CLAUDE.md
+AGENTS.md
+**/archive/*
+
+# uv
+# uv.lock is kept in git so all developers resolve the same dependency set.

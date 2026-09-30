@@ -1,0 +1,49 @@
+ci:
+  autofix_prs: true
+  autoupdate_schedule: monthly
+  skip: [mypy]  # local hook: pre-commit.ci has no .venv
+
+repos:
+  # ── Basic file checks ──────────────────────────────────────────────
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-toml
+      - id: check-merge-conflict
+      - id: detect-private-key
+      - id: debug-statements
+      - id: check-ast
+
+  # ── Ruff: unified linter + formatter (replaces black, isort, flake8) ─
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.15.0
+    hooks:
+      - id: ruff
+        args: [--fix]
+      - id: ruff-format
+
+  # ── mypy: static type checking (local .venv) ───────────────────────
+  # 走本地 .venv 而非 mirrors-mypy：镜像 hook 在隔离环境中运行，看不到
+  # openqasm3 等项目依赖，会报出一批虚假的 import 错误。
+  # pass_filenames: false —— mypy 需要完整模块图才能正确推断，逐文件传参会漏判。
+  - repo: local
+    hooks:
+      - id: mypy
+        name: mypy (src)
+        entry: .venv/bin/mypy
+        args: [src]
+        language: system
+        types: [python]
+        pass_filenames: false
+        files: ^src/
+        stages: [pre-commit]
+
+  # ── Commit message linting (Conventional Commits) ──────────────────
+  - repo: https://github.com/commitizen-tools/commitizen
+    rev: v4.13.6
+    hooks:
+      - id: commitizen
+        stages: [commit-msg]

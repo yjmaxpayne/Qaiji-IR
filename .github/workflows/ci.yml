@@ -1,0 +1,124 @@
+# Qaiji-IR 持续集成：静态检查与跨 Python 版本测试。
+#
+# 设计说明：
+#   * 静态检查独立成 job —— 测试失败时仍能看到 lint/类型结果，避免串行遮蔽。
+#   * 本地开发协议与证据脚本不进入仓库，CI 只依赖公开源码与测试。
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# 同一分支的新推送取消仍在排队的旧运行；main 上的运行保留完整历史。
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  static-checks:
+    name: static checks (ruff + mypy)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      # 压过仓库根目录的 .python-version，保证使用的解释器是显式声明的那个。
+      UV_PYTHON: '3.13'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Install dependencies
+        run: uv sync --locked --group analysis
+
+      # ruff format 统一承担格式化职责（替代 black + isort + flake8）。
+      - name: Lint with ruff
+        run: uv run --no-sync ruff check --no-cache src tests
+
+      - name: Check formatting with ruff
+        run: uv run --no-sync ruff format --check src tests
+
+      - name: Type-check with mypy
+        run: uv run mypy src
+
+  tests:
+    name: pytest (py${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      UV_PYTHON: ${{ matrix.python-version }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        # 覆盖 pyproject 中 requires-python = ">=3.12,<3.15" 的完整区间。
+        python-version: ['3.12', '3.13', '3.14']
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: uv sync --locked --group tests
+
+      # 仓库根目录的 .python-version 优先级高于 PATH，若不用 UV_PYTHON 压过它，
+      # 三个矩阵条目会静默地全部跑在 3.13 上。该步骤让这种退化立刻暴露。
+      - name: Verify interpreter matches the matrix entry
+        run: |
+          uv run --no-sync python -c "import sys; print('running on', sys.version)"
+          uv run --no-sync python -c "import sys; actual = f'{sys.version_info.major}.{sys.version_info.minor}'; expected = '${{ matrix.python-version }}'; assert actual == expected, f'matrix says {expected}, interpreter is {actual}'"
+
+      # 覆盖率门槛（--cov-fail-under=90）与 XML 输出均来自 pyproject 的 addopts，
+      # 此处不重复传参，避免 CI 与本地 `uv run pytest` 行为漂移。
+      - name: Run pytest
+        run: uv run pytest -v
+
+      - name: Check core and codec coverage
+        run: |
+          uv run --no-sync coverage report --include='src/qaiji/core/*' --fail-under=95
+          uv run --no-sync coverage report --include='src/qaiji/codec/*' --fail-under=95
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-py${{ matrix.python-version }}
+          path: |
+            coverage.xml
+          retention-days: 14
+
+      - name: Upload coverage to Codecov
+        if: matrix.python-version == '3.13'
+        uses: codecov/codecov-action@v5
+        with:
+          files: ./coverage.xml
+          token: ${{ secrets.CODECOV_TOKEN }}
+          # 未配置 CODECOV_TOKEN 时只告警，不让整条流水线变红。
+          fail_ci_if_error: false

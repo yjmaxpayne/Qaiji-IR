@@ -1,0 +1,61 @@
+# Sphinx 文档构建守卫。
+#
+# 以 -W 严格模式构建：docstring 交叉引用失效、rst 语法错误、孤立页面等
+# 都会让流水线变红。宽松模式下文档腐烂无人察觉，该 job 也就失去信号价值。
+# --keep-going 让 Sphinx 收集完所有问题再退出，便于一次性修复。
+name: Docs
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: docs-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  build-docs:
+    name: build Sphinx HTML
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      UV_PYTHON: '3.13'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      # autodoc 需要导入 qaiji，uv sync 会同时以可编辑方式安装本项目。
+      - name: Install dependencies
+        run: uv sync --locked --group docs
+
+      - name: Build documentation (warnings as errors)
+        run: uv run make -C doc html SPHINXOPTS="-W --keep-going"
+
+      - name: Test documentation examples (warnings as errors)
+        run: uv run --no-sync make -C doc doctest SPHINXOPTS="-W --keep-going"
+
+      - name: Upload documentation artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: documentation-html
+          path: doc/build/html/
+          retention-days: 14
