@@ -75,7 +75,7 @@ print(canonical)
 
 ## 文档
 
-在线文档：<https://yjmaxpayne.github.io/Qaiji-IR/>（`main` 分支每次推送后自动构建并发布到 GitHub Pages）。
+在线文档：<https://yjmaxpayne.github.io/Qaiji-IR/>。
 
 本地构建专业中文文档：
 
