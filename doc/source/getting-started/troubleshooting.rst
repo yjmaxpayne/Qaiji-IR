@@ -25,13 +25,10 @@ L5 程序和 L2 原生调度校验问题。
    发布包名与导入名不同（``qaiji-ir`` → ``qaiji``），``pip install qaiji``
    不会安装本项目。
 
-2. ``pip install qaiji-ir`` 报找不到匹配的发行版：该包尚未发布到 PyPI，
-   请改用 :doc:`installation` 中的源码安装方式。
-
-3. 确认当前解释器就是安装了依赖的虚拟环境：``source .venv/bin/activate``
+2. 确认当前解释器就是安装了依赖的虚拟环境：``source .venv/bin/activate``
    之后重试，或统一使用 ``uv run`` 执行脚本。
 
-4. 开发安装后仍导入失败时，检查安装的是否为可编辑模式且指向本仓库：
+3. 开发安装后仍导入失败时，检查安装的是否为可编辑模式且指向本仓库：
    ``uv sync --group tests --group analysis`` 会把 ``src/qaiji`` 以可编辑
    方式接入环境。
 

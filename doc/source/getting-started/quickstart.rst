@@ -47,10 +47,10 @@ OpenQASM 往返
    >>> [gate.gate_type for gate in bell.gates]
    [<GateType.H: 'H'>, <GateType.CX: 'CX'>]
 
-切片边界
+支持边界
 --------
 
-M-1 前端只接受已经登记的 OpenQASM 构件。遇到循环、脉冲语句或未支持的
+前端只接受已经登记的 OpenQASM 构件。遇到循环、脉冲语句或未支持的
 门时，编解码器会抛出 :class:`qaiji.QaijiIRError` 的具体子类，不会静默丢弃信息。
 序列化输出统一使用 OpenQASM 3.0；OpenQASM 2.0 输入只作为兼容入口读取。
 

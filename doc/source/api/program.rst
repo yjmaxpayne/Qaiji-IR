@@ -52,8 +52,8 @@ JSON 往返只承载程序描述，L4 解析表由调用方另行提供。
 --------
 
 该异常定义在程序子包，继承 :class:`qaiji.QaijiIRError`，从
-``qaiji.core.program`` 导入；不向包根、``qaiji.core`` 或 ``qaiji.exceptions``
-新增导出。``problems`` 为按报告顺序排列的不可修改字符串元组。
+``qaiji.core.program`` 导入；包根、``qaiji.core`` 与 ``qaiji.exceptions``
+不导出它。``problems`` 为按报告顺序排列的不可修改字符串元组。
 
 .. autoclass:: qaiji.core.program.ProgramValidationError
    :show-inheritance:

@@ -8,24 +8,19 @@
 
 - Python 3.12–3.14（以 ``pyproject.toml`` 的 ``requires-python`` 为准）。
 - 用户安装只需要 ``pip``；开发环境使用 ``uv``。
-- 无 GPU 或系统级依赖要求：Slice A 是纯 Python 的电路级前端。
+- 无 GPU 或系统级依赖要求：Qaiji-IR 是纯 Python 包。
 
-发布包名是 ``qaiji-ir``，Python 导入名是 ``qaiji``：安装时使用前者，
-在 Python 中导入时使用后者。
+发布包名是 ``qaiji-ir``，Python 导入名是 ``qaiji``：``pip list``、``pip uninstall``
+使用前者，在 Python 中导入时使用后者。
 
 用户安装
 --------
 
 .. code-block:: console
 
-   pip install qaiji-ir
+   pip install "git+https://github.com/yjmaxpayne/Qaiji-IR.git"
 
 安装后在任何 Python 3.12–3.14 环境中都可以直接 ``import qaiji``。
-
-.. note::
-
-   ``qaiji-ir`` 尚未发布到 PyPI；在首个发布标签落地之前，请使用下文的
-   源码安装方式。
 
 开发安装
 --------
