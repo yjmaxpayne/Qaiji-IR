@@ -85,8 +85,11 @@ def _measure(action):
 
 
 def _save(name, rows):
-    """持久记录内容指纹；并发 pytest worker 各自只写其独立实验文件。"""
-    out = Path(os.environ.get("QM5_SCALE_EVIDENCE", ROOT / "tmp/qm5-impl/T8/scale-evidence"))
+    """持久记录内容指纹；未设证据目录时不写文件，并发 pytest worker 各自只写其独立实验文件。"""
+    evidence = os.environ.get("QM5_SCALE_EVIDENCE")
+    if not evidence:
+        return
+    out = Path(evidence)
     out.mkdir(parents=True, exist_ok=True)
     files = sorted([*ROOT.glob("src/qaiji/**/*.py"), Path(__file__)])
     hashes = {str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest() for p in files}

@@ -33,6 +33,7 @@ ENV/
 .idea
 .DS_Store
 *.swp
+/.codegraph/
 
 # Local planning, development protocols, and evidence tools
 .plan

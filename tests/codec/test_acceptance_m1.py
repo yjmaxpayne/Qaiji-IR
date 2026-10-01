@@ -2,12 +2,12 @@
 # SPDX-License-Identifier: Apache-2.0
 """OpenQASM 声明与序列化的接受契约。"""
 
-# 本文件的来源核对报告：.plan/matrix/diff-v1.json（schema qaiji.qm6.diff.v1）。
+# 本文件的来源核对报告：前端差分核对报告 diff-v1（JSON）。
 # 报告 ID（文件 SHA256）：115acd9634159fe8f0187ef3c84a6e333ad3f12a3e397730ba164c75a547bab2
 # EmuPlat HEAD：ff6bfc8f1b59e1e60f91de7996bf5434c06ea597；双方 openqasm3 1.0.1。
 # 下列程序 ID 是报告 results[].id 的唯一前缀；首现位置相对于该 EmuPlat 检出树。
 # 关联样例说明语义来源，不表示参数化输入逐字来自语料；原有期望值及其构造方式不变。
-# 补充重放：tmp/qm6-impl/T10b/golden-replay.json，含全部58例输入和两侧规范形式。
+# 补充重放：golden 重放记录，含全部58例输入和两侧规范形式。
 # 条件候选只核对数量、值、展开门名和宽度；不证明候选未携带的寄存器名/目标/参数。
 # 展开规范化共用生产展开表，物理正确性由独立物理测试负责。
 
@@ -111,7 +111,7 @@ def test_to_qasm3_avoids_classical_register_names(names, expected_name):
 
 # 来源核对：bell 输入逐字命中；三份输出均源自 qaiji 原始序列化器，不源自 EmuPlat 输出。
 # diff-v1 程序 52b456fd583d44c1（A），首现 tests/compiler/test_frontend_version_mismatch.py:20。
-# 原始输出：tmp/qm6-impl/T3/codec/origin.json 的 goldens；feedforward/c-and-q0 无逐字语料首现。
+# 原始输出：codec 原始序列化输出记录中的 goldens；feedforward/c-and-q0 无逐字语料首现。
 @pytest.mark.parametrize(
     ("name", "golden"),
     [
