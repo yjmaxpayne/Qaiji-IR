@@ -21,7 +21,7 @@ def _clean_subprocess_env() -> dict[str, str]:
     """剥掉 COVERAGE_*，确保被启动的解释器不会同时被插桩。
 
     xdist worker fork 出 sys.executable、而 coverage 又对子进程一并插桩，这种组合
-    曾经损坏过 coverage 的 SQLite 存储（QM1 I-003 先例）；修法是从一开始就不让子
+    曾经损坏过 coverage 的 SQLite 存储；修法是从一开始就不让子
     进程继承 coverage 的子进程触发器。
     """
     return {key: value for key, value in os.environ.items() if not key.startswith("COVERAGE_")}

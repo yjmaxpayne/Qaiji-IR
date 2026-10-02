@@ -30,7 +30,7 @@ class MorphismType(StrEnum):
 class EquivLevel(StrEnum):
     """保持性裁决可以断言的等价强度。
 
-    本切片中只有 ``EXACT`` 与 ``UP_TO_PHASE`` 是可判定的；``UP_TO_LOCAL`` 与
+    只有 ``EXACT`` 与 ``UP_TO_PHASE`` 是可判定的；``UP_TO_LOCAL`` 与
     ``ENTANGLEMENT`` 是为后续层预留的词汇，会在判定入口处被拒绝。
     """
 
@@ -52,7 +52,7 @@ class CartanRole(StrEnum):
 class ConditionModel(StrEnum):
     """电路的经典条件是如何被求值的。
 
-    ``FPROC_PLACEHOLDER`` 在本切片中没有任何生产路径 —— 它只是为多条件前馈预留
+    ``FPROC_PLACEHOLDER`` 没有任何生产路径 —— 它只是为多条件前馈预留
     位置，而不是声称已经支持。
     """
 

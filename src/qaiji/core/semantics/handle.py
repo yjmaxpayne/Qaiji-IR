@@ -68,7 +68,7 @@ def freeze_summary(value: Mapping[str, Any]) -> Mapping[str, JSONValue]:
 
 @dataclass(frozen=True, slots=True)
 class SemanticIRHandle:
-    """QM6 坍缩阶段消费的唯一对象：摘要、哈希与状态。
+    """下游坍缩阶段消费的唯一对象：摘要、哈希与状态。
 
     Example:
         >>> from qaiji.core.semantics.handle import SemanticIRHandle

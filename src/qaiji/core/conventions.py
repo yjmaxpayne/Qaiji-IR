@@ -19,7 +19,7 @@ QASM3_INDEX_TO_PHYSICAL: Final = {0: "ground", 1: "excited"}
 OPTICS_INDEX_TO_PHYSICAL: Final = {0: "excited", 1: "ground"}
 """将光学适配器的存储下标映射到物理态名称。
 
-证伪状态：已跨库证伪（QM3，判据 R0–R4，范围限于光学适配器的门、电路与原生后端层）。
+证伪状态：已跨库证伪（判据 R0–R4，范围限于光学适配器的门、电路与原生后端层）。
 快照事实 XR-SP、XR-SM、XR-Z、XR-ASSEMBLE、XR-SEMPARAM、XR-APPLY-MPS、XR-APPLY-SV、
 XR-INIT、XR-INIT-PARSE，见源码仓库 ``tests/core/_optics_snapshot.py``。
 """
@@ -35,7 +35,7 @@ QASM3_TO_OPTICS_BIT: Final = {0: 1, 1: 0}
 RZ_PHASE_CONVENTION: Final = "exp(-i*theta*Z/2)"
 """Z 轴旋转的规范符号约定。
 
-证伪状态：已跨库证伪（QM3，判据 R3a、R3b）。快照事实 XR-RZ、XR-Z，
+证伪状态：已跨库证伪（判据 R3a、R3b）。快照事实 XR-RZ、XR-Z，
 见源码仓库 ``tests/core/_optics_snapshot.py``。跨到光学适配器的存储下标时 Z 的物理含义反号，
 因此同一角度的物理作用相反：RZ_optics(θ) ≡ RZ_qasm(−θ)。
 """

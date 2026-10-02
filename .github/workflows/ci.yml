@@ -32,6 +32,9 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        # poetry-dynamic-versioning 从 tag 推导版本；浅克隆看不到 tag，版本会静默退化成 0.0.0。
+        with:
+          fetch-depth: 0
 
       - name: Install uv
         uses: astral-sh/setup-uv@v6
@@ -73,6 +76,9 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        # poetry-dynamic-versioning 从 tag 推导版本；浅克隆看不到 tag，版本会静默退化成 0.0.0。
+        with:
+          fetch-depth: 0
 
       - name: Install uv
         uses: astral-sh/setup-uv@v6

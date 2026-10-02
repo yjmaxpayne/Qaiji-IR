@@ -70,7 +70,7 @@ def test_every_member_serializes_as_a_plain_json_string(
 def test_partial_equivalence_levels_are_referenceable() -> None:
     """UP_TO_LOCAL / ENTANGLEMENT 在任何判定器出现之前就先作为词汇存在。
 
-    把它们作为*判定请求*来拒绝，是 check_preservation（T3.1）的职责；词汇表本身
+    把它们作为*判定请求*来拒绝，是 check_preservation 的职责；词汇表本身
     不该假装它们不被支持。
     """
     assert EquivLevel.UP_TO_LOCAL.value == "UP_TO_LOCAL"
@@ -78,7 +78,7 @@ def test_partial_equivalence_levels_are_referenceable() -> None:
 
 
 def test_fproc_placeholder_is_reserved_without_a_production_path() -> None:
-    """QM2 没有任何构造多条件前馈的路径。
+    """语义层没有任何构造多条件前馈的路径。
 
     保留该成员是为了让 condition_model 日后可以扩展而无需递增 schema 版本；它不该
     被解读为已支持 FPROC 的声明。

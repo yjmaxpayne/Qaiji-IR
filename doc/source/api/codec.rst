@@ -13,6 +13,46 @@ OpenQASM 3 编解码器
 
 .. autofunction:: qaiji.to_qasm3
 
+元数据出口
+----------
+
+需要把电路中的操作对应回源码时，使用 ``qaiji.codec.parse_qasm3``。它只解析一次，
+同时返回电路和逐操作的源码来历；接受与拒收的源码和 ``from_qasm3`` 完全相同。
+
+* ``origins`` 与 ``circuit.gates`` 逐位一一对应。广播或门名展开产生的多个操作共享
+  所属语句的 span，用 ``broadcast_index`` 和 ``expansion_index`` 区分；条件操作的
+  origin 用 ``body`` 按同样规则对应条件体内的门。``statement_index`` 是顶层语句序号，
+  声明等不产生操作的语句也占号，条件体内的门沿用所属 ``if`` 的序号。
+* 行号和列号都从 1 起，``line:column`` 到 ``end_line:end_column`` 为闭区间；列按
+  Unicode code point 计，与错误消息中的 ``at line:column`` 采用同一约定。
+* origin 只是旁表：电路的 ``==``、语义摘要哈希、``canonicalize()`` 和 ``to_qasm3``
+  都不读取它。``ParsedQasm3`` 本身不可哈希，它的 ``==`` 同时比较电路和 origins；
+  只比较语义时请比较 ``.circuit``。
+* ``circuit`` 仍是可变容器。调用方增删或替换其中的操作后，``origins`` 不再对齐，
+  记录不做运行期检查。
+* ``declared_version`` 是版本头原文，例如 ``"3.0"``；缺少版本头时为 ``None``，
+  此时 ``version_header_present`` 为 ``False``。
+
+下面的 ``CY`` 展开为 3 个门，3 条 origin 都保留源码拼写和同一 span：
+
+.. doctest::
+
+   >>> from qaiji.codec import parse_qasm3
+   >>> parsed = parse_qasm3("qubit[2] q; h q[0];\nCY q[0], q[1];")
+   >>> len(parsed.origins) == len(parsed.circuit.gates)
+   True
+   >>> [(o.raw_name, o.line, o.expansion_index) for o in parsed.origins]
+   [('h', 1, 0), ('CY', 2, 0), ('CY', 2, 1), ('CY', 2, 2)]
+   >>> parsed.version_header_present
+   False
+
+.. autofunction:: qaiji.codec.parse_qasm3
+
+.. autoclass:: qaiji.codec.ParsedQasm3
+   :members:
+
+.. autoclass:: qaiji.codec.OperationOrigin
+
 支持边界
 --------
 
@@ -42,6 +82,18 @@ Python 构造电路并使用 :doc:`native` 中的原生调度生成接口；它�
   :class:`~qaiji.Qasm3UnsupportedConstructError`，detail 为
   ``program has no qubit declaration``；解析库调用中的其他 ``AttributeError``
   包装为 :class:`~qaiji.Qasm3ParseError`。
+* 超出解释器整数字符串转换上限（默认 4300 位，见 :func:`sys.set_int_max_str_digits`）
+  的十进制整数字面量抛出 :class:`~qaiji.Qasm3ParseError`，消息为 ``source at 1:1:``
+  加解释器原生消息，原异常保留为 ``__cause__``。
+* 门参数中未超出位数上限、但超出浮点范围的整数按无穷大求值，由既有的有限性检查
+  拒收：抛出 :class:`~qaiji.Qasm3UnsupportedConstructError`，detail 为
+  ``Gate parameters must be finite``。``1/N`` 下溢为 ``0.0`` 并被接受；``1/(1/N)``
+  抛出 :class:`~qaiji.Qasm3ParseError`，detail 为 ``division by zero``；``N**2`` 与
+  ``N%2`` 与小操作数时一样报 ``unsupported binary expression``。
+* 十六进制、二进制、八进制字面量（寄存器宽度、下标、条件值、参数）以及累计的
+  qubit 总数同样受该上限约束；超限时抛出 :class:`~qaiji.Qasm3ParseError`，消息为
+  ``<构件> at 行:列:`` 加解释器原生消息。位置指向该字面量，宽度指向 ``[``；
+  总数越限时指向使总数越限的那条声明。经典位总数不设上限。
 * 输出的量子寄存器名依次尝试 ``q``、``q0``、``q1``、……，选择首个未被
   经典寄存器占用的名字。
 

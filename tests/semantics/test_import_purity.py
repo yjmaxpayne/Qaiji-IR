@@ -110,7 +110,7 @@ def test_gate1_scan_detects_an_injected_banned_import(tmp_path: Path) -> None:
 def test_gate2_fresh_process_delta_is_whitelisted_to_qaiji_core() -> None:
     """运行时白名单：导入每个 semantics 子模块会拉进来的全部东西。
 
-    自 T3.5 起，`semantics/__init__.py` 会急切导入每个子模块来构建自己的 `__all__`，
+    `semantics/__init__.py` 会急切导入每个子模块来构建自己的 `__all__`，
     因此仅一句 `import qaiji.core.semantics` 就已足以加载
     dataflow.py/summary.py/registry.py 等等。本测试仍然按名字逐个显式导入每个子模块
     （和门禁 1 的扫描集合一样用 glob 发现，因此新模块会自动纳入）：这样白名单的断言

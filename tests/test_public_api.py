@@ -56,7 +56,14 @@ CORE_PUBLIC_NAMES = {
     "GateType",
     "Measure",
 }
-CODEC_PUBLIC_NAMES = {"GateSpec", "from_qasm3", "to_qasm3"}
+CODEC_PUBLIC_NAMES = {
+    "GateSpec",
+    "OperationOrigin",
+    "ParsedQasm3",
+    "from_qasm3",
+    "parse_qasm3",
+    "to_qasm3",
+}
 SEMANTICS_PUBLIC_NAMES = {
     "CartanRole",
     "ClassicalEdge",

@@ -4,9 +4,22 @@ All notable changes to this project are documented here. The format follows
 [Conventional Commits](https://www.conventionalcommits.org/) and versions are derived from
 git tags via `poetry-dynamic-versioning`.
 
-## [Unreleased]
+## [0.1.0] - 2026-10-02
 
 ### Feat
+
+- Add `qaiji.codec.parse_qasm3`: one parse returns the circuit together with a source-origin
+  table aligned one-to-one with `circuit.gates`, including conditional bodies. `from_qasm3`
+  keeps its signature and accepts and rejects exactly the same sources (L7-01).
+- Add `qaiji.codec.ParsedQasm3`, a frozen, unhashable record of `circuit`, `origins` and
+  `declared_version` (header text, `None` when absent); its equality compares circuit and
+  origins (L7-02).
+- Add `qaiji.codec.OperationOrigin`, a frozen per-operation record: statement index, raw
+  spelling, 1-based inclusive line/column span in code points, broadcast and expansion
+  indices, and conditional body origins. Circuit equality, summaries, canonical form and
+  `to_qasm3` never read it (L7-03).
+- Ship an empty PEP 561 `py.typed` marker inside the package and every built wheel, so type
+  checkers use qaiji's annotations (L7-06).
 
 - Accept headerless OpenQASM input while retaining explicit version validation (L6-01).
 - Expand 19 additional gate names into existing serializable gates, with documented
@@ -48,6 +61,29 @@ git tags via `poetry-dynamic-versioning`.
 
 ### Fix
 
+- A decimal integer literal longer than the interpreter's integer string conversion limit
+  now raises `Qasm3ParseError` (`source at 1:1:` plus the interpreter's message, original
+  `ValueError` as the cause) instead of a bare `ValueError`. Only the `openqasm3.parse` step
+  is wrapped (L7-04).
+- An integer gate parameter outside the float range now evaluates to infinity and raises
+  `Qasm3UnsupportedConstructError` (`Gate parameters must be finite`) instead of a bare
+  `OverflowError`, whether written alone, negated, parenthesised or inside an expression that
+  stays infinite. Each of the following also used to raise that bare `OverflowError`: `1/N`
+  and `pi/N` now underflow to `0.0` and are accepted; `1/(1/N)` raises `Qasm3ParseError`
+  (`division by zero`); `N-N` and `N/N` are not finite and raise the error above; `N**2` and
+  `N%2` raise `Qasm3UnsupportedConstructError` (`unsupported binary expression`), as they
+  already did for small operands (L7-05).
+- Hexadecimal, binary and octal literals no longer bypass the conversion limit. Every integer
+  literal that is read (register widths, indices, condition values, parameters) and the
+  running total qubit count must be convertible to decimal; otherwise `Qasm3ParseError`
+  reports `<construct> at L:C:` plus the interpreter's message, with the original cause.
+  Per case: an oversized qubit index was a bare `ValueError`; an oversized gate parameter
+  was a bare `OverflowError`; an oversized classical bit index or bit condition value was
+  `Qasm3UnsupportedConstructError` at the statement and is now `Qasm3ParseError` at the
+  literal; an oversized register width (reported at `[`),
+  whole-register condition value or total qubit count (reported at the crossing
+  declaration) was accepted and then broke `to_qasm3`. Values within the limit keep their
+  previous outcome; the total number of classical bits is not limited (L7-08).
 - Reject quantum/classical register name collisions in either declaration order (L6-07).
 - Wrap recursion overflow during parsing or evaluation in `Qasm3ParseError`, reporting
   `expression nesting exceeds parser limit` (L6-08).
@@ -91,3 +127,8 @@ git tags via `poetry-dynamic-versioning`.
   falsified / reference frame / derived), linked to the snapshot facts by rules L1-L5.
 - Add a locally reproducible Chinese Sphinx documentation site and align the bilingual README
   quick start with the delivered Slice A API.
+- Docstrings in five modules state their facts without milestone codes or status wording;
+  code with bare strings stripped is unchanged (L7-07).
+- Document the codec metadata API (`parse_qasm3`, `ParsedQasm3`, `OperationOrigin`) with an
+  executable example, the integer-limit failures and their messages in the codec reference
+  and troubleshooting pages, and the shipped `py.typed` marker.

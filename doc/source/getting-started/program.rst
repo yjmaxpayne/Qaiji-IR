@@ -6,7 +6,7 @@ L5 程序引用与校验
 引用到电路的解析表。示例使用一位测量电路；``shot_count`` 仅描述请求，
 ``validate_program`` 不执行采样。
 
-.. testcode:: qm4-program
+.. testcode:: program
 
    from qaiji import from_qasm3
    from qaiji.core.program import (
