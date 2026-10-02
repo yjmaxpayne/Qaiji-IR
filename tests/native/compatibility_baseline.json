@@ -122,7 +122,7 @@
   "frozen_sources": {
     "src/qaiji/__init__.py": "93fc5646dd76bb1e18e35e861df09811aca3d798bf793deea330393710693667",
     "src/qaiji/codec/__init__.py": "1d25d779044c5c6b8d30835bd0042b39e092ba554ba9fee7a2c8590a897dbc9b",
-    "src/qaiji/codec/qasm3.py": "02e303881ed19b06684895c0fd265f86313f6c16c57480a700b0a23cfd876b88",
+    "src/qaiji/codec/qasm3.py": "4c81bec473aeff9224775ace939b7d07d0b526e40ded0aad15c50c0ca55464f0",
     "src/qaiji/constants.py": "c38d491059de235ae71c4351e9dc355a87b6eb450fe46c8a46055f0c365aadd0",
     "src/qaiji/core/__init__.py": "af33db4a43be455b0394cde31526b9506e3574a2043bf3b26cf921c00bd3ea19",
     "src/qaiji/core/circuit.py": "71a6d94dba9aca5c66cb668c96401bdf98b04ebc9f97d7595ffd13914df954e9",
@@ -494,6 +494,70 @@
         "src/qaiji/codec/__init__.py": {
           "before": "ec466fa1f5033b27937afb9801a6197547ff22dd2901e0fa01b9ef5346d8d22f",
           "after": "1d25d779044c5c6b8d30835bd0042b39e092ba554ba9fee7a2c8590a897dbc9b"
+        }
+      }
+    },
+    {
+      "id": "L7-04",
+      "kind": "fix",
+      "surface": "source",
+      "decision": "D7-22",
+      "before": "A decimal integer literal longer than the interpreter's integer string conversion limit escapes from parsing as a bare ValueError.",
+      "after": "The parser's ValueError becomes Qasm3ParseError with source at 1:1: and the interpreter's own message, keeping the original cause. Only the openqasm3.parse step is wrapped; errors raised while walking the program are unchanged.",
+      "tests_rewritten": [],
+      "guard_tests": [
+        "tests/codec/test_integer_limits.py::test_decimal_literal_over_limit_is_parse_error",
+        "tests/codec/test_integer_limits.py::test_decimal_literal_at_limit_is_not_a_parse_error"
+      ],
+      "sources": {
+        "src/qaiji/codec/qasm3.py": {
+          "before": "02e303881ed19b06684895c0fd265f86313f6c16c57480a700b0a23cfd876b88",
+          "after": "12c21e0c5759a0fb28dbab537db883d021bdddefd54b38fab6d60d30bc554e8f"
+        }
+      }
+    },
+    {
+      "id": "L7-05",
+      "kind": "fix",
+      "surface": "parameter",
+      "decision": "D7-22",
+      "before": "An integer gate parameter outside the float range escapes as a bare OverflowError, whether written alone, negated, parenthesised or as an operand.",
+      "after": "Such an integer evaluates to infinity and is rejected by the existing check as Gate parameters must be finite. Its arithmetic follows from that: 1/N underflows to 0.0 and is accepted, 1/(1/N) reports division by zero, N-N and N/N are not finite, and N**2 or N%2 still report unsupported binary expression.",
+      "tests_rewritten": [],
+      "guard_tests": [
+        "tests/codec/test_integer_limits.py::test_integer_parameter_overflow_reports_nonfinite",
+        "tests/codec/test_integer_limits.py::test_reciprocal_of_huge_integer_underflows_to_zero",
+        "tests/codec/test_integer_limits.py::test_power_and_modulo_of_huge_integer_report_unsupported_operator",
+        "tests/codec/test_integer_limits.py::test_huge_integer_arithmetic_side_effects_are_pinned"
+      ],
+      "sources": {
+        "src/qaiji/codec/qasm3.py": {
+          "before": "12c21e0c5759a0fb28dbab537db883d021bdddefd54b38fab6d60d30bc554e8f",
+          "after": "29290ea906edd5543b749ce21ae67ab61f940298d6c16577120292177f4e7d50"
+        }
+      }
+    },
+    {
+      "id": "L7-08",
+      "kind": "fix",
+      "surface": "source",
+      "decision": "D7-22",
+      "before": "Hexadecimal, binary and octal literals bypass the conversion limit: an oversized qubit index escapes as a bare ValueError, an oversized classical bit index or bit condition value is rejected as Qasm3UnsupportedConstructError at the statement, and an oversized register width, whole-register condition value or total qubit count is accepted and then breaks to_qasm3.",
+      "after": "Every integer literal that is read (register widths, indices, condition values, parameters) and the running total qubit count must be convertible to decimal; otherwise Qasm3ParseError names the construct, the literal's position (the crossing declaration for the total) and the interpreter's own message, keeping the cause. The qubit pre-scan only adds widths and never converts them, so an earlier statement's error is still reported first. Classical bit indices and bit condition values that were already rejected as unsupported now raise Qasm3ParseError with the conversion message at the literal instead. Values within the limit keep their previous outcome, and the total number of classical bits is not limited.",
+      "tests_rewritten": [],
+      "guard_tests": [
+        "tests/codec/test_integer_limits.py::test_nondecimal_literal_over_limit_is_parse_error",
+        "tests/codec/test_integer_limits.py::test_nondecimal_literal_below_limit_keeps_existing_behaviour",
+        "tests/codec/test_integer_limits.py::test_total_qubit_count_over_limit_is_parse_error",
+        "tests/codec/test_integer_limits.py::test_prescan_does_not_preempt_earlier_statement_errors",
+        "tests/codec/test_integer_limits.py::test_integer_limit_diagnostics_point_at_the_literal",
+        "tests/codec/test_integer_limits.py::test_adversarial_inputs_raise_only_qaiji_errors",
+        "tests/codec/test_integer_limits.py::test_accepted_programs_round_trip_after_integer_checks"
+      ],
+      "sources": {
+        "src/qaiji/codec/qasm3.py": {
+          "before": "29290ea906edd5543b749ce21ae67ab61f940298d6c16577120292177f4e7d50",
+          "after": "4c81bec473aeff9224775ace939b7d07d0b526e40ded0aad15c50c0ca55464f0"
         }
       }
     }

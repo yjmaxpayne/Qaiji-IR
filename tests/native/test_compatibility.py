@@ -223,7 +223,7 @@ def test_purity_oracle_detects_injected_import(tmp_path, payload, location):
 
 
 # 已计划但尚未落行的 L7 行；每张卡落行时移出本卡的行，全部落行后为空。
-_PENDING_L7 = frozenset({"L7-04", "L7-05", "L7-08"})
+_PENDING_L7 = frozenset()
 
 
 def _ledger_errors(baseline, root):

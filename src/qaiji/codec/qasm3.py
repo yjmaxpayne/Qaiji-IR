@@ -208,12 +208,30 @@ def _reject_annotations(node: object, construct: str) -> None:
         _raise_unsupported(node, construct, "annotations are not supported")
 
 
+def _decimal_limit_error(value: int) -> ValueError | None:
+    """错误消息与 ``to_qasm3`` 都要把整数写成十进制；写不出时返回解释器的原生错误。"""
+    try:
+        str(value)
+    except ValueError as exc:
+        return exc
+    return None
+
+
+def _checked_int(node: ast.IntegerLiteral, construct: str) -> int:
+    # 十六/二/八进制字面量不受解析期位数上限约束，故在每个取值点按十进制化能力拒收。
+    value = int(node.value)
+    error = _decimal_limit_error(value)
+    if error is not None:
+        raise Qasm3ParseError(_message(node, construct, str(error))) from error
+    return value
+
+
 def _literal_size(value: object, node: object, construct: str) -> int:
     if value is None:
         return 1
     if not isinstance(value, ast.IntegerLiteral):
         _raise_unsupported(node, construct, "register size must be an integer literal")
-    return int(value.value)
+    return _checked_int(value, construct)
 
 
 def _require_circuit(state: _ParseState, node: object, construct: str) -> Circuit:
@@ -251,6 +269,10 @@ def _handle_qubit_declaration(stmt: ast.QubitDeclaration, state: _ParseState) ->
         _raise_value_error(
             stmt, "qubit", f"name {name!r} is already declared as a classical register"
         )
+    # to_qasm3 以十进制写出总 qubit 数，所以总数同样受上限约束，报在使总数越限的声明上。
+    total_error = _decimal_limit_error(state.next_qubit + size)
+    if total_error is not None:
+        raise Qasm3ParseError(_message(stmt, "qubit", str(total_error))) from total_error
 
     if state.circuit is None:
         circuit = _core_call(stmt, "qubit", lambda: Circuit(state.total_qubits))
@@ -317,11 +339,17 @@ def _single_literal_index(node: object, construct: str) -> tuple[str, int]:
 
     if not isinstance(index, ast.IntegerLiteral):
         _raise_unsupported(node, construct, "operand requires a single literal index")
-    return (name, int(index.value))
+    return (name, _checked_int(index, construct))
 
 
 def _evaluate_parameter(expression: object) -> float:
-    if isinstance(expression, (ast.IntegerLiteral, ast.FloatLiteral)):
+    if isinstance(expression, ast.IntegerLiteral):
+        try:
+            return float(_checked_int(expression, "parameter"))
+        except OverflowError:
+            # 超出 float 范围的整数按 inf 交给有限性检查，与 1e400 的浮点写法同判。
+            return math.inf
+    if isinstance(expression, ast.FloatLiteral):
         return float(expression.value)
     if isinstance(expression, ast.Identifier):
         name = str(expression.name)
@@ -548,7 +576,7 @@ def _handle_branching(stmt: ast.BranchingStatement, state: _ParseState) -> None:
                 stmt, construct, "bit-level condition on a multi-bit register is not supported"
             )
         _core_call(stmt, construct, partial(ClassicalBit, register, bit_index))
-        if stmt.condition.rhs.value not in {0, 1}:
+        if _checked_int(stmt.condition.rhs, construct) not in {0, 1}:
             _raise_unsupported(stmt, construct, "bit condition value must be 0 or 1")
     circuit = _require_circuit(state, stmt, construct)
     body: list[Gate] = []
@@ -565,7 +593,7 @@ def _handle_branching(stmt: ast.BranchingStatement, state: _ParseState) -> None:
             _message(stmt, construct, str(first_bounds_error))
         ) from first_bounds_error
     register = state.registers[register_name]
-    value = int(stmt.condition.rhs.value)
+    value = _checked_int(stmt.condition.rhs, construct)
     conditional = _core_call(stmt, construct, lambda: Conditional(register, value, tuple(body)))
     _core_call(stmt, construct, lambda: circuit.add_conditional(conditional))
     state.origins.append(_origin(stmt, state, construct, body=tuple(body_origins)))
@@ -675,7 +703,8 @@ def parse_qasm3(src: str) -> ParsedQasm3:
         电路、与 ``circuit.gates`` 逐位对齐的 ``OperationOrigin`` 元组，以及声明的版本。
 
     Raises:
-        Qasm3ParseError: 语法错误、版本不受支持或表达式嵌套过深。
+        Qasm3ParseError: 语法错误、版本不受支持、表达式嵌套过深，
+            或整数字面量、qubit 总数无法写成十进制。
         Qasm3UnsupportedConstructError: 构造、门或操作数不受支持。
     """
     try:
@@ -689,6 +718,9 @@ def _parse_source(src: str) -> ParsedQasm3:
         program = openqasm3.parse(src)
     except QASM3ParsingError as exc:
         raise Qasm3ParseError(_message(src, "source", "invalid OpenQASM syntax")) from exc
+    except ValueError as exc:
+        # 解析器内部的 ValueError，典型是十进制字面量超出解释器的整数位数上限。
+        raise Qasm3ParseError(_message(src, "source", str(exc))) from exc
     except AttributeError as exc:
         if re.sub(r"//[^\n]*|/\*.*?\*/", "", src, flags=re.DOTALL).strip():
             raise Qasm3ParseError(_message(src, "source", "invalid OpenQASM syntax")) from exc
