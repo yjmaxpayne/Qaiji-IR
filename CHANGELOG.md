@@ -4,7 +4,7 @@ All notable changes to this project are documented here. The format follows
 [Conventional Commits](https://www.conventionalcommits.org/) and versions are derived from
 git tags via `poetry-dynamic-versioning`.
 
-## [Unreleased]
+## [0.1.0] - 2026-10-02
 
 ### Feat
 
@@ -68,16 +68,19 @@ git tags via `poetry-dynamic-versioning`.
 - An integer gate parameter outside the float range now evaluates to infinity and raises
   `Qasm3UnsupportedConstructError` (`Gate parameters must be finite`) instead of a bare
   `OverflowError`, whether written alone, negated, parenthesised or inside an expression that
-  stays infinite. `1/N` now underflows to `0.0` and is accepted; `1/(1/N)` raises
-  `Qasm3ParseError` (`division by zero`); `N-N` and `N/N` are not finite; `N**2` and `N%2`
-  still report `unsupported binary expression` (L7-05).
+  stays infinite. Each of the following also used to raise that bare `OverflowError`: `1/N`
+  and `pi/N` now underflow to `0.0` and are accepted; `1/(1/N)` raises `Qasm3ParseError`
+  (`division by zero`); `N-N` and `N/N` are not finite and raise the error above; `N**2` and
+  `N%2` raise `Qasm3UnsupportedConstructError` (`unsupported binary expression`), as they
+  already did for small operands (L7-05).
 - Hexadecimal, binary and octal literals no longer bypass the conversion limit. Every integer
   literal that is read (register widths, indices, condition values, parameters) and the
   running total qubit count must be convertible to decimal; otherwise `Qasm3ParseError`
   reports `<construct> at L:C:` plus the interpreter's message, with the original cause.
-  Per case: an oversized qubit index was a bare `ValueError`; an oversized classical bit
-  index or bit condition value was `Qasm3UnsupportedConstructError` at the statement and is
-  now `Qasm3ParseError` at the literal; an oversized register width (reported at `[`),
+  Per case: an oversized qubit index was a bare `ValueError`; an oversized gate parameter
+  was a bare `OverflowError`; an oversized classical bit index or bit condition value was
+  `Qasm3UnsupportedConstructError` at the statement and is now `Qasm3ParseError` at the
+  literal; an oversized register width (reported at `[`),
   whole-register condition value or total qubit count (reported at the crossing
   declaration) was accepted and then broke `to_qasm3`. Values within the limit keep their
   previous outcome; the total number of classical bits is not limited (L7-08).

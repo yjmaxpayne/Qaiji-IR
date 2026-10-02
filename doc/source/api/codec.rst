@@ -89,7 +89,7 @@ Python 构造电路并使用 :doc:`native` 中的原生调度生成接口；它�
   拒收：抛出 :class:`~qaiji.Qasm3UnsupportedConstructError`，detail 为
   ``Gate parameters must be finite``。``1/N`` 下溢为 ``0.0`` 并被接受；``1/(1/N)``
   抛出 :class:`~qaiji.Qasm3ParseError`，detail 为 ``division by zero``；``N**2`` 与
-  ``N%2`` 仍报 ``unsupported binary expression``。
+  ``N%2`` 与小操作数时一样报 ``unsupported binary expression``。
 * 十六进制、二进制、八进制字面量（寄存器宽度、下标、条件值、参数）以及累计的
   qubit 总数同样受该上限约束；超限时抛出 :class:`~qaiji.Qasm3ParseError`，消息为
   ``<构件> at 行:列:`` 加解释器原生消息。位置指向该字面量，宽度指向 ``[``；
