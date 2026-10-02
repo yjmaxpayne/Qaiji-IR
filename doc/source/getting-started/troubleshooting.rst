@@ -50,11 +50,12 @@ OpenQASM 解析问题
 
 **排查**：
 
-- :class:`qaiji.Qasm3ParseError`：文本有语法错误、不支持的显式版本或嵌套超限。
+- :class:`qaiji.Qasm3ParseError`：文本有语法错误、不支持的显式版本、嵌套超限，
+  或整数字面量、qubit 总数超出整数字符串转换上限。
   输入可以是受支持的 OpenQASM 2/3 文本；缺少版本头本身不再报错。
 - :class:`qaiji.Qasm3UnsupportedConstructError`：包含未支持的构件或不合法的
   寄存器用法，例如循环、脉冲语句、``reset``、``barrier``、多位寄存器的单个位条件、
-  同名寄存器或 0 qubit 程序。多个量子寄存器已经支持，按声明顺序扁平化。
+  同名寄存器、0 qubit 程序或非有限的门参数。多个量子寄存器已经支持，按声明顺序扁平化。
 - :class:`qaiji.Qasm3UnsupportedGateError`：使用了未登记的门或不支持的门修饰符。
   可解析门名是注册表的 14 个加上展开表的 19 个，见 :doc:`/api/codec`；
   不等同于 :class:`qaiji.GateType`。``RX90``、``RX180``、``ISWAP``、``SQISWAP``
@@ -69,6 +70,35 @@ OpenQASM 解析问题
 **排查**：前者来自解析或表达式求值等阶段的递归超限；先简化括号和表达式嵌套，
 不要依赖提高 Python 递归上限。后者表示没有量子寄存器声明，空、纯空白和纯注释
 源码也按这一规则拒收。补上合法的正宽度量子寄存器声明；仅补版本头不能修复空程序。
+
+超大整数字面量
+~~~~~~~~~~~~~~
+
+**现象**：整数字面量过大时，解析报下面三种错误之一（按默认上限 4300 位）：
+
+- 十进制字面量超过上限，抛出 :class:`qaiji.Qasm3ParseError`::
+
+     source at 1:1: Exceeds the limit (4300 digits) for integer string conversion: value has 4301 digits; use sys.set_int_max_str_digits() to increase the limit
+
+- 门参数中的整数超出浮点范围，抛出 :class:`qaiji.Qasm3UnsupportedConstructError`::
+
+     rx at 1:10: Gate parameters must be finite
+
+- 十六进制、二进制、八进制字面量或 qubit 总数超过上限，抛出
+  :class:`qaiji.Qasm3ParseError`，前缀是构件名和位置，例如::
+
+     qubit at 1:6: Exceeds the limit (4300 digits) for integer string conversion; use sys.set_int_max_str_digits() to increase the limit
+
+**排查**：第一种和第三种的位数上限来自 Python 解释器，原异常保留在 ``__cause__``；
+十进制字面量在语法解析阶段就超限，统一报在 ``1:1``；非十进制字面量报在字面量处
+（寄存器宽度报在 ``[``），qubit 总数报在使总数越限的那条声明。这样大的宽度或下标
+通常来自生成器的错误，应当修正输入，而不是调高解释器上限。第二种是参数按无穷大
+求值后被有限性检查拒收；``1/N`` 这类下溢为 ``0.0`` 的表达式仍会被接受。
+以非十进制写出的经典位下标和 bit 条件值超限时，以前报
+:class:`qaiji.Qasm3UnsupportedConstructError`，现在报 :class:`qaiji.Qasm3ParseError`；
+非十进制写出的寄存器宽度、整寄存器条件值，以及超限的 qubit 总数，以前会被接受、
+随后在 ``to_qasm3`` 输出时失败，现在在解析阶段就报 :class:`qaiji.Qasm3ParseError`。
+按异常类型分支的调用方需要相应调整。
 
 广播长度不一致
 ~~~~~~~~~~~~~~
