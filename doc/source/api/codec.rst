@@ -87,7 +87,7 @@ Python 构造电路并使用 :doc:`native` 中的原生调度生成接口；它�
   加解释器原生消息，原异常保留为 ``__cause__``。
 * 门参数中未超出位数上限、但超出浮点范围的整数按无穷大求值，由既有的有限性检查
   拒收：抛出 :class:`~qaiji.Qasm3UnsupportedConstructError`，detail 为
-  ``Gate parameters must be finite``。``1/N`` 下溢为 ``0.0`` 并被接受；``1/(1/N)``
+  ``Gate parameters must be finite``。``1/N``、``pi/N`` 下溢为 ``0.0`` 并被接受；``1/(1/N)``
   抛出 :class:`~qaiji.Qasm3ParseError`，detail 为 ``division by zero``；``N**2`` 与
   ``N%2`` 与小操作数时一样报 ``unsupported binary expression``。
 * 十六进制、二进制、八进制字面量（寄存器宽度、下标、条件值、参数）以及累计的
