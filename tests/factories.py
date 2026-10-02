@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 """共享的电路工厂，以一个在整个 tests/ 下唯一的 basename 供导入。
 
-有意不放进 conftest.py：tests/semantics/ 下现在也有一个 conftest.py（T2.3 的全新
+有意不放进 conftest.py：tests/semantics/ 下现在也有一个 conftest.py（全新
 进程前置守卫），而 pytest 的裸名模块解析 —— tests/ 下任何地方都没有 __init__.py ——
 会让两个同名 "conftest.py" 在 sys.modules 里相撞，对某个 worker 而言后加载的那个
 会在该进程余下的时间里赢得 `from conftest import X`（已复现：一旦

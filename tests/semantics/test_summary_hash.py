@@ -340,7 +340,7 @@ def test_frozen_mappingproxy_tree_hashes_identically_to_the_plain_dict() -> None
 
 
 def test_freeze_summary_output_hashes_identically_to_the_plain_dict() -> None:
-    """AC-Q9 的机制，这次针对真实的 freeze_summary（T3.4）验证，而不是手工构造的
+    """AC-Q9 的机制，这次针对真实的 freeze_summary 验证，而不是手工构造的
     proxy 树。
     """
     from qaiji.core.semantics.handle import freeze_summary

@@ -94,7 +94,7 @@ def build_semantic_summary(
     Args:
         circuit: 判别性键（num_qubits、cregs、operations）与 gate_coverage 的来源。
         annotations: 该电路的语义标注，按 ``annotate_circuit`` 的顺序排列。
-        status_label: 取自 ``HandleStatus`` 的值（T3.4；在该枚举落地前是未经校验的
+        status_label: 取自 ``HandleStatus`` 的值（本函数不做校验，按原样写入的
             普通 str）。
         source_language: 可选的溯源标签。生产调用方保持为 None；只有测试会传入
             具体值。

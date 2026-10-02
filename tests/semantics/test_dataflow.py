@@ -39,7 +39,7 @@ def test_measurement_id_is_deterministic_across_two_builds() -> None:
 def test_conditional_preceding_its_measurement_still_connects() -> None:
     """边表达的是声明式数据流，不是因果证明（ARCH §2.2）。
 
-    调度与因果是 QM5 的议题；即便某个 Conditional 在门序中排在与之匹配的 Measure
+    调度与因果属于 L2 调度层的议题；即便某个 Conditional 在门序中排在与之匹配的 Measure
     之前，也依然必须产生一条边。
     """
     register = ClassicalRegister("c", 1)

@@ -591,7 +591,7 @@ MAX_SNAPSHOT_AGE_DAYS = 180
 OPTICS_ROOT_ENV = "QAIJI_QUANTEMPO_ROOT"
 
 REFRESH_STEPS = f"""
-refresh the snapshot (QAIJI-ADD-003 section 4.5):
+refresh the snapshot:
   1. confirm the counterpart checkout and its commit:
        git -C "${OPTICS_ROOT_ENV}" log -1 --format=%h
   2. for each class fact, re-locate the ClassDef block and check its line range (example: Sp):

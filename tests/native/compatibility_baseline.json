@@ -124,21 +124,22 @@
     "src/qaiji/core/__init__.py": "af33db4a43be455b0394cde31526b9506e3574a2043bf3b26cf921c00bd3ea19",
     "src/qaiji/core/circuit.py": "71a6d94dba9aca5c66cb668c96401bdf98b04ebc9f97d7595ffd13914df954e9",
     "src/qaiji/core/classical.py": "db07b191897426d34b6ba7e44780d1a45a228420e08b4d19bf0e3370440976e3",
-    "src/qaiji/core/conventions.py": "1e2334251a1fd414d47746715041aa4e2f60fde6471d228d7d852b0d2b1e4cc4",
+    "src/qaiji/core/conventions.py": "df921285b3dbef49d379fc023d0e0a6e77b9630481548f9ac3a0ee01b8a1954f",
     "src/qaiji/core/program/__init__.py": "5e1e1bcbacb85d3034c4b093a3fb129feef8481b84891b13b7a71754c8e38ca2",
     "src/qaiji/core/program/model.py": "7ee988d7e8ee5c87e04c39ed5e63aa005eb5e630270c28fe6c9f34ffdf073f95",
     "src/qaiji/core/program/validation.py": "9da3c91089a0945e252151ba732a54cdfac7786514de4cbe9ab2ee83d3431f19",
     "src/qaiji/core/semantics/__init__.py": "f5715a714dd3e79cb61592a587a7b0a7db988cb13022b55e00ff5af9fbc9c5c1",
     "src/qaiji/core/semantics/annotation.py": "ca3f8fea48d01d87611e5cb7e476976d85ff94b403a0526d0ad0dabfa31834d3",
-    "src/qaiji/core/semantics/dataflow.py": "ef8ccb0ccfede1d88e25b7efbfa39ee8f3c73427cf6a8d3e8bd8e3a72e3e1b21",
-    "src/qaiji/core/semantics/handle.py": "4aad5a694292022a0922d74e803df65c1715eb7ad97e2ed0f7a34683b7acfec8",
+    "src/qaiji/core/semantics/dataflow.py": "3dfca7037f348c50985a071c15a4d81c1e1f7977029691a8f79a9f45db48b318",
+    "src/qaiji/core/semantics/handle.py": "0c21f817e3adf027b70bc316e3c7faa71774b88f87a543f10c97c97c03cc1a64",
     "src/qaiji/core/semantics/preservation.py": "ed8c912cc533a931aa5540c00223069db021ee090049238855b6738e9f4edfda",
     "src/qaiji/core/semantics/registry.py": "04f8cc635e04e2db6f53338cc1f96eb61f4b05808f89a1e6d275da75f5730201",
-    "src/qaiji/core/semantics/summary.py": "1f049c343b017377b232099050df1635bbc12356e2f480bb66a9fb659694f8a6",
-    "src/qaiji/core/semantics/types.py": "990effb63a98f75cd7bba34d567904a008ce3f9e070b091aca060fea325dd415",
+    "src/qaiji/core/semantics/summary.py": "39042bde4894b844a98ff7fac8fc368fdd32c46f101db6763a141a3c70276889",
+    "src/qaiji/core/semantics/types.py": "819cfad698a45550f2b65b8d4a2d90147669dfcb591d55e7f34812a502854aa7",
     "src/qaiji/exceptions.py": "20256139b7f3361989e7be1985ba870a08ae587f73f028bb24fcda50cdae56f8",
     "src/qaiji/version.py": "39a2fa1ba47a0d4e301aa1c241a6add1e95296a1b484947f0af4c14eec2b5adf",
-    "src/qaiji/codec/_stdgates.py": "b1738a3335907d5475279edd952c98a91ffb254193cbeab867700909137fcda7"
+    "src/qaiji/codec/_stdgates.py": "b1738a3335907d5475279edd952c98a91ffb254193cbeab867700909137fcda7",
+    "src/qaiji/py.typed": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
   },
   "origin": {
     "src/qaiji/codec/qasm3.py": "231237a1bee5a2a480e90dde0a662fdec6753312f921a6e5d96a3886f63964ac",
@@ -147,7 +148,8 @@
     "src/qaiji/core/conventions.py": "1e2334251a1fd414d47746715041aa4e2f60fde6471d228d7d852b0d2b1e4cc4",
     "src/qaiji/core/semantics/dataflow.py": "ef8ccb0ccfede1d88e25b7efbfa39ee8f3c73427cf6a8d3e8bd8e3a72e3e1b21",
     "src/qaiji/core/semantics/handle.py": "4aad5a694292022a0922d74e803df65c1715eb7ad97e2ed0f7a34683b7acfec8",
-    "src/qaiji/core/semantics/types.py": "990effb63a98f75cd7bba34d567904a008ce3f9e070b091aca060fea325dd415"
+    "src/qaiji/core/semantics/types.py": "990effb63a98f75cd7bba34d567904a008ce3f9e070b091aca060fea325dd415",
+    "src/qaiji/core/semantics/summary.py": "1f049c343b017377b232099050df1635bbc12356e2f480bb66a9fb659694f8a6"
   },
   "ledger": [
     {
@@ -284,7 +286,7 @@
       "surface": "gate name",
       "decision": "D6-7, D6-13, D6-19",
       "before": "Only the 14 registered native names are accepted; sx is rejected.",
-      "after": "Nineteen additional standard names resolve after lowercasing via the immutable expansion table; each broadcast application expands before the next. Shape errors retain ValueError causes. T2 expansion source is frozen at its delivered bytes.",
+      "after": "Nineteen additional standard names resolve after lowercasing via the immutable expansion table; each broadcast application expands before the next. Shape errors retain ValueError causes. The expansion source is frozen at its delivered bytes.",
       "tests_rewritten": [
         "tests/codec/test_rejection.py::test_unregistered_gate_name_is_rejected"
       ],
@@ -364,6 +366,59 @@
         "src/qaiji/codec/qasm3.py": {
           "before": "a3673d5894d4d221eb56a09af34096c52a64d2d68e77717fe0b7ba1cb5dab36f",
           "after": "b2a0a922492035debeb2f735f40a4fc4dd4d5e9242878818ff73c92e35b69dca"
+        }
+      }
+    },
+    {
+      "id": "L7-06",
+      "kind": "extend",
+      "surface": "distribution",
+      "decision": "PEP 561",
+      "before": "Wheels and installed packages carry no PEP 561 marker; type checkers treat qaiji as untyped.",
+      "after": "An empty py.typed marker ships inside the qaiji package and in every built wheel.",
+      "tests_rewritten": [],
+      "guard_tests": [
+        "tests/test_distribution.py::test_wheel_contains_py_typed",
+        "tests/test_distribution.py::test_py_typed_marker_ships_in_package"
+      ],
+      "sources": {
+        "src/qaiji/py.typed": {
+          "before": null,
+          "after": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      }
+    },
+    {
+      "id": "L7-07",
+      "kind": "docs",
+      "surface": "frozen-source docstrings",
+      "decision": "D7-18",
+      "before": "Docstrings in five frozen sources cite milestone codes and slice-status wording that public readers cannot resolve.",
+      "after": "The same docstrings state the facts without milestone codes or status wording; code with bare strings stripped is unchanged.",
+      "tests_rewritten": [],
+      "guard_tests": [
+        "tests/native/test_compatibility.py::test_docs_rows_preserve_stripped_ast"
+      ],
+      "sources": {
+        "src/qaiji/core/conventions.py": {
+          "before": "1e2334251a1fd414d47746715041aa4e2f60fde6471d228d7d852b0d2b1e4cc4",
+          "after": "df921285b3dbef49d379fc023d0e0a6e77b9630481548f9ac3a0ee01b8a1954f"
+        },
+        "src/qaiji/core/semantics/dataflow.py": {
+          "before": "ef8ccb0ccfede1d88e25b7efbfa39ee8f3c73427cf6a8d3e8bd8e3a72e3e1b21",
+          "after": "3dfca7037f348c50985a071c15a4d81c1e1f7977029691a8f79a9f45db48b318"
+        },
+        "src/qaiji/core/semantics/handle.py": {
+          "before": "4aad5a694292022a0922d74e803df65c1715eb7ad97e2ed0f7a34683b7acfec8",
+          "after": "0c21f817e3adf027b70bc316e3c7faa71774b88f87a543f10c97c97c03cc1a64"
+        },
+        "src/qaiji/core/semantics/summary.py": {
+          "before": "1f049c343b017377b232099050df1635bbc12356e2f480bb66a9fb659694f8a6",
+          "after": "39042bde4894b844a98ff7fac8fc368fdd32c46f101db6763a141a3c70276889"
+        },
+        "src/qaiji/core/semantics/types.py": {
+          "before": "990effb63a98f75cd7bba34d567904a008ce3f9e070b091aca060fea325dd415",
+          "after": "819cfad698a45550f2b65b8d4a2d90147669dfcb591d55e7f34812a502854aa7"
         }
       }
     }

@@ -223,7 +223,7 @@ def test_purity_oracle_detects_injected_import(tmp_path, payload, location):
 
 
 # 已计划但尚未落行的 L7 行；每张卡落行时移出本卡的行，全部落行后为空。
-_PENDING_L7 = frozenset({"L7-01", "L7-02", "L7-03", "L7-04", "L7-05", "L7-06", "L7-07", "L7-08"})
+_PENDING_L7 = frozenset({"L7-01", "L7-02", "L7-03", "L7-04", "L7-05", "L7-08"})
 
 
 def _ledger_errors(baseline, root):
@@ -354,7 +354,7 @@ def _ledger_errors(baseline, root):
 
 
 def _origin_errors(origin):
-    """origin 必须恰为 7 个钉住的路径，且每个值等于钉住时的字面哈希。"""
+    """origin 必须恰为 8 个钉住的路径，且每个值等于钉住时的字面哈希。"""
     pins = {
         "src/qaiji/codec/qasm3.py": (
             "231237a1bee5a2a480e90dde0a662fdec6753312f921a6e5d96a3886f63964ac"
@@ -373,6 +373,9 @@ def _origin_errors(origin):
         ),
         "src/qaiji/core/semantics/handle.py": (
             "4aad5a694292022a0922d74e803df65c1715eb7ad97e2ed0f7a34683b7acfec8"
+        ),
+        "src/qaiji/core/semantics/summary.py": (
+            "1f049c343b017377b232099050df1635bbc12356e2f480bb66a9fb659694f8a6"
         ),
         "src/qaiji/core/semantics/types.py": (
             "990effb63a98f75cd7bba34d567904a008ce3f9e070b091aca060fea325dd415"
@@ -625,7 +628,14 @@ def test_ledger_pending_l7_rows_are_declared():
         assert _pending_errors(identities | {identity}) == expected
 
 
-_GUARDED_HELPERS = ("_ledger_errors", "_ledger_test_reference", "_origin_errors", "_pending_errors")
+_GUARDED_HELPERS = (
+    "_ledger_errors",
+    "_ledger_test_reference",
+    "_origin_errors",
+    "_pending_errors",
+    "_l707_reverse_edits",
+    "_strip_bare_strings",
+)
 
 
 def _module_bindings(source):
@@ -953,7 +963,7 @@ def test_ledger_guards_detect_tampering(tmp_path, tamper):
 
 
 def test_ledger_origin_is_pinned_to_the_qm5_baseline():
-    """钉住已发布源文件的初始哈希与允许纳入账本的 7 个路径；每个路径的改值与缺失都须报出。"""
+    """钉住已发布源文件的初始哈希与允许纳入账本的 8 个路径；每个路径的改值与缺失都须报出。"""
     baseline = json.loads(CASES.read_text())
     origin = baseline["origin"]
     assert "src/qaiji/codec/qasm3.py" in origin
@@ -1018,3 +1028,111 @@ def test_ledger_covers_all_planned_rows():
     baseline = json.loads(CASES.read_text())
     planned = {f"L6-{i:02d}" for i in range(1, 11)} | {f"L7-{i:02d}" for i in range(1, 9)}
     assert {row["id"] for row in baseline["ledger"]} == planned - _PENDING_L7
+
+
+def _l707_reverse_edits():
+    """L7-07 的反向编辑表：``(path, line, new_text, old_text)``，new_text 是改写后的整行。"""
+    conventions = "src/qaiji/core/conventions.py"
+    types = "src/qaiji/core/semantics/types.py"
+    return [
+        (
+            conventions,
+            22,
+            "证伪状态：已跨库证伪（判据 R0–R4，范围限于光学适配器的门、电路与原生后端层）。",
+            "证伪状态：已跨库证伪（QM3，判据 R0–R4，范围限于光学适配器的门、电路与原生后端层）。",
+        ),
+        (
+            conventions,
+            38,
+            "证伪状态：已跨库证伪（判据 R3a、R3b）。快照事实 XR-RZ、XR-Z，",
+            "证伪状态：已跨库证伪（QM3，判据 R3a、R3b）。快照事实 XR-RZ、XR-Z，",
+        ),
+        (
+            "src/qaiji/core/semantics/dataflow.py",
+            45,
+            "    之前，边依然会连上 —— 顺序与因果属于 L2 调度层的议题，不由语义层判定。",
+            "    之前，边依然会连上 —— 顺序与因果是 QM5 的调度议题，不是 QM2 的。",
+        ),
+        (
+            "src/qaiji/core/semantics/handle.py",
+            71,
+            '    """下游坍缩阶段消费的唯一对象：摘要、哈希与状态。',
+            '    """QM6 坍缩阶段消费的唯一对象：摘要、哈希与状态。',
+        ),
+        (
+            "src/qaiji/core/semantics/summary.py",
+            97,
+            "        status_label: 取自 ``HandleStatus`` 的值（本函数不做校验，按原样写入的",
+            "        status_label: 取自 ``HandleStatus`` 的值（T3.4；在该枚举落地前是未经校验的",
+        ),
+        (
+            types,
+            33,
+            "    只有 ``EXACT`` 与 ``UP_TO_PHASE`` 是可判定的；``UP_TO_LOCAL`` 与",
+            "    本切片中只有 ``EXACT`` 与 ``UP_TO_PHASE`` 是可判定的；``UP_TO_LOCAL`` 与",
+        ),
+        (
+            types,
+            55,
+            "    ``FPROC_PLACEHOLDER`` 没有任何生产路径 —— 它只是为多条件前馈预留",
+            "    ``FPROC_PLACEHOLDER`` 在本切片中没有任何生产路径 —— 它只是为多条件前馈预留",
+        ),
+    ]
+
+
+def _strip_bare_strings(tree):
+    """删除每个语句体中的裸字符串表达式语句，原地修改并返回该树。
+
+    不只 docstring：``conventions.py`` 的属性说明字符串跟在赋值之后，也是裸字符串语句。
+    """
+    for node in ast.walk(tree):
+        body = getattr(node, "body", None)
+        if isinstance(body, list):
+            node.body = [
+                statement
+                for statement in body
+                if not (
+                    isinstance(statement, ast.Expr)
+                    and isinstance(statement.value, ast.Constant)
+                    and isinstance(statement.value.value, str)
+                )
+            ]
+    return tree
+
+
+def test_docs_rows_preserve_stripped_ast():
+    """L7-07 只改措辞：反向编辑还原出 hop 的 before 字节，且剥去裸字符串后 AST 不变。
+
+    当前文件已离开这一跳的 after 字节时，账本中该路径必须另有后续 hop。
+    """
+    kept = "def f():\n    g()\n    ...\n    1\n"
+    stripped_kept = ast.dump(_strip_bare_strings(ast.parse('"""doc"""\n' + kept)))
+    assert stripped_kept == ast.dump(ast.parse(kept)), "_strip_bare_strings removed code"
+    ledger = json.loads(CASES.read_text())["ledger"]
+    # L7-07 落行时已存在的行：重排它们不能充当「后续 hop」
+    landed = {f"L6-{i:02d}" for i in range(1, 11)} | {"L7-06", "L7-07"}
+    index = next((i for i, row in enumerate(ledger) if row["id"] == "L7-07"), None)
+    hops = ledger[index]["sources"] if index is not None else {}
+    edits = _l707_reverse_edits()
+    for path in dict.fromkeys(edit[0] for edit in edits):
+        text = (ROOT / path).read_bytes().decode()
+        hop = hops.get(path)
+        if hop is not None and hashlib.sha256(text.encode()).hexdigest() != hop["after"]:
+            later = [
+                row["id"]
+                for row in ledger[index + 1 :]
+                if path in row["sources"] and row["id"] not in landed
+            ]
+            assert later, f"{path}: changed after its L7-07 hop without a later hop"
+            continue
+        lines = text.split("\n")
+        for _, line, new_text, old_text in (edit for edit in edits if edit[0] == path):
+            assert lines[line - 1] == new_text, f"{path}:{line} is not the target text"
+            lines[line - 1] = old_text
+        restored = "\n".join(lines)
+        assert hop is not None, f"L7-07 has no hop for {path}"
+        restored_sha = hashlib.sha256(restored.encode()).hexdigest()
+        assert restored_sha == hop["before"], f"{path}: reverse edits do not restore the hop bytes"
+        stripped = [ast.dump(_strip_bare_strings(ast.parse(source))) for source in (text, restored)]
+        assert stripped[0] == stripped[1], f"{path}: code changed beyond bare strings"
+    assert set(hops) == {edit[0] for edit in edits}

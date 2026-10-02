@@ -187,7 +187,7 @@ def test_golden_circuit_roundtrip_is_a_fixed_point(
     # 树？"，语义保持问的是"变换之后算符是否仍然相等（可差全局相位）？"。
     # RZ(2*pi) 对测量统计*分类器*而言是 IDENTITY，对*保持性*裁决而言却是
     # UP_TO_PHASE —— 两条断言都保留，正是本测试的用意所在。
-    assert roundtripped == circuit  # QM1 结构性契约（未变）
+    assert roundtripped == circuit  # 结构性契约
     verdict = check_preservation(circuit, roundtripped, stage="codec_roundtrip")
     assert verdict.status == "passed"
 

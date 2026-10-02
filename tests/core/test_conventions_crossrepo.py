@@ -602,7 +602,7 @@ def test_freshness_fails_on_day_181_with_inline_refresh_steps() -> None:
     oldest = {fact.fact_id for fact in FACTS if fact.extracted_on == OLDEST}
     assert oldest <= set(FACT_ID.findall(message))
     assert "181 days" in message
-    assert "QAIJI-ADD-003 section 4.5" in message
+    assert "refresh the snapshot:" in message
     # CI 读者看不到计划文档，刷新命令必须在消息里且能直接运行。
     assert (
         f"{OPTICS_ROOT_ENV}=... uv run pytest tests/core/test_conventions_crossrepo.py --no-cov -rfEs"

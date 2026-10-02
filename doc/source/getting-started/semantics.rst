@@ -11,7 +11,7 @@ L4 给电路操作分类，生成可重复计算的内容引用，并对受支�
 ``annotate_circuit`` 为节点分配位置；``build_semantic_summary`` 输出包含
 操作结构、测量句柄和分类计数的 JSON 安全摘要。相同输入可得到相同哈希。
 
-.. testcode:: qm3-semantics
+.. testcode:: semantics
 
    from qaiji import from_qasm3
    from qaiji.core.semantics import (
@@ -55,7 +55,7 @@ L4 给电路操作分类，生成可重复计算的内容引用，并对受支�
 ``unsupported``，不能将其当成通过。一个门展开成多个门或一般重排序不属于
 这个逐位置判决域。:doc:`/api/semantics` 给出完整接口与错误类型。
 
-.. testcode:: qm3-preservation
+.. testcode:: preservation
 
    import math
    from qaiji import Circuit

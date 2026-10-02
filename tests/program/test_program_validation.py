@@ -21,7 +21,7 @@ from qaiji.core.program import (
 from qaiji.exceptions import QaijiIRError
 
 _DRIFT_ACTION = (
-    "QAIJI-ADD-004 section 4.5: stop and investigate L4 drift; "
+    "stop and investigate L4 drift; "
     "report the impact and obtain a versioning decision before updating goldens."
 )
 
