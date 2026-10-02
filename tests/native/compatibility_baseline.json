@@ -34,7 +34,10 @@
     ],
     "qaiji.codec": [
       "GateSpec",
+      "OperationOrigin",
+      "ParsedQasm3",
       "from_qasm3",
+      "parse_qasm3",
       "to_qasm3"
     ],
     "qaiji.core.semantics": [
@@ -118,8 +121,8 @@
   ],
   "frozen_sources": {
     "src/qaiji/__init__.py": "93fc5646dd76bb1e18e35e861df09811aca3d798bf793deea330393710693667",
-    "src/qaiji/codec/__init__.py": "ec466fa1f5033b27937afb9801a6197547ff22dd2901e0fa01b9ef5346d8d22f",
-    "src/qaiji/codec/qasm3.py": "b2a0a922492035debeb2f735f40a4fc4dd4d5e9242878818ff73c92e35b69dca",
+    "src/qaiji/codec/__init__.py": "1d25d779044c5c6b8d30835bd0042b39e092ba554ba9fee7a2c8590a897dbc9b",
+    "src/qaiji/codec/qasm3.py": "02e303881ed19b06684895c0fd265f86313f6c16c57480a700b0a23cfd876b88",
     "src/qaiji/constants.py": "c38d491059de235ae71c4351e9dc355a87b6eb450fe46c8a46055f0c365aadd0",
     "src/qaiji/core/__init__.py": "af33db4a43be455b0394cde31526b9506e3574a2043bf3b26cf921c00bd3ea19",
     "src/qaiji/core/circuit.py": "71a6d94dba9aca5c66cb668c96401bdf98b04ebc9f97d7595ffd13914df954e9",
@@ -419,6 +422,78 @@
         "src/qaiji/core/semantics/types.py": {
           "before": "990effb63a98f75cd7bba34d567904a008ce3f9e070b091aca060fea325dd415",
           "after": "819cfad698a45550f2b65b8d4a2d90147669dfcb591d55e7f34812a502854aa7"
+        }
+      }
+    },
+    {
+      "id": "L7-01",
+      "kind": "extend",
+      "surface": "codec public set",
+      "decision": "D7-6",
+      "before": "qaiji.codec exports GateSpec, from_qasm3 and to_qasm3; parsing yields a Circuit with no source positions.",
+      "after": "qaiji.codec also exports parse_qasm3: one parse returns the circuit plus a source-origin table aligned one-to-one with circuit.gates. from_qasm3 keeps its signature and accepts and rejects exactly the same sources.",
+      "tests_rewritten": [
+        "tests/test_public_api.py::test_public_exports_are_the_exact_contract"
+      ],
+      "guard_tests": [
+        "tests/codec/test_source_origins.py::test_origins_align_one_to_one_with_gates"
+      ],
+      "sources": {
+        "src/qaiji/codec/qasm3.py": {
+          "before": "b2a0a922492035debeb2f735f40a4fc4dd4d5e9242878818ff73c92e35b69dca",
+          "after": "02e303881ed19b06684895c0fd265f86313f6c16c57480a700b0a23cfd876b88"
+        },
+        "src/qaiji/codec/__init__.py": {
+          "before": "ec466fa1f5033b27937afb9801a6197547ff22dd2901e0fa01b9ef5346d8d22f",
+          "after": "1d25d779044c5c6b8d30835bd0042b39e092ba554ba9fee7a2c8590a897dbc9b"
+        }
+      }
+    },
+    {
+      "id": "L7-02",
+      "kind": "extend",
+      "surface": "codec public set",
+      "decision": "D7-6",
+      "before": "No public record carries a parsed circuit together with its source metadata.",
+      "after": "qaiji.codec exports ParsedQasm3, a frozen and unhashable record of circuit, origins and declared_version (header text, None when absent); its equality compares circuit and origins.",
+      "tests_rewritten": [
+        "tests/test_public_api.py::test_public_exports_are_the_exact_contract"
+      ],
+      "guard_tests": [
+        "tests/codec/test_source_origins.py::test_parsed_qasm3_is_frozen_and_unhashable"
+      ],
+      "sources": {
+        "src/qaiji/codec/qasm3.py": {
+          "before": "b2a0a922492035debeb2f735f40a4fc4dd4d5e9242878818ff73c92e35b69dca",
+          "after": "02e303881ed19b06684895c0fd265f86313f6c16c57480a700b0a23cfd876b88"
+        },
+        "src/qaiji/codec/__init__.py": {
+          "before": "ec466fa1f5033b27937afb9801a6197547ff22dd2901e0fa01b9ef5346d8d22f",
+          "after": "1d25d779044c5c6b8d30835bd0042b39e092ba554ba9fee7a2c8590a897dbc9b"
+        }
+      }
+    },
+    {
+      "id": "L7-03",
+      "kind": "extend",
+      "surface": "codec public set",
+      "decision": "D7-6",
+      "before": "Source spelling and positions of operations are discarded after parsing.",
+      "after": "qaiji.codec exports OperationOrigin, a frozen per-operation record: statement index, raw spelling, 1-based inclusive line and column span in code points, broadcast and expansion indices, and conditional body origins. Equality, summaries, canonical form and to_qasm3 never read it.",
+      "tests_rewritten": [
+        "tests/test_public_api.py::test_public_exports_are_the_exact_contract"
+      ],
+      "guard_tests": [
+        "tests/codec/test_source_origins.py::test_origin_coordinates_are_one_based_inclusive_code_points"
+      ],
+      "sources": {
+        "src/qaiji/codec/qasm3.py": {
+          "before": "b2a0a922492035debeb2f735f40a4fc4dd4d5e9242878818ff73c92e35b69dca",
+          "after": "02e303881ed19b06684895c0fd265f86313f6c16c57480a700b0a23cfd876b88"
+        },
+        "src/qaiji/codec/__init__.py": {
+          "before": "ec466fa1f5033b27937afb9801a6197547ff22dd2901e0fa01b9ef5346d8d22f",
+          "after": "1d25d779044c5c6b8d30835bd0042b39e092ba554ba9fee7a2c8590a897dbc9b"
         }
       }
     }

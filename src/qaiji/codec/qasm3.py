@@ -24,7 +24,14 @@ from qaiji.exceptions import (
     Qasm3UnsupportedGateError,
 )
 
-__all__ = ["GateSpec", "from_qasm3", "to_qasm3"]
+__all__ = [
+    "GateSpec",
+    "OperationOrigin",
+    "ParsedQasm3",
+    "from_qasm3",
+    "parse_qasm3",
+    "to_qasm3",
+]
 
 
 @dataclass(frozen=True)
@@ -77,6 +84,58 @@ _FALLBACK_CONSTRUCT_NAMES = {
 }
 
 
+@dataclass(frozen=True)
+class OperationOrigin:
+    """一个电路操作在源码中的来历；只读元数据，不进入电路的相等、摘要或规范化。
+
+    行号从 1 起；列号从 1 起、两端闭区间，按 Unicode code point 计，
+    与错误消息 ``at line:column`` 同一约定。
+    ``statement_index`` 是顶层语句序号，条件体内的门沿用所属 ``if`` 的序号；
+    同一语句展开或广播出的多个操作共享 span，以两个下标区分。展开为零个门的语句
+    不留 origin，因此序号可能有空缺。``raw_name`` 对门是源码原样拼写，对测量与条件
+    是构造名 ``"measure"`` / ``"if"``；只有条件 origin 的 ``body`` 非空。
+
+    Example:
+        >>> origin = parse_qasm3("qubit[2] q; h q;").origins[1]
+        >>> (origin.raw_name, origin.line, origin.column, origin.broadcast_index)
+        ('h', 1, 13, 1)
+    """
+
+    statement_index: int
+    raw_name: str
+    line: int
+    column: int
+    end_line: int
+    end_column: int
+    broadcast_index: int = 0
+    expansion_index: int = 0
+    body: tuple[OperationOrigin, ...] = ()
+
+
+@dataclass(frozen=True)
+class ParsedQasm3:
+    """一次解析的产物：电路，加上与 ``circuit.gates`` 逐位对齐的源码旁表。
+
+    ``circuit`` 仍是可变容器：调用方一旦增删或替换其中的操作，``origins`` 即告失效，
+    本记录不做运行期防护。记录本身不可哈希，``==`` 同时比较电路与旁表，
+    比较语义时请只比较 ``.circuit``。``declared_version`` 是版本头原文，缺头为 ``None``。
+
+    Example:
+        >>> parsed = parse_qasm3("OPENQASM 3.0; qubit q; x q;")
+        >>> (parsed.declared_version, len(parsed.origins) == len(parsed.circuit.gates))
+        ('3.0', True)
+    """
+
+    circuit: Circuit
+    origins: tuple[OperationOrigin, ...]
+    declared_version: str | None
+
+    @property
+    def version_header_present(self) -> bool:
+        """源码是否写了 ``OPENQASM`` 版本头。"""
+        return self.declared_version is not None
+
+
 @dataclass
 class _ParseState:
     circuit: Circuit | None = None
@@ -84,13 +143,44 @@ class _ParseState:
     next_qubit: int = 0
     qubit_registers: dict[str, tuple[int, int]] = field(default_factory=dict)
     registers: dict[str, ClassicalRegister] = field(default_factory=dict)
+    statement_index: int = 0
+    origins: list[OperationOrigin] = field(default_factory=list)
+
+
+def _span(node: object) -> tuple[int, int, int, int]:
+    span = getattr(node, "span", None)
+    if span is None:
+        return (1, 1, 1, 1)
+    # openqasm3 的列从 0 起、end 指向末记号首字符；统一加 1 成为从 1 起的闭区间。
+    return (
+        int(span.start_line),
+        int(span.start_column) + 1,
+        int(span.end_line),
+        int(span.end_column) + 1,
+    )
 
 
 def _location(node: object) -> tuple[int, int]:
-    span = getattr(node, "span", None)
-    if span is None:
-        return (1, 1)
-    return (int(span.start_line), int(span.start_column) + 1)
+    line, column, _, _ = _span(node)
+    return (line, column)
+
+
+def _origin(
+    node: object,
+    state: _ParseState,
+    raw_name: str,
+    broadcast_index: int = 0,
+    expansion_index: int = 0,
+    body: tuple[OperationOrigin, ...] = (),
+) -> OperationOrigin:
+    return OperationOrigin(
+        state.statement_index,
+        raw_name,
+        *_span(node),
+        broadcast_index=broadcast_index,
+        expansion_index=expansion_index,
+        body=body,
+    )
 
 
 def _message(node: object, construct: str, detail: str) -> str:
@@ -315,8 +405,9 @@ def _validate_gate_operands(
 def _build_gate(
     stmt: ast.QuantumGate,
     state: _ParseState,
-) -> tuple[tuple[Gate, ...], ValueError | None]:
-    gate_name = str(stmt.name.name).lower()
+) -> tuple[tuple[Gate, ...], tuple[OperationOrigin, ...], ValueError | None]:
+    raw_name = str(stmt.name.name)
+    gate_name = raw_name.lower()
     _reject_annotations(stmt, gate_name)
     if stmt.modifiers:
         _raise_unsupported_gate(stmt, gate_name, "gate modifiers are not supported")
@@ -338,7 +429,7 @@ def _build_gate(
     scalar_qubits = tuple((name, index) for name, index in indexed_qubits if index is not None)
     bounds_error = _qubit_bounds_error(scalar_qubits, state)
     if bounds_error is not None:
-        return (), bounds_error
+        return (), (), bounds_error
     register_sizes = {
         state.qubit_registers[name][1] for name, index in indexed_qubits if index is None
     }
@@ -346,6 +437,8 @@ def _build_gate(
         _raise_unsupported(stmt, gate_name, "broadcast operands have different register sizes")
     width = next(iter(register_sizes), 1)
     gates: list[Gate] = []
+    origins: list[OperationOrigin] = []
+    built: tuple[Gate, ...]
     for i in range(width):
         qubits = tuple(
             state.qubit_registers[name][0] + (i if index is None else index)
@@ -353,15 +446,17 @@ def _build_gate(
         )
         if isinstance(spec, GateSpec):
             gate_type = spec.gate_type
-            gates.append(_core_call(stmt, gate_name, partial(Gate, gate_type, qubits, parameters)))
+            built = (_core_call(stmt, gate_name, partial(Gate, gate_type, qubits, parameters)),)
         else:
             build = spec.build
-            gates.extend(_core_call(stmt, gate_name, partial(build, qubits, parameters)))
-    return tuple(gates), None
+            built = _core_call(stmt, gate_name, partial(build, qubits, parameters))
+        gates.extend(built)
+        origins.extend(_origin(stmt, state, raw_name, i, k) for k in range(len(built)))
+    return tuple(gates), tuple(origins), None
 
 
 def _handle_gate(stmt: ast.QuantumGate, state: _ParseState) -> None:
-    gates, bounds_error = _build_gate(stmt, state)
+    gates, origins, bounds_error = _build_gate(stmt, state)
     gate_name = str(stmt.name.name).lower()
     if bounds_error is not None:
         raise Qasm3UnsupportedConstructError(
@@ -370,6 +465,7 @@ def _handle_gate(stmt: ast.QuantumGate, state: _ParseState) -> None:
     circuit = _require_circuit(state, stmt, gate_name)
     for gate in gates:
         _core_call(stmt, gate_name, partial(circuit.add_gate, gate))
+    state.origins.extend(origins)
 
 
 def _handle_measurement(stmt: ast.QuantumMeasurementStatement, state: _ParseState) -> None:
@@ -406,9 +502,10 @@ def _handle_measurement(stmt: ast.QuantumMeasurementStatement, state: _ParseStat
         ) from bounds_error
     if len(source_indices) != len(targets):
         _raise_unsupported(stmt, construct, "broadcast operands have different register sizes")
-    for index, target in zip(source_indices, targets, strict=True):
+    for i, (index, target) in enumerate(zip(source_indices, targets, strict=True)):
         measurement = _core_call(stmt, construct, partial(Measure, offset + index, target))
         _core_call(stmt, construct, partial(circuit.add_measure, measurement))
+        state.origins.append(_origin(stmt, state, construct, i))
 
 
 def _conditional_gate_body(stmt: ast.BranchingStatement) -> tuple[ast.QuantumGate, ...]:
@@ -455,12 +552,14 @@ def _handle_branching(stmt: ast.BranchingStatement, state: _ParseState) -> None:
             _raise_unsupported(stmt, construct, "bit condition value must be 0 or 1")
     circuit = _require_circuit(state, stmt, construct)
     body: list[Gate] = []
+    body_origins: list[OperationOrigin] = []
     first_bounds_error = None
     for operation in body_statements:
-        gates, bounds_error = _build_gate(operation, state)
+        gates, origins, bounds_error = _build_gate(operation, state)
         if first_bounds_error is None:
             first_bounds_error = bounds_error
         body.extend(gates)
+        body_origins.extend(origins)
     if first_bounds_error is not None:
         raise Qasm3UnsupportedConstructError(
             _message(stmt, construct, str(first_bounds_error))
@@ -469,6 +568,7 @@ def _handle_branching(stmt: ast.BranchingStatement, state: _ParseState) -> None:
     value = int(stmt.condition.rhs.value)
     conditional = _core_call(stmt, construct, lambda: Conditional(register, value, tuple(body)))
     _core_call(stmt, construct, lambda: circuit.add_conditional(conditional))
+    state.origins.append(_origin(stmt, state, construct, body=tuple(body_origins)))
 
 
 def _fallback_construct_name(statement: object) -> str:
@@ -558,13 +658,33 @@ def _operation_to_ast(
 
 def from_qasm3(src: str) -> Circuit:
     """把一段受支持的 OpenQASM 程序解析为电路，否则大声拒绝。"""
+    # 不委托 parse_qasm3：多一层栈帧会让递归上限附近两个入口的拒收结果不同。
+    try:
+        return _parse_source(src).circuit
+    except RecursionError as exc:
+        raise Qasm3ParseError("source at 1:1: expression nesting exceeds parser limit") from exc
+
+
+def parse_qasm3(src: str) -> ParsedQasm3:
+    """一次解析同时得到电路与源码旁表；接受面与拒收面和 ``from_qasm3`` 完全相同。
+
+    Args:
+        src: OpenQASM 2/3 源码，版本头可缺省。
+
+    Returns:
+        电路、与 ``circuit.gates`` 逐位对齐的 ``OperationOrigin`` 元组，以及声明的版本。
+
+    Raises:
+        Qasm3ParseError: 语法错误、版本不受支持或表达式嵌套过深。
+        Qasm3UnsupportedConstructError: 构造、门或操作数不受支持。
+    """
     try:
         return _parse_source(src)
     except RecursionError as exc:
         raise Qasm3ParseError("source at 1:1: expression nesting exceeds parser limit") from exc
 
 
-def _parse_source(src: str) -> Circuit:
+def _parse_source(src: str) -> ParsedQasm3:
     try:
         program = openqasm3.parse(src)
     except QASM3ParsingError as exc:
@@ -576,7 +696,8 @@ def _parse_source(src: str) -> Circuit:
 
     _validate_version(program)
     state = _ParseState(total_qubits=_count_qubits(program.statements))
-    for statement in program.statements:
+    for statement_index, statement in enumerate(program.statements):
+        state.statement_index = statement_index
         if isinstance(statement, ast.Include):
             _handle_include(statement)
         elif isinstance(statement, ast.QubitDeclaration):
@@ -595,7 +716,7 @@ def _parse_source(src: str) -> Circuit:
 
     if state.circuit is None:
         _raise_unsupported(program, "qubit declaration", "program has no qubit declaration")
-    return state.circuit
+    return ParsedQasm3(state.circuit, tuple(state.origins), program.version)
 
 
 def to_qasm3(circuit: Circuit) -> str:
