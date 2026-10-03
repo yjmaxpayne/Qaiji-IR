@@ -63,7 +63,8 @@ package's public interface.
 ## Install
 
 ```bash
-pip install "git+https://github.com/yjmaxpayne/Qaiji-IR.git"   # import name: qaiji
+pip install qaiji-ir   # import name: qaiji
+# unreleased changes on main: pip install "git+https://github.com/yjmaxpayne/Qaiji-IR.git"
 ```
 
 Qaiji-IR supports Python 3.12–3.14. See the

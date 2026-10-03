@@ -53,7 +53,8 @@
 ## 安装
 
 ```bash
-pip install "git+https://github.com/yjmaxpayne/Qaiji-IR.git"   # Python 导入名：qaiji
+pip install qaiji-ir   # Python 导入名：qaiji
+# main 分支上尚未发布的改动：pip install "git+https://github.com/yjmaxpayne/Qaiji-IR.git"
 ```
 
 Qaiji-IR 支持 Python 3.12–3.14。开发环境的准备见[安装指南](doc/source/getting-started/installation.rst)。
