@@ -13,6 +13,7 @@
 [![Docs](https://img.shields.io/badge/docs-latest-blue)](https://yjmaxpayne.github.io/Qaiji-IR/)
 [![codecov](https://codecov.io/gh/yjmaxpayne/Qaiji-IR/graph/badge.svg?token=M9NQqTSx08)](https://codecov.io/gh/yjmaxpayne/Qaiji-IR)
 [![OpenQASM 3](https://img.shields.io/badge/OpenQASM-3.0-6929C4)](https://openqasm.com/)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23118964.svg)](https://doi.org/10.5281/zenodo.23118964)
 
 > **开济IR · Qaiji-IR** —— 一个跨层的量子-经典**数字孪生**中间表示（IR）。
 
