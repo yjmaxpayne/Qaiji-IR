@@ -125,6 +125,13 @@ PEP 517 构建后端，版本号取自 Git 标签）：
 （如 ``v0.2.0rc1``、``release-0.2``）一旦成为离 ``HEAD`` 最近的可达标签，构建就会失败。
 同一提交上有多个附注标签时以较晚打的为准，所以不要给已发布的提交补打其他附注标签。
 
+发布到 PyPI 由 ``Publish to PyPI`` 工作流完成（Trusted Publishing，不使用令牌）：在 GitHub 上发布
+``vX.Y.Z`` 标签的 Release 即触发，前提是标签所在提交已包含该工作流；标为预发布的 Release 不发布。
+上传前要求：标签提交可从 ``main`` 到达、元数据检查通过、wheel 装入干净环境后
+``qaiji.__version__`` 等于标签版本；Release 上已附包文件或 ``SHA256SUMS`` 时，构建结果还须与之
+逐字节一致。任一项不满足即不上传。通过后上传 PyPI，再把 wheel、sdist 和 ``SHA256SUMS`` 附到
+该 Release。对已存在的标签，可在 Actions 页面手动运行该工作流并填入标签名补发，补发不改动 Release。
+
 范围提醒
 --------
 
