@@ -14,6 +14,13 @@ authors:
     email: yjmaxpayne@hotmail.com
     affiliation: Independent
     orcid: "https://orcid.org/0000-0003-1963-0865"
+identifiers:
+  - type: doi
+    value: 10.5281/zenodo.23118964
+    description: Concept DOI for all Qaiji-IR versions on Zenodo
+  - type: doi
+    value: 10.5281/zenodo.23118965
+    description: Version-specific DOI for Qaiji-IR v0.1.0
 repository-code: "https://github.com/yjmaxpayne/Qaiji-IR"
 url: "https://yjmaxpayne.github.io/Qaiji-IR/"
 abstract: >-
@@ -33,3 +40,5 @@ keywords:
   - OpenQASM
   - quantum compiler
 license: Apache-2.0
+version: 0.1.0
+date-released: "2026-10-03"

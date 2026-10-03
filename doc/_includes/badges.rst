@@ -14,4 +14,5 @@
         <a href="https://yjmaxpayne.github.io/Qaiji-IR/"><img src="https://img.shields.io/badge/docs-latest-blue" alt="Docs"></a>
         <a href="https://codecov.io/gh/yjmaxpayne/Qaiji-IR"><img src="https://codecov.io/gh/yjmaxpayne/Qaiji-IR/graph/badge.svg?token=M9NQqTSx08" alt="codecov"></a>
         <a href="https://openqasm.com/"><img src="https://img.shields.io/badge/OpenQASM-3.0-6929C4" alt="OpenQASM 3"></a>
+        <a href="https://doi.org/10.5281/zenodo.23118964"><img src="https://zenodo.org/badge/DOI/10.5281/zenodo.23118964.svg" alt="DOI"></a>
       </p>
