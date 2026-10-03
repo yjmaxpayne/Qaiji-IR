@@ -24,8 +24,9 @@ Documentation = "https://yjmaxpayne.github.io/Qaiji-IR/"
 
 [tool.poetry]
 # Distribution name is "qaiji-ir" (PyPI); import name is "qaiji" (scikit-learn -> sklearn
-# pattern). `version` is a fallback placeholder used only when no git tag is found;
-# the real version comes from git tags via poetry-dynamic-versioning at build time.
+# pattern). `version` is only a placeholder: poetry-dynamic-versioning replaces it at build
+# time with the version derived from git tags. With `strict = true` (below) the build fails when
+# no matching tag is reachable or the clone is shallow.
 packages = [{ include = "qaiji", from = "src" }]
 
 # =============================================================================
@@ -146,6 +147,12 @@ enable = true
 vcs = "git"
 style = "pep440"
 pattern = "^v?(?P<base>\\d+\\.\\d+\\.\\d+)(-(?P<stage>[a-zA-Z]+)\\.?(?P<revision>\\d+)?)?$"
+# Fail the build when no tag is reachable, no reachable tag matches, or the clone is shallow.
+# Without it the first two silently yield a 0.0.0-based version and a shallow clone only warns.
+strict = true
+# The tag nearest to HEAD must itself match; otherwise a non-matching tag stacked on an older
+# matching tag is skipped and the build silently yields a .postN version of the older tag.
+latest-tag = true
 
 [tool.poetry-dynamic-versioning.substitution]
 files = ["src/qaiji/version.py"]
