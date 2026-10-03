@@ -6,6 +6,17 @@ git tags via `poetry-dynamic-versioning`.
 
 ## [Unreleased]
 
+### Added
+
+- A `Publish to PyPI` workflow builds a release tag and uploads its wheel and sdist to PyPI
+  through Trusted Publishing with attestations. It runs when a GitHub Release is published
+  (provided the tagged commit already contains the workflow), and on manual dispatch for an
+  existing tag. Before uploading it requires a `vX.Y.Z` tag on a commit reachable from `main`,
+  passing metadata checks, a wheel whose installed `qaiji.__version__` equals the tag, and, when the
+  Release already has package files or a `SHA256SUMS` asset, a byte-for-byte match with them; if any
+  check fails, nothing is uploaded. Releases marked as pre-releases are not published. On a Release,
+  the files and their `SHA256SUMS` are then attached to it.
+
 ### Changed
 
 - Building or installing the package from a git checkout now requires a reachable tag matching the

@@ -1,0 +1,188 @@
+# Qaiji-IR 发布到 PyPI：Trusted Publisher（OIDC），不存长期令牌。
+#
+# 设计说明：
+#   * 两种触发——发布 GitHub Release 时自动发布其标签；workflow_dispatch 为已有标签补发
+#     （例如 Release 早于本工作流的 v0.1.0）。
+#   * 只发布 main 上的 vX.Y.Z 正式版标签；标为预发布的 Release 不发布。Release 已附包文件或
+#     SHA256SUMS 时，CI 构建结果必须与之逐字节一致才发布，PyPI 与 GitHub Release 因此是同一组文件。
+#   * PyPI 侧的 Trusted Publisher 登记须与本文件名和 environment 名 `pypi` 一致；
+#     `pypi` environment 的部署范围限定为 main 分支与 v*.*.* 标签。
+name: Publish to PyPI
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag to build and publish (vX.Y.Z)'
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: publish-${{ github.event.inputs.tag || github.ref_name }}
+  cancel-in-progress: false
+
+env:
+  # 标签经环境变量进入脚本，不直接插值进 shell 文本。
+  TAG: ${{ github.event.inputs.tag || github.ref_name }}
+
+jobs:
+  build:
+    name: Build and verify distributions
+    if: github.event_name != 'release' || !github.event.release.prerelease
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      UV_PYTHON: '3.13'
+
+    steps:
+      # 校验脚本取自本工作流所在的提交：被发布的标签可能早于脚本（如 v0.1.0）。
+      - name: Checkout workflow scripts
+        uses: actions/checkout@v4
+        with:
+          path: tools
+          sparse-checkout: .github/scripts
+          persist-credentials: false
+
+      # 版本由 poetry-dynamic-versioning 在 strict 模式下从标签推导，必须取完整历史。
+      - name: Checkout tag
+        uses: actions/checkout@v4
+        with:
+          ref: refs/tags/${{ env.TAG }}
+          path: src
+          fetch-depth: 0
+          persist-credentials: false
+
+      # 只发布进过 main 的提交：打在未合并分支上的标签没有经过 CI。
+      - name: Require the tagged commit on main
+        run: git -C src merge-base --is-ancestor "refs/tags/$TAG^{commit}" origin/main
+
+      # 发布流程不读写 uv 缓存，避免被缓存内容影响构建。
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      # 构建后端版本未锁定：记进日志，SHA256SUMS 不一致时可据此对照。
+      - name: Show uv and build backend versions
+        run: |
+          uv --version
+          python -c 'import tomllib; print(*tomllib.load(open("src/pyproject.toml", "rb"))["build-system"]["requires"], sep="\n")' > "$RUNNER_TEMP/build-requires.txt"
+          uv run --no-project --with-requirements "$RUNNER_TEMP/build-requires.txt" python -c 'from importlib.metadata import version; [print(p, version(p)) for p in ("poetry-dynamic-versioning", "dunamai", "poetry-core")]'
+
+      # uv 会在输出目录写一个内容为 `*` 的 .gitignore；删掉它，让 dist 下只剩要发布的文件。
+      - name: Build wheel and sdist
+        run: |
+          uv build src --out-dir dist
+          rm -f dist/.gitignore
+
+      - name: Check package metadata
+        run: uvx twine check --strict dist/*
+
+      # 只有「没有这个 Release」时跳过逐字节校验；其他查询失败一律报错。Release 上已有的包文件按
+      # API 报告的 sha256 摘要比对（缺摘要即失败），已有的 SHA256SUMS 也逐行比对。
+      - name: Fetch release checksums
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          rel=$RUNNER_TEMP/release.json
+          if ! gh api "repos/$GITHUB_REPOSITORY/releases/tags/$TAG" > "$rel" 2> "$RUNNER_TEMP/release.err"; then
+            cat "$RUNNER_TEMP/release.err" >&2
+            grep -q 'HTTP 404' "$RUNNER_TEMP/release.err" || exit 1
+            echo "No GitHub Release for $TAG; byte-for-byte check skipped."
+            exit 0
+          fi
+          jq -r '.assets[] | select(.name | startswith("qaiji_ir-")) | "\(.digest // "missing")  \(.name)"' "$rel" > "$RUNNER_TEMP/assets.sums"
+          if grep -qv '^sha256:' "$RUNNER_TEMP/assets.sums"; then
+            echo "::error::a release asset has no sha256 digest" >&2
+            exit 1
+          fi
+          sed -i 's/^sha256://' "$RUNNER_TEMP/assets.sums"
+          if [[ -s $RUNNER_TEMP/assets.sums ]]; then
+            echo "ASSET_SUMS=$RUNNER_TEMP/assets.sums" >> "$GITHUB_ENV"
+          fi
+          if jq -e '.assets[] | select(.name == "SHA256SUMS")' "$rel" > /dev/null; then
+            gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --pattern SHA256SUMS --dir "$RUNNER_TEMP/release"
+            echo "SUMS=$RUNNER_TEMP/release/SHA256SUMS" >> "$GITHUB_ENV"
+          fi
+
+      - name: Verify distributions
+        run: |
+          bash tools/.github/scripts/check-dist.sh dist "$TAG"
+          [[ -z ${ASSET_SUMS:-} ]] || bash tools/.github/scripts/check-dist.sh dist "$TAG" "$ASSET_SUMS"
+          [[ -z ${SUMS:-} ]] || bash tools/.github/scripts/check-dist.sh dist "$TAG" "$SUMS"
+
+      # 文件名与哈希之外再看包内容：装进干净环境，确认版本号确实替换成了标签版本。
+      - name: Smoke-test the wheel
+        run: |
+          uv venv "$RUNNER_TEMP/smoke"
+          uv pip install --python "$RUNNER_TEMP/smoke/bin/python" dist/*.whl
+          cd "$RUNNER_TEMP"
+          smoke/bin/python -c 'import os, qaiji; v = os.environ["TAG"][1:]; assert qaiji.__version__ == v, (qaiji.__version__, v); print("qaiji", qaiji.__version__)'
+
+      # SHA256SUMS 放在 dist 之外：发布动作会上传 dist 下的全部文件。
+      - name: Write checksums
+        run: (cd dist && sha256sum ./*) > SHA256SUMS
+
+      - name: Upload distributions
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: |
+            dist/
+            SHA256SUMS
+          if-no-files-found: error
+
+  publish-pypi:
+    name: Publish to PyPI (Trusted Publisher)
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: pypi
+      url: https://pypi.org/p/qaiji-ir
+    permissions:
+      id-token: write
+
+    steps:
+      - name: Download distributions
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: dist/
+          attestations: true
+          print-hash: true
+
+  attach-release:
+    name: Attach distributions to the GitHub Release
+    needs: publish-pypi
+    # 补发（workflow_dispatch）不改 Release：Release 上已有的文件已与构建结果逐字节核对；
+    # 标签没有 Release 或 Release 上没有文件时，PyPI 上的文件不会同步到 Release。
+    if: github.event_name == 'release'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download distributions
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+
+      - name: Upload wheel, sdist and checksums
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "$TAG" dist/* SHA256SUMS --repo "$GITHUB_REPOSITORY" --clobber
