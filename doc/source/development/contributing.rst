@@ -106,6 +106,25 @@ PEP 517 构建后端，版本号取自 Git 标签）：
   ``perf``/``chore``，提交信息用简洁英文。
 - 仓库根目录和 ``src/`` 下不留临时文件。
 
+版本号与发布标签
+----------------
+
+版本号在构建时由 ``poetry-dynamic-versioning`` 从 Git 标签推导，并开启了 ``strict`` 与
+``latest-tag``：没有合适的标签时，``uv build``、``uv sync`` 等需要构建本项目的命令会直接报错，
+而不是生成 ``0.0.0`` 开头的版本。常见报错与处理：
+
+- ``No tags available and fallbacks disabled by strict mode``：从 ``HEAD`` 上溯不到任何标签
+  （例如克隆时没有取标签），执行 ``git fetch --tags``；fork 的克隆要从上游仓库取，
+  即 ``git fetch <上游远端> --tags``。
+- ``This is a shallow repository``：浅克隆（例如 ``git clone --depth 1``），
+  执行 ``git fetch --unshallow``。
+- ``The pattern did not match the latest tag '<标签>'``：离 ``HEAD`` 最近的标签不符合版本模式，
+  见下一段。
+
+发布只打 ``vX.Y.Z`` 形式的附注标签（``git tag -a vX.Y.Z -m "vX.Y.Z"``）。版本模式之外的标签
+（如 ``v0.2.0rc1``、``release-0.2``）一旦成为离 ``HEAD`` 最近的可达标签，构建就会失败。
+同一提交上有多个附注标签时以较晚打的为准，所以不要给已发布的提交补打其他附注标签。
+
 范围提醒
 --------
 

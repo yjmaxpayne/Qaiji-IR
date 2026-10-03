@@ -4,6 +4,29 @@ All notable changes to this project are documented here. The format follows
 [Conventional Commits](https://www.conventionalcommits.org/) and versions are derived from
 git tags via `poetry-dynamic-versioning`.
 
+## [Unreleased]
+
+### Changed
+
+- Building or installing the package from a git checkout now requires a reachable tag matching the
+  release pattern (`vX.Y.Z`) and full history: the build backend runs in strict mode and only reads the tag
+  nearest to `HEAD`. Each case, before → after:
+  - no tag reachable from `HEAD`: built as `0.0.0.postN.dev0+<commit>` → fails with
+    `No tags available and fallbacks disabled by strict mode`;
+  - only non-matching tags reachable: built as `0.0.0.postN.dev0+<commit>` → fails with
+    `The pattern did not match the latest tag '<tag>'`;
+  - a non-matching tag nearer to `HEAD` than a matching one: built as a `.postN` version of the
+    older matching tag → fails with the same message;
+  - shallow clone whose history contains the matching tag: built with the correct version and
+    a warning → fails with `This is a shallow repository, so Dunamai may not produce the
+    correct version.`;
+  - shallow clone whose history does not contain a tag: built as `0.0.0.postN.dev0+<commit>` →
+    fails with the same message.
+
+  Unchanged: a matching tag on `HEAD` gives `X.Y.Z`, one `N` commits behind gives
+  `X.Y.Z.postN.dev0+<commit>`, and sdists carry a fixed version and build without git.
+  A new CI job re-checks the git-checkout cases above on pushes to `main` and on pull requests.
+
 ## [0.1.0] - 2026-10-02
 
 ### Feat

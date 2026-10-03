@@ -32,7 +32,7 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        # poetry-dynamic-versioning 从 tag 推导版本；浅克隆看不到 tag，版本会静默退化成 0.0.0。
+        # poetry-dynamic-versioning 从 tag 推导版本且开启了 strict：浅克隆或看不到 tag 时，安装本项目会直接失败。
         with:
           fetch-depth: 0
 
@@ -60,6 +60,40 @@ jobs:
       - name: Type-check with mypy
         run: uv run mypy src
 
+  # 版本守门自测：在临时 clone 里造 tag 并构建，确认 strict / latest-tag 仍在起作用、合法 tag 得到确切版本。
+  version-gate:
+    name: version gate self-test
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      UV_PYTHON: '3.13'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        # 自测在完整历史上叠临时 tag；浅克隆下连正例也会因 shallow repository 构建失败。
+        with:
+          fetch-depth: 0
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      # 构建后端版本未锁定：先把本次解析到的版本记进日志。自测断言后端的报错文本，
+      # 若升级后措辞变化，自测会变红，可据此对照修正断言。
+      - name: Show uv and build backend versions
+        run: |
+          uv --version
+          python -c 'import tomllib; print(*tomllib.load(open("pyproject.toml", "rb"))["build-system"]["requires"], sep="\n")' > "$RUNNER_TEMP/build-requires.txt"
+          uv run --no-project --with-requirements "$RUNNER_TEMP/build-requires.txt" python -c 'from importlib.metadata import version; [print(p, version(p)) for p in ("poetry-dynamic-versioning", "dunamai", "poetry-core")]'
+
+      - name: Run version gate self-test
+        run: bash .github/scripts/version-gate-selftest.sh "$GITHUB_WORKSPACE"
+
   tests:
     name: pytest (py${{ matrix.python-version }})
     runs-on: ubuntu-latest
@@ -76,7 +110,7 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        # poetry-dynamic-versioning 从 tag 推导版本；浅克隆看不到 tag，版本会静默退化成 0.0.0。
+        # poetry-dynamic-versioning 从 tag 推导版本且开启了 strict：浅克隆或看不到 tag 时，安装本项目会直接失败。
         with:
           fetch-depth: 0
 
