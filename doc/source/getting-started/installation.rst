@@ -18,6 +18,12 @@
 
 .. code-block:: console
 
+   pip install qaiji-ir
+
+需要 ``main`` 分支上尚未发布的改动时，从 Git 仓库安装：
+
+.. code-block:: console
+
    pip install "git+https://github.com/yjmaxpayne/Qaiji-IR.git"
 
 安装后在任何 Python 3.12–3.14 环境中都可以直接 ``import qaiji``。
