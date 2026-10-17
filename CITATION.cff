@@ -4,9 +4,9 @@
 cff-version: 1.2.0
 title: "Qaiji-IR (开济IR): A Cross-Layer Quantum-Classical Digital-Twin Intermediate Representation"
 message: >-
-  If you use Qaiji-IR in your research, please cite it using the metadata
-  from this file. After the first Zenodo release, prefer the
-  version-specific DOI to reference the exact code used.
+  If you use Qaiji-IR, cite the software metadata in this file and use a
+  version-specific DOI for the exact code. For the IR architecture, also
+  cite the arXiv preprint listed in references.
 type: software
 authors:
   - given-names: Jun
@@ -42,3 +42,17 @@ keywords:
 license: Apache-2.0
 version: 0.1.0
 date-released: "2026-10-03"
+references:
+  - type: article
+    title: "QaiJi IR: An Eight-Layer Intermediate Representation Family for Hybrid Quantum-Classical Compilation"
+    authors:
+      - given-names: Jun
+        family-names: Ye
+    journal: arXiv
+    year: 2026
+    month: 9
+    url: "https://arxiv.org/abs/2609.29305"
+    identifiers:
+      - type: other
+        value: "arXiv:2609.29305"
+        description: Submitted preprint

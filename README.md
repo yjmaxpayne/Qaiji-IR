@@ -89,6 +89,13 @@ uv sync --group docs && uv run poe docs
 
 生成的 HTML 位于 `doc/build/html/`。
 
+## 论文与引用
+
+相关预印本：[arXiv:2609.29305](https://arxiv.org/abs/2609.29305)（Jun Ye，2026）。
+论文中的集成验证范围与本包接口范围分别说明，后者见上文“范围”。
+使用本软件时，请引用 [CITATION.cff](CITATION.cff) 中对应代码版本的 DOI。
+讨论 IR 架构时，请同时引用该预印本。
+
 ## 许可证
 
 Apache-2.0

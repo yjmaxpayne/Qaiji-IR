@@ -8,6 +8,9 @@ git tags via `poetry-dynamic-versioning`.
 
 ### Added
 
+- Link the arXiv preprint (2609.29305) from both READMEs, the documentation homepage,
+  package URLs, and citation metadata. Keep the software DOI as the default code citation.
+
 - A `Publish to PyPI` workflow builds a release tag and uploads its wheel and sdist to PyPI
   through Trusted Publishing with attestations. It runs when a GitHub Release is published
   (provided the tagged commit already contains the workflow), and on manual dispatch for an

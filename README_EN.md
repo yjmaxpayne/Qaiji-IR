@@ -99,6 +99,13 @@ uv sync --group docs && uv run poe docs
 The generated HTML is written to `doc/build/html/`. Online documentation:
 <https://yjmaxpayne.github.io/Qaiji-IR/>.
 
+## Paper and citation
+
+Related preprint: [arXiv:2609.29305](https://arxiv.org/abs/2609.29305) (Jun Ye, 2026).
+The paper's integration evidence and this package's public API have separate scopes; see
+**Scope** above for the latter. For software use, cite the version-specific DOI in
+[CITATION.cff](CITATION.cff). For the IR architecture, also cite the preprint.
+
 ## License
 
 Apache-2.0

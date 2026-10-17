@@ -21,6 +21,7 @@ dependencies = [
 [project.urls]
 Homepage = "https://github.com/yjmaxpayne/Qaiji-IR"
 Documentation = "https://yjmaxpayne.github.io/Qaiji-IR/"
+Paper = "https://arxiv.org/abs/2609.29305"
 
 [tool.poetry]
 # Distribution name is "qaiji-ir" (PyPI); import name is "qaiji" (scikit-learn -> sklearn

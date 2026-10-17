@@ -29,6 +29,11 @@
       "relation": "isDocumentedBy",
       "identifier": "https://yjmaxpayne.github.io/Qaiji-IR/",
       "resource_type": "publication-softwaredocumentation"
+    },
+    {
+      "relation": "isDocumentedBy",
+      "identifier": "https://arxiv.org/abs/2609.29305",
+      "resource_type": "publication-preprint"
     }
   ]
 }
