@@ -8,7 +8,10 @@ import hashlib
 import json
 
 from .codec import dump_problem, dump_request
+from .diagnostics import CheckBudget
 from .model import Problem, Request
+
+_DEFAULT_BUDGET = CheckBudget()
 
 
 def canonical_problem_bytes(problem: Problem) -> bytes:
@@ -38,7 +41,12 @@ def canonical_request_bytes(request: Request) -> bytes:
     Raises:
         PContractError: 请求不符合交换契约或超出默认交换预算。
     """
-    document = json.loads(dump_request(request, layout="inline").document)
+    return _canonical_request_bytes(request, budget=_DEFAULT_BUDGET)
+
+
+def _canonical_request_bytes(request: Request, *, budget: CheckBudget) -> bytes:
+    """按指定交换预算编码请求身份字节。"""
+    document = json.loads(dump_request(request, layout="inline", budget=budget).document)
     del document["provenance"]
     return json.dumps(
         document, sort_keys=True, ensure_ascii=False, separators=(",", ":"), allow_nan=False
@@ -73,5 +81,10 @@ def request_id(request: Request) -> str:
     Raises:
         PContractError: 请求不符合规范编码契约。
     """
-    content = canonical_request_bytes(request)
+    return _request_id(request, budget=_DEFAULT_BUDGET)
+
+
+def _request_id(request: Request, *, budget: CheckBudget) -> str:
+    """按指定交换预算计算请求内容身份。"""
+    content = _canonical_request_bytes(request, budget=budget)
     return "sha256:" + hashlib.sha256(request.schema.encode("utf-8") + b"\0" + content).hexdigest()

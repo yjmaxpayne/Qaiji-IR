@@ -10,6 +10,7 @@ from itertools import pairwise
 from typing import Any, cast
 
 from . import codec
+from ._numeric import _NumericContext
 from .arrays import ArrayData, FrozenJSON
 from .diagnostics import (
     CheckBudget,
@@ -271,7 +272,12 @@ def _remaining_stages(level: _Level, failed: str) -> tuple[str, ...]:
 
 
 def _check(
-    value: Problem | Request, level: _Level, budget: CheckBudget, cls: type[Problem] | type[Request]
+    value: Problem | Request,
+    level: _Level,
+    budget: CheckBudget,
+    cls: type[Problem] | type[Request],
+    *,
+    context: _NumericContext | None = None,
 ) -> CheckReport:
     if level not in ("transport", "structure", "physical"):
         from .diagnostics import _fail
@@ -372,10 +378,10 @@ def _check(
     else:
         checked += ("capability",)
     if not diagnostics:
-        from ._numeric import _check_physical, _NumericContext
+        from ._numeric import _check_physical
 
         try:
-            _check_physical(value, _NumericContext(budget))
+            _check_physical(value, context if context is not None else _NumericContext(budget))
         except PContractError as error:
             diagnostics.extend(error.diagnostics)
         else:

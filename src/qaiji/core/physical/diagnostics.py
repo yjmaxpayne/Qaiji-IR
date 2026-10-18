@@ -141,21 +141,194 @@ def _pointer(value: Any, path: str) -> str:
     return text
 
 
-def _pointer_tokens(path: str) -> tuple[tuple[int, str | int], ...]:
+def _is_index_token(token: str) -> bool:
+    return token.isascii() and token.isdecimal() and (token == "0" or not token.startswith("0"))
+
+
+type _PointerToken = tuple[int, str | tuple[int, str]]
+type _PathNode = str | tuple[str, str]
+
+# 此表只列出固定容器。标量字段和未知字段的内部均不透明。
+_PATH_FIELDS: dict[str, dict[str, _PathNode]] = {
+    "problem": {
+        "sites": ("array", "site"),
+        "tensor_order": ("array", "scalar"),
+        "h0": "operator",
+        "drives": ("array", "drive"),
+        "environment": "environment",
+        "initial_state": "state",
+        "signal_edges": "array",
+        "approximations": ("array", "scalar"),
+        "extensions": ("array", "extension"),
+    },
+    "site": {"basis": ("array", "scalar")},
+    "operator": {"terms": ("array", "term")},
+    "term": {"coefficient": ("array", "scalar"), "factors": ("array", "factor")},
+    "factor": {"matrix": "array"},
+    "signal": {"values": "array"},
+    "drive": {"operator": "operator", "signal": "signal"},
+    "jump": {"operator": "operator", "rate": "signal"},
+    "environment": {"jumps": ("array", "jump")},
+    "state": {"data": "array", "factors": ("array", "product_factor")},
+    "product_factor": {"data": "array"},
+    "extension": {},
+    "observation": {
+        "operator": "operator",
+        "keep_sites": ("array", "scalar"),
+        "input_sites": ("array", "scalar"),
+        "isometry": "array",
+        "data": "array",
+        "block": "array",
+        "leakage": "array",
+        "input_trace": "array",
+        "trace_error": "array",
+    },
+    "policy": {"method": "method"},
+    "method": {"allowed": ("array", "scalar")},
+    "provenance": {
+        "device_snapshot": "snapshot",
+        "calibration_snapshot": "snapshot",
+        "basis_mapping": ("array", "basis_mapping"),
+        "prior_transforms": ("array", "opaque"),
+    },
+    "snapshot": {},
+    "basis_mapping": {},
+    "report": {
+        "actual_policy": "actual_policy",
+        "policy_differences": ("array", "difference"),
+        "transforms": ("array", "transform"),
+        "state_representations": ("map", "scalar"),
+        "diagnostics": ("array", "diagnostic"),
+    },
+    "actual_policy": {},
+    "difference": {},
+    "transform": {"authorization": "authorization"},
+    "authorization": {},
+    "diagnostic": {},
+    "profile": {"output_kinds": ("array", "scalar")},
+    "precision": {},
+    "array": {"shape": ("array", "scalar")},
+}
+_PATH_FIELDS["root"] = {
+    **_PATH_FIELDS["problem"],
+    "problem": "problem",
+    "output_times": "array",
+    "observations": ("array", "observation"),
+    "policy": "policy",
+    "provenance": "provenance",
+    "report": "report",
+    "profiles": ("array", "profile"),
+    "precision": "precision",
+    "required_extensions": ("array", "pair"),
+    "output_kinds": ("array", "scalar"),
+    "methods": ("array", "scalar"),
+    "shape": ("array", "scalar"),
+    "$p_array": "array",
+}
+
+
+def _path_step(node: _PathNode, token: str, hint: str | None) -> tuple[str, _PathNode]:
+    if isinstance(node, tuple):
+        container, child = node
+        if container == "map":
+            return "key", child
+        if _is_index_token(token):
+            return "index", ("array", "scalar") if child == "pair" else child
+        return "key", "opaque"
+    if node in _PATH_FIELDS:
+        return "key", _PATH_FIELDS[node].get(token, "opaque")
+    # 数组标记在不透明 JSON 中仍使用固定的传输结构。
+    if token == "$p_array":
+        return "key", "array"
+    return hint or ("index" if _is_index_token(token) else "key"), "opaque"
+
+
+def _pointer_tokens(path: str, kinds: tuple[str, ...] | None = None) -> tuple[_PointerToken, ...]:
     if path == "":
         return ()
-    tokens: list[tuple[int, str | int]] = []
-    for raw in path[1:].split("/"):
-        token = raw.replace("~1", "/").replace("~0", "~")
-        if token.isdigit() and (token == "0" or not token.startswith("0")):
-            tokens.append((1, int(token)))
+    decoded = tuple(raw.replace("~1", "/").replace("~0", "~") for raw in path[1:].split("/"))
+    if kinds is not None and (
+        len(kinds) != len(decoded)
+        or any(
+            kind == "index" and not _is_index_token(token)
+            for kind, token in zip(kinds, decoded, strict=False)
+        )
+    ):
+        kinds = None
+    tokens: list[_PointerToken] = []
+    node: _PathNode = "root"
+    for position, token in enumerate(decoded):
+        kind, node = _path_step(node, token, kinds[position] if kinds is not None else None)
+        if kind == "index":
+            # 十进制位数和字典序可比较任意长度的非负下标。
+            tokens.append((1, (len(token), token)))
         else:
             tokens.append((0, token))
     return tuple(tokens)
 
 
-def _diagnostic_key(item: Diagnostic) -> tuple[tuple[tuple[int, str | int], ...], str]:
-    return (_pointer_tokens(item.path), item.code)
+def _path_kinds(item: Diagnostic) -> tuple[str, ...] | None:
+    from .arrays import _JSONArray, _JSONObject
+
+    value = item.details.value
+    if type(value) is not _JSONObject:
+        return None
+    hint = dict(value.items).get("path_kinds")
+    if type(hint) is not _JSONArray:
+        return None
+    if not all(type(kind) is str and kind in ("key", "index") for kind in hint.items):
+        return None
+    return tuple(cast(str, kind) for kind in hint.items)
+
+
+_STAGES = ("transport", "structure", "capability", "budget", "physical", "result")
+_TRANSPORT_CODES = frozenset(
+    {
+        "UTF8",
+        "JSON",
+        "DUPLICATE",
+        "VERSION",
+        "KEYS",
+        "KEY_TYPE",
+        "JSON_TYPE",
+        "INTEGER",
+        "NUMBER_ENCODING",
+        "BINARY64",
+        "NONFINITE",
+        "UNICODE",
+        "DTYPE",
+        "BYTE_LENGTH",
+        "BASE64",
+        "ATTACHMENT_MISSING",
+        "ATTACHMENT_DIGEST",
+    }
+)
+_PHYSICAL_CODES = frozenset({"HERMITIAN", "NORMALIZATION", "PSD", "ISOMETRY"})
+
+
+def _diagnostic_stage(item: Diagnostic) -> int:
+    from .arrays import _JSONObject
+
+    value = item.details.value
+    if type(value) is _JSONObject:
+        stage = dict(value.items).get("stage")
+        if type(stage) is str and stage in _STAGES:
+            return _STAGES.index(stage)
+    if item.category == "UNSUPPORTED_CAPABILITY":
+        return 2
+    if item.category == "RESOURCE_LIMIT":
+        return 3
+    if item.category in {"INVALID_RESULT", "SOLVER_FAILURE"}:
+        return 5
+    if item.code in _TRANSPORT_CODES:
+        return 0
+    if item.code in _PHYSICAL_CODES:
+        return 4
+    return 1
+
+
+def _diagnostic_key(item: Diagnostic) -> tuple[int, tuple[_PointerToken, ...], str]:
+    return (_diagnostic_stage(item), _pointer_tokens(item.path, _path_kinds(item)), item.code)
 
 
 def _sorted_diagnostics(items: tuple[Diagnostic, ...]) -> tuple[Diagnostic, ...]:

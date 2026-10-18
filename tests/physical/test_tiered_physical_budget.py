@@ -409,3 +409,88 @@ def test_operator_releases_local_workspace_between_terms(monkeypatch):
     assert matrix == [2, 0, 0, 2]
     assert active == 0
     assert peak == 1
+
+
+@pytest.mark.parametrize("variant", ["reset-request-result-counter"])
+def test_p_request_and_result_share_budget(variant):
+    from physical_result_factories import carray, farray, result_for, result_request
+    from qaiji.core.physical._numeric import _check_physical, _NumericContext
+    from qaiji.core.physical.model import ObservationValue
+    from qaiji.core.physical.results import _physical_observation, check_result
+
+    req = result_request((Observation(id="state", kind="full_state", representation="density"),))
+    req = replace(
+        req,
+        output_times=farray([0.0]),
+        policy=replace(req.policy, representation="density"),
+        problem=replace(
+            req.problem,
+            initial_state=State(kind="density", frame="lab", data=carray([1, 0, 0, 0], (2, 2))),
+        ),
+    )
+    value = ObservationValue(
+        id="state",
+        kind="full_state",
+        representation="density",
+        data=carray([1, 0, 0, 0], (1, 2, 2)),
+    )
+    result = result_for(req, (value,))
+    context = _NumericContext(CheckBudget())
+    _check_physical(req, context)
+    request_count = context.operations
+    _physical_observation(value, context, "/observations/0")
+    total_count = context.operations
+    # 每个四阶实嵌入矩阵需要 6 + 3 + 1 次 Schur 更新。
+    assert request_count == 10
+    assert total_count == 20
+    assert check_result(
+        req, result, level="physical", budget=CheckBudget(max_rational_ops=total_count)
+    ).complete
+    budget = CheckBudget(max_rational_ops=request_count)
+    assert check_request(req, level="physical", budget=budget).complete
+    result_context = _NumericContext(budget)
+    _physical_observation(value, result_context, "/observations/0")
+    assert result_context.operations == request_count
+    report = check_result(req, result, level="physical", budget=budget)
+    assert not report.complete
+    item = report.diagnostics[0]
+    assert (item.category, item.code) == ("RESOURCE_LIMIT", "RATIONAL_OPS")
+    assert item.path == "/observations/0/data"
+    assert item.details.value.items == (
+        ("limit", request_count),
+        ("required", request_count + 1),
+        ("resource", "RATIONAL_OPS"),
+    )
+
+
+def test_result_numeric_budget_precedes_array_materialization(monkeypatch):
+    from physical_result_factories import carray, result_for, result_request
+    from qaiji.core.physical import results
+    from qaiji.core.physical.model import ObservationValue
+
+    req = result_request((Observation(id="state", kind="full_state", representation="density"),))
+    req = replace(req, policy=replace(req.policy, representation="density"))
+    count = req.output_times.shape[0]
+    value = ObservationValue(
+        id="state",
+        kind="full_state",
+        representation="density",
+        data=carray([1, 0, 0, 0] * count, (count, 2, 2)),
+    )
+    result = result_for(req, (value,))
+    assert results.check_result(req, result, level="physical").complete
+
+    def forbidden(array):
+        raise AssertionError("Result values must not be materialized above the budget.")
+
+    monkeypatch.setattr(results, "_values", forbidden)
+    report = results.check_result(
+        req, result, level="physical", budget=CheckBudget(max_numeric_elements=32)
+    )
+    assert not report.complete
+    assert any(
+        d.category == "RESOURCE_LIMIT"
+        and d.code == "NUMERIC_ELEMENTS"
+        and d.path == "/observations/0/data"
+        for d in report.diagnostics
+    )
