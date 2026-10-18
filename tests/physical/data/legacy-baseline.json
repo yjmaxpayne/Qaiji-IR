@@ -173,7 +173,7 @@
       }
     ]
   },
-  "source_digest_basis": "tests/native/compatibility_baseline.json frozen_sources plus native and program_native package initializers",
+  "source_digest_basis": "源文件清单取自 `tests/native/compatibility_baseline.json` 的 `frozen_sources`。另含 `native` 与 `program_native` 的包入口文件。",
   "source_digests": {
     "src/qaiji/__init__.py": "93fc5646dd76bb1e18e35e861df09811aca3d798bf793deea330393710693667",
     "src/qaiji/codec/__init__.py": "1d25d779044c5c6b8d30835bd0042b39e092ba554ba9fee7a2c8590a897dbc9b",

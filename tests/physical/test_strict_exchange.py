@@ -1,6 +1,6 @@
 # Copyright 2026 Qaiji-IR core developer: Ye Jun <yjmaxpayne@hotmail.com>
 # SPDX-License-Identifier: Apache-2.0
-"""Compare complete wire fields with independent public fixtures."""
+"""用独立的公开夹具检查完整交换字段。"""
 
 from __future__ import annotations
 
@@ -62,7 +62,7 @@ def rejection(kind, raw, code, path=None, **kwargs):
 def test_p_strict_exchange(kind, layout):
     raw = canonical(wire_examples()[kind])
     obj = load(kind, raw)
-    assert dump(kind, obj) == raw  # Expected bytes never come from the codec.
+    assert dump(kind, obj) == raw  # 受检 codec 不参与生成期望字节。
     assert load(kind, json.dumps(json.loads(raw), indent=2).encode()) == obj
     if kind in ("problem", "request", "result"):
         artifact = getattr(codec(), "dump_" + kind)(obj, layout=layout)
@@ -120,7 +120,7 @@ def test_p_strict_exchange(kind, layout):
 def test_p_rejects_codec_semantics(variant):
     doc = wire_examples()["problem"]
     raw = canonical(doc)
-    # These assertions are also the oracles for single-mechanism mutation runs.
+    # 这些断言也作为单项机制变异的判据。
     assert dump("problem", load("problem", raw)) == raw
     if variant == "drop-imaginary":
         assert load("problem", raw).h0.terms[0].coefficient.imag == -0.25

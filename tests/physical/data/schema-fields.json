@@ -1,5 +1,5 @@
 {
-  "source": "P-v1 interface and encoding contract; field inventory is independent of the codec.",
+  "source": "P-v1 接口与编码契约。字段清单独立于 codec。",
   "branches": {
     "ArrayData": [
       [

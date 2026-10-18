@@ -1,6 +1,6 @@
 # Copyright 2026 Qaiji-IR core developer: Ye Jun <yjmaxpayne@hotmail.com>
 # SPDX-License-Identifier: Apache-2.0
-"""Exercise transport syntax, record branches and explicit resource limits."""
+"""检查传输语法、记录分支和显式资源上限。"""
 
 from __future__ import annotations
 
@@ -68,7 +68,7 @@ def duplicate(doc, path, key):
     )
 
 
-# Paths name wire records, independently of the production dispatch table.
+# 路径标识交换记录，不依赖生产代码的分派表。
 BRANCHES = [
     ("problem", (), "Problem"),
     ("problem", ("sites", 0), "Site"),
@@ -265,7 +265,7 @@ def test_p_transport_negative_space_matrix(case, path, value, code):
 @pytest.mark.parametrize("resource", ["max_wire_bytes", "max_depth", "max_attachment_bytes"])
 def test_p_transport_budget_config_matrix(kind, configuration, resource):
     if resource == "max_attachment_bytes" and kind in ("requirements", "capabilities"):
-        # These signatures have no attachment argument. Their empty mapping is tested below.
+        # 这些函数的签名没有附件参数。下方检查其空附件映射。
         assert load(
             kind, canonical(wire_examples()[kind]), budget=CheckBudget(max_attachment_bytes=0)
         )
@@ -294,7 +294,7 @@ def test_p_transport_budget_config_matrix(kind, configuration, resource):
             if kind == "result"
             else ("precision",)
         )
-        # The root object and each path ancestor contribute one container.
+        # 根对象和路径中的每个祖先各贡献一层容器深度。
         nested = 0
         for _ in range(limit - len(path)):
             nested = [nested]
@@ -340,7 +340,8 @@ def test_p_decoder_never_resolves_external_paths(monkeypatch):
 @pytest.mark.parametrize("kind", KINDS)
 def test_p_transport_parser_boundaries(kind):
     doc = wire_examples()[kind]
-    # Select an opaque leaf so integer limits are independent of record semantics.
+    # 选取不透明 JSON 树的叶节点。
+    # 整数上限检查不依赖记录语义。
     path = (
         ("extensions", 0, "payload")
         if kind == "problem"
@@ -407,7 +408,7 @@ def test_p_transport_attachment_integrity():
         assert dump("problem", load("problem", canonical(doc))) == canonical(doc)
     doc["drives"][1]["signal"]["values"] = dict(dtype="f64le", shape=[0], data="")
     assert dump("problem", load("problem", canonical(doc))) == canonical(doc)
-    # Equal bytes with different shape/dtype remain different envelopes.
+    # 即使字节相同，不同的 shape 或 dtype 仍须保留各自的信封。
     payload = doc["extensions"][0]["payload"]
     payload["same-bytes-real"] = {
         "$p_array": dict(dtype="f64le", shape=[2], data=base64.b64encode(b"\0" * 16).decode())
@@ -421,7 +422,7 @@ def test_p_transport_attachment_integrity():
         dump("problem", load("problem", artifact.document, attachments=dict(artifact.attachments)))
         == raw
     )
-    # Correct digest with an incorrect length must reach the length guard.
+    # 摘要正确但长度错误时，必须触发长度守卫。
     doc["signal_edges"] = dict(dtype="f64le", shape=[3], attachment=key)
     rejection("problem", canonical(doc), "BYTE_LENGTH", attachments=attachments)
     nan = struct.pack("<d", float("nan"))
@@ -433,7 +434,8 @@ def test_p_transport_attachment_integrity():
 @pytest.mark.parametrize("kind", KINDS)
 def test_p_dump_rechecks_fields(kind):
     obj = load(kind, canonical(wire_examples()[kind]))
-    # Frozen dataclasses may be corrupted by object.__setattr__; dump must not trust them.
+    # 调用 object.__setattr__ 可能篡改 frozen 数据类。
+    # dump 必须重新检查这些对象。
     for field in fields(obj):
         changed = copy.deepcopy(obj)
         object.__setattr__(changed, field.name, object())
@@ -471,7 +473,7 @@ def test_p_transport_preserves_interpreter_limits():
     rejection("problem", b"9" * 5000, "INTEGER")
     assert sys.getrecursionlimit() == recursion
     assert sys.get_int_max_str_digits() == digits
-    # Byte budget precedes UTF-8 decoding and nesting checks.
+    # 字节预算检查先于 UTF-8 解码和嵌套深度检查。
     rejection("problem", b"\xff[[[", "BYTES", budget=CheckBudget(max_wire_bytes=1))
 
 

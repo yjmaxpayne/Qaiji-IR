@@ -1,6 +1,6 @@
 # Copyright 2026 Qaiji-IR core developer: Ye Jun <yjmaxpayne@hotmail.com>
 # SPDX-License-Identifier: Apache-2.0
-"""Strict P-v1 JSON exchange with explicit, content-addressed attachments."""
+"""P-v1 严格 JSON 交换：使用显式附件，以内容摘要寻址。"""
 
 from __future__ import annotations
 
@@ -25,8 +25,8 @@ _EMPTY_ATTACHMENTS: Mapping[str, bytes] = MappingProxyType({})
 _HEX = re.compile(r"[0-9a-f]{16}\Z")
 _DIGEST = re.compile(r"sha256:[0-9a-f]{64}\Z")
 
-# Descriptors specify wire types. Constructors enforce model-local constraints.
-# Only declared branches enter the wire; nullable fields remain mandatory keys.
+# 字段描述表规定交换数据的类型。构造器检查模型内部约束。
+# 只编码已声明的分支。可空字段也必须保留键。
 _FIELDS: dict[type[Any], dict[str, Any]] = {
     m.Site: dict(id=str, dim=int, basis=("list", str)),
     m.LocalFactor: dict(site=str, matrix=ArrayData),
@@ -649,7 +649,7 @@ def _externalize_array(obj: dict[str, Any], attachments: dict[str, bytes]) -> di
 
 
 def _layout_record(value: Any, cls: type[Any], attachments: dict[str, bytes]) -> dict[str, Any]:
-    # Walk schema descriptors rather than guessing array envelopes from key names.
+    # 按 schema 描述表遍历。不按字段名猜测数组信封。
     return {
         name: _layout_field(child, _FIELDS[cls][name], attachments) for name, child in value.items()
     }
@@ -676,7 +676,7 @@ def _dump(value: Any, cls: type[Any], layout: str, budget: CheckBudget) -> Encod
         ctx.fail("KEYS", "/layout", "Expected layout inline or attachments.")
     try:
         obj = _encode_record(value, cls, "", ctx)
-        # Reconstruct every nested record, including tampered frozen instances.
+        # 重建所有嵌套记录，包括遭篡改的 frozen 实例。
         _decode_record(obj, cls, "", ctx)
         attachments: dict[str, bytes] = {}
         if layout == "attachments":
