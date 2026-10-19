@@ -55,7 +55,7 @@ jobs:
         run: uv run --no-sync ruff check --no-cache src tests
 
       - name: Check formatting with ruff
-        run: uv run --no-sync ruff format --check src tests
+        run: uv run --no-sync ruff format --check --no-cache src tests
 
       - name: Type-check with mypy
         run: uv run mypy src
@@ -93,6 +93,38 @@ jobs:
 
       - name: Run version gate self-test
         run: bash .github/scripts/version-gate-selftest.sh "$GITHUB_WORKSPACE"
+
+  physical-minimal:
+    name: P contract required-only wheel
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      UV_PYTHON: '3.13'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Build wheel in an isolated clone
+        shell: bash
+        run: |
+          set -euo pipefail
+          git clone --no-hardlinks "$GITHUB_WORKSPACE" "$RUNNER_TEMP/p-wheel-source"
+          git -C "$RUNNER_TEMP/p-wheel-source" checkout --detach "$GITHUB_SHA"
+          uv build --project "$RUNNER_TEMP/p-wheel-source" --wheel --out-dir "$RUNNER_TEMP/p-wheel"
+      - name: Install required dependencies and run explicit P acceptance
+        shell: bash
+        run: |
+          set -euo pipefail
+          uv venv "$RUNNER_TEMP/p-minimal"
+          uv pip install --python "$RUNNER_TEMP/p-minimal/bin/python" "$RUNNER_TEMP"/p-wheel/*.whl
+          env -u PYTHONPATH "$RUNNER_TEMP/p-minimal/bin/python" -I -B tests/physical/minimal_acceptance.py
 
   tests:
     name: pytest (py${{ matrix.python-version }})

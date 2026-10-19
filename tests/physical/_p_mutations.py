@@ -593,28 +593,18 @@ def check_acceptance_map(mapping, inventory, collected=()):
     assert len(mapped) == len(set(mapped)) and set(mapped) == set(catalogue), message
     root = DATA.parents[2]
     for child in catalogue.values():
-        if child["owner"] == "T9":
-            assert not child["nodes"], message
-        else:
-            assert child["nodes"], message
-            for node in child["nodes"]:
-                assert node.split("[")[0] == child["entry"], message
-                if any(n.startswith(child["entry"].split("::")[0] + "::") for n in collected):
-                    assert node in collected, message
+        assert child["nodes"], message
+        for node in child["nodes"]:
+            assert node.split("[")[0] == child["entry"], message
+            if any(n.startswith(child["entry"].split("::")[0] + "::") for n in collected):
+                assert node in collected, message
     for row in mapping:
         assert row["status"] == "planned", message
         assert set(row["children"]) == {c for c in catalogue if c.startswith(row["ac"] + "/")}, (
             message
         )
         path = root / row["test_file"]
-        if not path.is_file():
-            assert row["owner"] == "T9" and not row["nodes"], message
-            continue
-        functions = {
-            node.name
-            for node in ast.parse(path.read_text()).body
-            if isinstance(node, ast.FunctionDef)
-        }
+        assert path.is_file(), message
         assert row["nodes"] and len(row["nodes"]) == len(set(row["nodes"])), message
         entries = {f"{row['test_file']}::{row[key]}" for key in ("positive", "negative")}
         assert {node.split("[")[0] for node in row["nodes"]} == entries, message
@@ -622,12 +612,22 @@ def check_acceptance_map(mapping, inventory, collected=()):
         assert not set(supporting) & set(row["nodes"]), message
         assert len(supporting) == len(set(supporting)), message
         for node in row["nodes"] + supporting:
-            assert node.split("::")[0] == row["test_file"], message
+            source = root / node.split("::")[0]
+            assert source.is_file(), message
+            functions = {
+                item.name
+                for item in ast.parse(source.read_text()).body
+                if isinstance(item, ast.FunctionDef)
+            }
             assert node.split("::")[1].split("[")[0] in functions, message
-        if any(node.startswith(row["test_file"] + "::") for node in collected):
-            assert set(row["nodes"] + supporting) == {
-                node for node in collected if node.startswith(row["test_file"] + "::")
-            }, message
+        declared_files = {node.split("::")[0] for node in row["nodes"] + supporting}
+        for filename in declared_files:
+            actual = {node for node in collected if node.split("::")[0] == filename}
+            if actual:
+                expected = {
+                    node for node in row["nodes"] + supporting if node.split("::")[0] == filename
+                }
+                assert expected == actual, message
 
 
 def damage_inventory(inventory, receipts, variant):

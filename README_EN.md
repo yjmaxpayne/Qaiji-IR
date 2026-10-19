@@ -50,15 +50,21 @@ without borrowing semantic authority from them.
   produces neutral operation records, and the program bridge associates measurement histories and
   final-bit references with L5 invocations. Python-built RX90, RX180, ISWAP, and SQISWAP gates take
   part in native scheduling; the OpenQASM codec does not support these four gates.
+- **P continuous-evolution contract** (`qaiji.core.physical`): immutable problems, requests, and
+  results; strict exchange with explicit array attachments; content identities for physical fields
+  and execution policy; tiered checks for structure, capabilities, numerical conditions, and resource
+  budgets. The P layer uses only the standard library and does not execute time evolution.
 
 Executable tutorials: [L4 semantic summaries](doc/source/getting-started/semantics.rst),
-[L5 program validation](doc/source/getting-started/program.rst), and
-[L2 native scheduling](doc/source/getting-started/native-schedule.rst).
+[L5 program validation](doc/source/getting-started/program.rst),
+[L2 native scheduling](doc/source/getting-started/native-schedule.rst), and
+[P continuous-evolution contracts](doc/source/getting-started/physical.rst).
 
-**Scope**: the package does not execute shots, provide a feedback runtime, emit ISA or waveforms,
-or claim physical fidelity; calibration and device-model references are passed through. The pulse
-(L1), waveform (L0), dynamics (P), and trace (T) layers of the eight-layer model are outside the
-package's public interface.
+**Scope**: the package does not execute shots or time evolution, provide a feedback runtime,
+emit ISA or waveforms, or claim physical fidelity. Calibration and device-model references are
+passed through. The pulse (L1), waveform (L0), and trace (T) layers have no public interfaces yet.
+The P layer provides exchange and checking contracts. Consumers implement solvers and hardware
+adapters themselves.
 
 ## Install
 

@@ -1,9 +1,23 @@
 # Copyright 2026 Qaiji-IR core developer: Ye Jun <yjmaxpayne@hotmail.com>
 # SPDX-License-Identifier: Apache-2.0
-"""P 层公开入口：不可变契约记录。"""
+"""P 层公开入口：不可变记录、严格交换、身份与分级检查。"""
 
 from .arrays import ArrayData, FrozenJSON
+from .capabilities import extract_requirements, match_capabilities
+from .codec import (
+    dump_capabilities,
+    dump_problem,
+    dump_request,
+    dump_requirements,
+    dump_result,
+    load_capabilities,
+    load_problem,
+    load_request,
+    load_requirements,
+    load_result,
+)
 from .diagnostics import CheckBudget, CheckReport, Diagnostic, EncodedArtifact, PContractError
+from .identity import canonical_problem_bytes, canonical_request_bytes, problem_id, request_id
 from .model import (
     BasisMapping,
     Capabilities,
@@ -32,6 +46,8 @@ from .model import (
     State,
     TransformRecord,
 )
+from .results import check_result
+from .validation import check_problem, check_request, require_valid
 
 __all__ = [
     "ArrayData",
@@ -67,4 +83,24 @@ __all__ = [
     "SnapshotRef",
     "State",
     "TransformRecord",
+    "canonical_problem_bytes",
+    "canonical_request_bytes",
+    "check_problem",
+    "check_request",
+    "check_result",
+    "dump_capabilities",
+    "dump_problem",
+    "dump_request",
+    "dump_requirements",
+    "dump_result",
+    "extract_requirements",
+    "load_capabilities",
+    "load_problem",
+    "load_request",
+    "load_requirements",
+    "load_result",
+    "match_capabilities",
+    "problem_id",
+    "request_id",
+    "require_valid",
 ]

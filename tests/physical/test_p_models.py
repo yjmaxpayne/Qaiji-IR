@@ -408,7 +408,9 @@ def test_p_constructor_signatures_match() -> None:
     with pytest.raises(TypeError):
         Site("q0", 2, ("0", "1"))  # type: ignore[misc]
 
-    assert physical.__all__ == list(EXPECTED_EXPORTS)
+    assert [name for name in physical.__all__ if isinstance(getattr(physical, name), type)] == list(
+        EXPECTED_EXPORTS
+    )
     assert all(isinstance(getattr(physical, name), type) for name in EXPECTED_EXPORTS)
 
     ordered = (

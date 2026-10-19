@@ -945,14 +945,33 @@
       "ADR-801",
       "ADR-806"
     ],
-    "nodes": [],
+    "nodes": [
+      "tests/physical/test_legacy_and_minimal_install.py::test_p_legacy_minimal_install",
+      "tests/physical/test_legacy_and_minimal_install.py::test_p_rejects_dependency_or_eager_import[numerical-wheel-dependency]",
+      "tests/physical/test_legacy_and_minimal_install.py::test_p_rejects_dependency_or_eager_import[eager-P-root-import]",
+      "tests/physical/test_legacy_and_minimal_install.py::test_p_rejects_dependency_or_eager_import[eager-solver-import]",
+      "tests/physical/test_legacy_and_minimal_install.py::test_p_rejects_dependency_or_eager_import[source-tree-shadowing-install]"
+    ],
     "children": [
       "AC-17/numerical-wheel-dependency",
       "AC-17/eager-P-root-import",
       "AC-17/eager-solver-import",
       "AC-17/source-tree-shadowing-install"
     ],
-    "support_nodes": []
+    "support_nodes": [
+      "tests/physical/test_p_public_api.py::test_p_final_public_exports_are_exact",
+      "tests/physical/test_p_public_api.py::test_p_root_import_does_not_load_physical",
+      "tests/physical/test_p_public_api.py::test_p_each_module_import_is_isolated[qaiji.core.physical]",
+      "tests/physical/test_p_public_api.py::test_p_each_module_import_is_isolated[qaiji.core.physical._numeric]",
+      "tests/physical/test_p_public_api.py::test_p_each_module_import_is_isolated[qaiji.core.physical.arrays]",
+      "tests/physical/test_p_public_api.py::test_p_each_module_import_is_isolated[qaiji.core.physical.capabilities]",
+      "tests/physical/test_p_public_api.py::test_p_each_module_import_is_isolated[qaiji.core.physical.codec]",
+      "tests/physical/test_p_public_api.py::test_p_each_module_import_is_isolated[qaiji.core.physical.diagnostics]",
+      "tests/physical/test_p_public_api.py::test_p_each_module_import_is_isolated[qaiji.core.physical.identity]",
+      "tests/physical/test_p_public_api.py::test_p_each_module_import_is_isolated[qaiji.core.physical.model]",
+      "tests/physical/test_p_public_api.py::test_p_each_module_import_is_isolated[qaiji.core.physical.results]",
+      "tests/physical/test_p_public_api.py::test_p_each_module_import_is_isolated[qaiji.core.physical.validation]"
+    ]
   },
   {
     "ac": "AC-18",

@@ -8,6 +8,11 @@ git tags via `poetry-dynamic-versioning`.
 
 ### Added
 
+- P 层公开不可变记录、严格交换、内容身份与分级检查。
+  新增标准库可执行教程和 API 文档。
+  最小 wheel 验收检查必需依赖、安装路径与逐模块导入。
+  CI 在独立环境执行该入口。
+
 - Link the arXiv preprint (2609.29305) from both READMEs, the documentation homepage,
   package URLs, and citation metadata. Keep the software DOI as the default code citation.
 
