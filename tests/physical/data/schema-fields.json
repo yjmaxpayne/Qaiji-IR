@@ -1,0 +1,1253 @@
+{
+  "source": "P-v1 接口与编码契约。字段清单独立于 codec。",
+  "branches": {
+    "ArrayData": [
+      [
+        "dtype",
+        "shape",
+        "data"
+      ],
+      [
+        "dtype",
+        "shape",
+        "attachment"
+      ]
+    ],
+    "Site": [
+      [
+        "id",
+        "dim",
+        "basis"
+      ]
+    ],
+    "LocalFactor": [
+      [
+        "site",
+        "matrix"
+      ]
+    ],
+    "OperatorTerm": [
+      [
+        "coefficient",
+        "factors"
+      ]
+    ],
+    "OperatorSum": [
+      [
+        "unit",
+        "terms"
+      ]
+    ],
+    "Signal": [
+      [
+        "kind",
+        "unit",
+        "value"
+      ],
+      [
+        "kind",
+        "unit",
+        "values"
+      ]
+    ],
+    "Drive": [
+      [
+        "id",
+        "operator",
+        "signal"
+      ]
+    ],
+    "Jump": [
+      [
+        "id",
+        "operator",
+        "rate"
+      ]
+    ],
+    "Environment": [
+      [
+        "kind",
+        "jumps"
+      ]
+    ],
+    "ProductFactor": [
+      [
+        "site",
+        "kind",
+        "data"
+      ]
+    ],
+    "State": [
+      [
+        "kind",
+        "frame",
+        "data"
+      ],
+      [
+        "kind",
+        "frame",
+        "factors"
+      ]
+    ],
+    "RequiredExtension": [
+      [
+        "namespace",
+        "version",
+        "content_type",
+        "required",
+        "affects_physics",
+        "payload"
+      ]
+    ],
+    "SnapshotRef": [
+      [
+        "id",
+        "version",
+        "digest"
+      ]
+    ],
+    "BasisMapping": [
+      [
+        "logical_bit",
+        "site",
+        "zero_label",
+        "one_label"
+      ]
+    ],
+    "Provenance": [
+      [
+        "kind",
+        "program_ref",
+        "binder_version",
+        "device_snapshot",
+        "calibration_snapshot",
+        "basis_mapping",
+        "prior_transforms"
+      ]
+    ],
+    "Observation": [
+      [
+        "id",
+        "kind",
+        "representation"
+      ],
+      [
+        "id",
+        "kind",
+        "operator"
+      ],
+      [
+        "id",
+        "kind",
+        "keep_sites"
+      ],
+      [
+        "id",
+        "kind",
+        "input_sites",
+        "isometry"
+      ]
+    ],
+    "ObservationValue": [
+      [
+        "id",
+        "kind",
+        "representation",
+        "data"
+      ],
+      [
+        "id",
+        "kind",
+        "data"
+      ],
+      [
+        "id",
+        "kind",
+        "keep_sites",
+        "data"
+      ],
+      [
+        "id",
+        "kind",
+        "input_sites",
+        "block",
+        "leakage",
+        "input_trace",
+        "trace_error"
+      ]
+    ],
+    "MethodChoice": [
+      [
+        "mode",
+        "value",
+        "allowed"
+      ],
+      [
+        "mode",
+        "value",
+        "allowed"
+      ]
+    ],
+    "ExecutionPolicy": [
+      [
+        "method",
+        "atol",
+        "rtol",
+        "max_step_ns",
+        "representation"
+      ]
+    ],
+    "PolicyDifference": [
+      [
+        "path",
+        "requested",
+        "actual",
+        "basis"
+      ]
+    ],
+    "TransformRecord": [
+      [
+        "name",
+        "kind",
+        "authorization"
+      ]
+    ],
+    "ExecutionReport": [
+      [
+        "backend_id",
+        "backend_version",
+        "actual_policy",
+        "policy_differences",
+        "transforms",
+        "state_representations",
+        "validation_level",
+        "diagnostics"
+      ]
+    ],
+    "Problem": [
+      [
+        "sites",
+        "tensor_order",
+        "h0",
+        "drives",
+        "environment",
+        "initial_state",
+        "signal_edges",
+        "time_unit",
+        "frame",
+        "approximations",
+        "extensions",
+        "schema"
+      ]
+    ],
+    "Request": [
+      [
+        "problem",
+        "output_times",
+        "observations",
+        "policy",
+        "provenance",
+        "schema"
+      ]
+    ],
+    "Result": [
+      [
+        "request_id",
+        "output_times",
+        "tensor_order",
+        "frame",
+        "observations",
+        "report",
+        "schema"
+      ]
+    ],
+    "Requirements": [
+      [
+        "profiles",
+        "dimension",
+        "precision",
+        "required_extensions",
+        "output_kinds",
+        "methods",
+        "schema"
+      ]
+    ],
+    "Capabilities": [
+      [
+        "consumer_id",
+        "consumer_version",
+        "profiles",
+        "max_dimension",
+        "precision",
+        "required_extensions",
+        "output_kinds",
+        "methods",
+        "schema"
+      ]
+    ],
+    "Diagnostic": [
+      [
+        "category",
+        "code",
+        "path",
+        "message",
+        "details"
+      ]
+    ]
+  },
+  "examples": {
+    "problem": {
+      "approximations": [],
+      "drives": [
+        {
+          "id": "μ",
+          "operator": {
+            "terms": [
+              {
+                "coefficient": [
+                  "3fe0000000000000",
+                  "bfd0000000000000"
+                ],
+                "factors": [
+                  {
+                    "matrix": {
+                      "data": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAAAAAAAA8L8AAAAAAAAAAAAAAAAAAPA/AAAAAAAAAAAAAAAAAAAAAA==",
+                      "dtype": "c128le",
+                      "shape": [
+                        2,
+                        2
+                      ]
+                    },
+                    "site": "a"
+                  }
+                ]
+              },
+              {
+                "coefficient": [
+                  "8000000000000000",
+                  "3ff0000000000000"
+                ],
+                "factors": [
+                  {
+                    "matrix": {
+                      "data": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAAAAAAAA8L8AAAAAAAAAAAAAAAAAAPA/AAAAAAAAAAAAAAAAAAAAAA==",
+                      "dtype": "c128le",
+                      "shape": [
+                        2,
+                        2
+                      ]
+                    },
+                    "site": "a"
+                  }
+                ]
+              }
+            ],
+            "unit": "rad/ns"
+          },
+          "signal": {
+            "kind": "constant",
+            "unit": "rad/ns",
+            "value": "8000000000000000"
+          }
+        },
+        {
+          "id": "zoh",
+          "operator": {
+            "terms": [
+              {
+                "coefficient": [
+                  "3fe0000000000000",
+                  "bfd0000000000000"
+                ],
+                "factors": [
+                  {
+                    "matrix": {
+                      "data": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAAAAAAAA8L8AAAAAAAAAAAAAAAAAAPA/AAAAAAAAAAAAAAAAAAAAAA==",
+                      "dtype": "c128le",
+                      "shape": [
+                        2,
+                        2
+                      ]
+                    },
+                    "site": "a"
+                  }
+                ]
+              },
+              {
+                "coefficient": [
+                  "8000000000000000",
+                  "3ff0000000000000"
+                ],
+                "factors": [
+                  {
+                    "matrix": {
+                      "data": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAAAAAAAA8L8AAAAAAAAAAAAAAAAAAPA/AAAAAAAAAAAAAAAAAAAAAA==",
+                      "dtype": "c128le",
+                      "shape": [
+                        2,
+                        2
+                      ]
+                    },
+                    "site": "a"
+                  }
+                ]
+              }
+            ],
+            "unit": "rad/ns"
+          },
+          "signal": {
+            "kind": "zoh",
+            "unit": "rad/ns",
+            "values": {
+              "dtype": "f64le",
+              "shape": [
+                1
+              ],
+              "data": "AAAAAAAA6D8="
+            }
+          }
+        }
+      ],
+      "environment": {
+        "kind": "markovian",
+        "jumps": [
+          {
+            "id": "jump",
+            "operator": {
+              "terms": [
+                {
+                  "coefficient": [
+                    "3fe0000000000000",
+                    "bfd0000000000000"
+                  ],
+                  "factors": [
+                    {
+                      "matrix": {
+                        "data": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAAAAAAAA8L8AAAAAAAAAAAAAAAAAAPA/AAAAAAAAAAAAAAAAAAAAAA==",
+                        "dtype": "c128le",
+                        "shape": [
+                          2,
+                          2
+                        ]
+                      },
+                      "site": "a"
+                    }
+                  ]
+                },
+                {
+                  "coefficient": [
+                    "8000000000000000",
+                    "3ff0000000000000"
+                  ],
+                  "factors": [
+                    {
+                      "matrix": {
+                        "data": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAAAAAAAA8L8AAAAAAAAAAAAAAAAAAPA/AAAAAAAAAAAAAAAAAAAAAA==",
+                        "dtype": "c128le",
+                        "shape": [
+                          2,
+                          2
+                        ]
+                      },
+                      "site": "a"
+                    }
+                  ]
+                }
+              ],
+              "unit": "rad/ns"
+            },
+            "rate": {
+              "kind": "constant",
+              "unit": "1/ns",
+              "value": "3f947ae147ae147b"
+            }
+          }
+        ]
+      },
+      "extensions": [
+        {
+          "affects_physics": true,
+          "content_type": "application/vnd.qaiji.p.opaque+json",
+          "namespace": "org.qaiji.fixtures.bath-correlation",
+          "payload": {
+            "correlation": {
+              "$p_array": {
+                "data": "AAAAAAAA8D8AAAAAAAAAAAAAAAAAAACAAAAAAAAA8L8=",
+                "dtype": "c128le",
+                "shape": [
+                  2
+                ]
+              }
+            },
+            "correlation_unit": "1/ns^2",
+            "label": "μ/é/é/😀/\b\t\n\f\r\u0001/\"/\\",
+            "lag_unit": "ns",
+            "lags": {
+              "$p_array": {
+                "data": "AAAAAAAAAAAAAAAAAADwPw==",
+                "dtype": "f64le",
+                "shape": [
+                  2
+                ]
+              }
+            },
+            "ordinary": {
+              "dtype": "mystery",
+              "shape": [
+                -1
+              ],
+              "data": "not base64"
+            }
+          },
+          "required": true,
+          "version": "1.0"
+        }
+      ],
+      "frame": "lab",
+      "h0": {
+        "terms": [
+          {
+            "coefficient": [
+              "3fe0000000000000",
+              "bfd0000000000000"
+            ],
+            "factors": [
+              {
+                "matrix": {
+                  "data": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAAAAAAAA8L8AAAAAAAAAAAAAAAAAAPA/AAAAAAAAAAAAAAAAAAAAAA==",
+                  "dtype": "c128le",
+                  "shape": [
+                    2,
+                    2
+                  ]
+                },
+                "site": "a"
+              }
+            ]
+          },
+          {
+            "coefficient": [
+              "8000000000000000",
+              "3ff0000000000000"
+            ],
+            "factors": [
+              {
+                "matrix": {
+                  "data": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAAAAAAAA8L8AAAAAAAAAAAAAAAAAAPA/AAAAAAAAAAAAAAAAAAAAAA==",
+                  "dtype": "c128le",
+                  "shape": [
+                    2,
+                    2
+                  ]
+                },
+                "site": "a"
+              }
+            ]
+          }
+        ],
+        "unit": "rad/ns"
+      },
+      "initial_state": {
+        "data": {
+          "data": "AAAAAAAA8D8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          "dtype": "c128le",
+          "shape": [
+            6
+          ]
+        },
+        "frame": "lab",
+        "kind": "ket"
+      },
+      "schema": "qaiji.p.problem/1.0",
+      "signal_edges": {
+        "data": "AAAAAAAAAAAAAAAAAADwPw==",
+        "dtype": "f64le",
+        "shape": [
+          2
+        ]
+      },
+      "sites": [
+        {
+          "basis": [
+            "ground",
+            "excited"
+          ],
+          "dim": 2,
+          "id": "a"
+        },
+        {
+          "basis": [
+            "0",
+            "1",
+            "2"
+          ],
+          "dim": 3,
+          "id": "b"
+        }
+      ],
+      "tensor_order": [
+        "b",
+        "a"
+      ],
+      "time_unit": "ns"
+    },
+    "request": {
+      "observations": [
+        {
+          "id": "full",
+          "kind": "full_state",
+          "representation": "either"
+        },
+        {
+          "id": "exp",
+          "kind": "expectation",
+          "operator": {
+            "terms": [
+              {
+                "coefficient": [
+                  "3fe0000000000000",
+                  "bfd0000000000000"
+                ],
+                "factors": [
+                  {
+                    "matrix": {
+                      "data": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAAAAAAAA8L8AAAAAAAAAAAAAAAAAAPA/AAAAAAAAAAAAAAAAAAAAAA==",
+                      "dtype": "c128le",
+                      "shape": [
+                        2,
+                        2
+                      ]
+                    },
+                    "site": "a"
+                  }
+                ]
+              },
+              {
+                "coefficient": [
+                  "8000000000000000",
+                  "3ff0000000000000"
+                ],
+                "factors": [
+                  {
+                    "matrix": {
+                      "data": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAAAAAAAA8L8AAAAAAAAAAAAAAAAAAPA/AAAAAAAAAAAAAAAAAAAAAA==",
+                      "dtype": "c128le",
+                      "shape": [
+                        2,
+                        2
+                      ]
+                    },
+                    "site": "a"
+                  }
+                ]
+              }
+            ],
+            "unit": "rad/ns"
+          }
+        },
+        {
+          "id": "trace",
+          "kind": "partial_trace",
+          "keep_sites": [
+            "b"
+          ]
+        },
+        {
+          "id": "project",
+          "kind": "projection",
+          "input_sites": [
+            "a"
+          ],
+          "isometry": {
+            "dtype": "c128le",
+            "shape": [
+              2,
+              1
+            ],
+            "data": "AAAAAAAA8D8AAAAAAAAAAAAAAAAAAAAAAAAAAAAA8D8="
+          }
+        }
+      ],
+      "output_times": {
+        "data": "AAAAAAAAAAAAAAAAAADgPwAAAAAAAPA/",
+        "dtype": "f64le",
+        "shape": [
+          3
+        ]
+      },
+      "policy": {
+        "atol": "3ddb7cdfd9d7bdbb",
+        "max_step_ns": null,
+        "method": {
+          "allowed": [
+            "reference-exact"
+          ],
+          "mode": "delegate",
+          "value": null
+        },
+        "representation": "density",
+        "rtol": "0000000000000000"
+      },
+      "problem": {
+        "approximations": [],
+        "drives": [
+          {
+            "id": "μ",
+            "operator": {
+              "terms": [
+                {
+                  "coefficient": [
+                    "3fe0000000000000",
+                    "bfd0000000000000"
+                  ],
+                  "factors": [
+                    {
+                      "matrix": {
+                        "data": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAAAAAAAA8L8AAAAAAAAAAAAAAAAAAPA/AAAAAAAAAAAAAAAAAAAAAA==",
+                        "dtype": "c128le",
+                        "shape": [
+                          2,
+                          2
+                        ]
+                      },
+                      "site": "a"
+                    }
+                  ]
+                },
+                {
+                  "coefficient": [
+                    "8000000000000000",
+                    "3ff0000000000000"
+                  ],
+                  "factors": [
+                    {
+                      "matrix": {
+                        "data": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAAAAAAAA8L8AAAAAAAAAAAAAAAAAAPA/AAAAAAAAAAAAAAAAAAAAAA==",
+                        "dtype": "c128le",
+                        "shape": [
+                          2,
+                          2
+                        ]
+                      },
+                      "site": "a"
+                    }
+                  ]
+                }
+              ],
+              "unit": "rad/ns"
+            },
+            "signal": {
+              "kind": "constant",
+              "unit": "rad/ns",
+              "value": "8000000000000000"
+            }
+          },
+          {
+            "id": "zoh",
+            "operator": {
+              "terms": [
+                {
+                  "coefficient": [
+                    "3fe0000000000000",
+                    "bfd0000000000000"
+                  ],
+                  "factors": [
+                    {
+                      "matrix": {
+                        "data": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAAAAAAAA8L8AAAAAAAAAAAAAAAAAAPA/AAAAAAAAAAAAAAAAAAAAAA==",
+                        "dtype": "c128le",
+                        "shape": [
+                          2,
+                          2
+                        ]
+                      },
+                      "site": "a"
+                    }
+                  ]
+                },
+                {
+                  "coefficient": [
+                    "8000000000000000",
+                    "3ff0000000000000"
+                  ],
+                  "factors": [
+                    {
+                      "matrix": {
+                        "data": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAAAAAAAA8L8AAAAAAAAAAAAAAAAAAPA/AAAAAAAAAAAAAAAAAAAAAA==",
+                        "dtype": "c128le",
+                        "shape": [
+                          2,
+                          2
+                        ]
+                      },
+                      "site": "a"
+                    }
+                  ]
+                }
+              ],
+              "unit": "rad/ns"
+            },
+            "signal": {
+              "kind": "zoh",
+              "unit": "rad/ns",
+              "values": {
+                "dtype": "f64le",
+                "shape": [
+                  1
+                ],
+                "data": "AAAAAAAA6D8="
+              }
+            }
+          }
+        ],
+        "environment": {
+          "kind": "markovian",
+          "jumps": [
+            {
+              "id": "jump",
+              "operator": {
+                "terms": [
+                  {
+                    "coefficient": [
+                      "3fe0000000000000",
+                      "bfd0000000000000"
+                    ],
+                    "factors": [
+                      {
+                        "matrix": {
+                          "data": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAAAAAAAA8L8AAAAAAAAAAAAAAAAAAPA/AAAAAAAAAAAAAAAAAAAAAA==",
+                          "dtype": "c128le",
+                          "shape": [
+                            2,
+                            2
+                          ]
+                        },
+                        "site": "a"
+                      }
+                    ]
+                  },
+                  {
+                    "coefficient": [
+                      "8000000000000000",
+                      "3ff0000000000000"
+                    ],
+                    "factors": [
+                      {
+                        "matrix": {
+                          "data": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAAAAAAAA8L8AAAAAAAAAAAAAAAAAAPA/AAAAAAAAAAAAAAAAAAAAAA==",
+                          "dtype": "c128le",
+                          "shape": [
+                            2,
+                            2
+                          ]
+                        },
+                        "site": "a"
+                      }
+                    ]
+                  }
+                ],
+                "unit": "rad/ns"
+              },
+              "rate": {
+                "kind": "constant",
+                "unit": "1/ns",
+                "value": "3f947ae147ae147b"
+              }
+            }
+          ]
+        },
+        "extensions": [
+          {
+            "affects_physics": true,
+            "content_type": "application/vnd.qaiji.p.opaque+json",
+            "namespace": "org.qaiji.fixtures.bath-correlation",
+            "payload": {
+              "correlation": {
+                "$p_array": {
+                  "data": "AAAAAAAA8D8AAAAAAAAAAAAAAAAAAACAAAAAAAAA8L8=",
+                  "dtype": "c128le",
+                  "shape": [
+                    2
+                  ]
+                }
+              },
+              "correlation_unit": "1/ns^2",
+              "label": "μ/é/é/😀/\b\t\n\f\r\u0001/\"/\\",
+              "lag_unit": "ns",
+              "lags": {
+                "$p_array": {
+                  "data": "AAAAAAAAAAAAAAAAAADwPw==",
+                  "dtype": "f64le",
+                  "shape": [
+                    2
+                  ]
+                }
+              },
+              "ordinary": {
+                "dtype": "mystery",
+                "shape": [
+                  -1
+                ],
+                "data": "not base64"
+              }
+            },
+            "required": true,
+            "version": "1.0"
+          }
+        ],
+        "frame": "lab",
+        "h0": {
+          "terms": [
+            {
+              "coefficient": [
+                "3fe0000000000000",
+                "bfd0000000000000"
+              ],
+              "factors": [
+                {
+                  "matrix": {
+                    "data": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAAAAAAAA8L8AAAAAAAAAAAAAAAAAAPA/AAAAAAAAAAAAAAAAAAAAAA==",
+                    "dtype": "c128le",
+                    "shape": [
+                      2,
+                      2
+                    ]
+                  },
+                  "site": "a"
+                }
+              ]
+            },
+            {
+              "coefficient": [
+                "8000000000000000",
+                "3ff0000000000000"
+              ],
+              "factors": [
+                {
+                  "matrix": {
+                    "data": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAAAAAAAA8L8AAAAAAAAAAAAAAAAAAPA/AAAAAAAAAAAAAAAAAAAAAA==",
+                    "dtype": "c128le",
+                    "shape": [
+                      2,
+                      2
+                    ]
+                  },
+                  "site": "a"
+                }
+              ]
+            }
+          ],
+          "unit": "rad/ns"
+        },
+        "initial_state": {
+          "data": {
+            "data": "AAAAAAAA8D8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+            "dtype": "c128le",
+            "shape": [
+              6
+            ]
+          },
+          "frame": "lab",
+          "kind": "ket"
+        },
+        "schema": "qaiji.p.problem/1.0",
+        "signal_edges": {
+          "data": "AAAAAAAAAAAAAAAAAADwPw==",
+          "dtype": "f64le",
+          "shape": [
+            2
+          ]
+        },
+        "sites": [
+          {
+            "basis": [
+              "ground",
+              "excited"
+            ],
+            "dim": 2,
+            "id": "a"
+          },
+          {
+            "basis": [
+              "0",
+              "1",
+              "2"
+            ],
+            "dim": 3,
+            "id": "b"
+          }
+        ],
+        "tensor_order": [
+          "b",
+          "a"
+        ],
+        "time_unit": "ns"
+      },
+      "schema": "qaiji.p.request/1.0",
+      "provenance": {
+        "kind": "device_bound",
+        "program_ref": "program",
+        "binder_version": "1",
+        "device_snapshot": {
+          "id": "device",
+          "version": "1",
+          "digest": null
+        },
+        "calibration_snapshot": {
+          "id": "cal",
+          "version": null,
+          "digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        "basis_mapping": [
+          {
+            "logical_bit": 0,
+            "site": "a",
+            "zero_label": "ground",
+            "one_label": "excited"
+          }
+        ],
+        "prior_transforms": [
+          {
+            "name": "bind",
+            "value": null
+          }
+        ]
+      }
+    },
+    "result": {
+      "schema": "qaiji.p.result/1.0",
+      "request_id": "sha256:ccb8a71547ff7d5cd63407f6dd45e22f29c3ef7cc79e9a65b545c535a551da34",
+      "output_times": {
+        "data": "AAAAAAAAAAAAAAAAAADgPwAAAAAAAPA/",
+        "dtype": "f64le",
+        "shape": [
+          3
+        ]
+      },
+      "tensor_order": [
+        "b",
+        "a"
+      ],
+      "frame": "lab",
+      "report": {
+        "backend_id": "consumer",
+        "backend_version": "1",
+        "actual_policy": {
+          "atol": "3ddb7cdfd9d7bdbb",
+          "max_step_ns": null,
+          "method": "reference-exact",
+          "representation": "density",
+          "rtol": "0000000000000000"
+        },
+        "policy_differences": [
+          {
+            "path": "/policy/method",
+            "requested": {
+              "allowed": [
+                "reference-exact"
+              ],
+              "mode": "delegate",
+              "value": null
+            },
+            "actual": "reference-exact",
+            "basis": "delegated"
+          }
+        ],
+        "transforms": [
+          {
+            "name": "integrator",
+            "kind": "numerical_substep",
+            "authorization": {
+              "policy": "/policy/max_step_ns"
+            }
+          }
+        ],
+        "state_representations": {
+          "full": "ket"
+        },
+        "validation_level": "transport",
+        "diagnostics": [
+          {
+            "category": "UNSUPPORTED_CAPABILITY",
+            "code": "EXTENSION",
+            "path": "/problem/extensions/0",
+            "message": "Unknown extension.",
+            "details": {
+              "namespace": "org.qaiji.fixtures.bath-correlation",
+              "version": "1.0"
+            }
+          }
+        ]
+      },
+      "observations": [
+        {
+          "id": "full",
+          "kind": "full_state",
+          "representation": "ket",
+          "data": {
+            "dtype": "c128le",
+            "shape": [
+              3,
+              6
+            ],
+            "data": "AAAAAAAA8D8AAAAAAAAAAAAAAAAAAAAAAAAAAAAA8D8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA8D8AAAAAAAAAAAAAAAAAAAAAAAAAAAAA8D8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA8D8AAAAAAAAAAAAAAAAAAAAAAAAAAAAA8D8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+          }
+        },
+        {
+          "id": "exp",
+          "kind": "expectation",
+          "data": {
+            "dtype": "c128le",
+            "shape": [
+              3
+            ],
+            "data": "AAAAAAAA8D8AAAAAAAAAAAAAAAAAAACAAAAAAAAA8L8AAAAAAADgPwAAAAAAANA/"
+          }
+        },
+        {
+          "id": "trace",
+          "kind": "partial_trace",
+          "keep_sites": [
+            "b"
+          ],
+          "data": {
+            "dtype": "c128le",
+            "shape": [
+              3,
+              3,
+              3
+            ],
+            "data": "AAAAAAAA8D8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+          }
+        },
+        {
+          "id": "project",
+          "kind": "projection",
+          "input_sites": [
+            "a"
+          ],
+          "block": {
+            "dtype": "c128le",
+            "shape": [
+              3,
+              1,
+              1
+            ],
+            "data": "AAAAAAAA4D8AAAAAAAAAAAAAAAAAANA/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+          },
+          "leakage": {
+            "dtype": "f64le",
+            "shape": [
+              3
+            ],
+            "data": "AAAAAAAA4D8AAAAAAADoPwAAAAAAAPA/"
+          },
+          "input_trace": {
+            "dtype": "f64le",
+            "shape": [
+              3
+            ],
+            "data": "AAAAAAAA8D8AAAAAAADwPwAAAAAAAPA/"
+          },
+          "trace_error": {
+            "dtype": "f64le",
+            "shape": [
+              3
+            ],
+            "data": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+          }
+        }
+      ]
+    },
+    "requirements": {
+      "profiles": [
+        {
+          "environment": "markovian",
+          "frame": "lab",
+          "interpolation": "zoh",
+          "determinism": "deterministic",
+          "initial_kind": "ket",
+          "method": "reference-exact",
+          "output_kinds": [
+            "full_state",
+            "expectation",
+            "partial_trace",
+            "projection"
+          ],
+          "state_representations": [
+            "ket",
+            "density"
+          ]
+        }
+      ],
+      "precision": {
+        "dtype": "binary64",
+        "atol": "3ddb7cdfd9d7bdbb",
+        "rtol": "0000000000000000"
+      },
+      "required_extensions": [
+        [
+          "org.qaiji.fixtures.bath-correlation",
+          "1.0"
+        ]
+      ],
+      "output_kinds": [
+        "full_state",
+        "expectation",
+        "partial_trace",
+        "projection"
+      ],
+      "methods": [
+        "reference-exact"
+      ],
+      "dimension": 6,
+      "schema": "qaiji.p.requirements/1.0"
+    },
+    "capabilities": {
+      "profiles": [
+        {
+          "environment": "markovian",
+          "frame": "lab",
+          "interpolation": "zoh",
+          "determinism": "deterministic",
+          "initial_kind": "ket",
+          "method": "reference-exact",
+          "output_kinds": [
+            "full_state",
+            "expectation",
+            "partial_trace",
+            "projection"
+          ],
+          "state_representations": [
+            "ket",
+            "density"
+          ]
+        }
+      ],
+      "precision": {
+        "dtype": "binary64",
+        "min_atol": "0000000000000000",
+        "min_rtol": "0000000000000000"
+      },
+      "required_extensions": [
+        [
+          "org.qaiji.fixtures.bath-correlation",
+          "1.0"
+        ]
+      ],
+      "output_kinds": [
+        "full_state",
+        "expectation",
+        "partial_trace",
+        "projection"
+      ],
+      "methods": [
+        "reference-exact"
+      ],
+      "consumer_id": "consumer",
+      "consumer_version": "1",
+      "max_dimension": 6,
+      "schema": "qaiji.p.capabilities/1.0"
+    }
+  }
+}

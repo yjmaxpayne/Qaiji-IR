@@ -1,0 +1,1965 @@
+{
+  "status": "planned",
+  "required_six": {
+    "tensor assembly": [
+      "AC-02/factor-reversal"
+    ],
+    "operator assembly": [
+      "AC-03/reverse-Y",
+      "AC-03/wrong-Hamiltonian-sign",
+      "AC-15/A-only-target-change"
+    ],
+    "unit interpretation": [
+      "AC-03/extra-2pi"
+    ],
+    "dissipator adaptation": [
+      "AC-04/rate-as-amplitude"
+    ],
+    "time interpretation": [
+      "AC-05/left-boundary",
+      "AC-05/snapped-time-label",
+      "AC-05/left-edge-state-with-original-label",
+      "AC-05/right-edge-state-with-original-label",
+      "AC-05/first-rate-extended"
+    ],
+    "codec": [
+      "AC-08/drop-imaginary",
+      "AC-08/replace-axis",
+      "AC-08/accept-unknown-key",
+      "AC-08/accept-duplicate-key"
+    ]
+  },
+  "children": [
+    {
+      "id": "AC-01/default-calibration",
+      "ac": "AC-01",
+      "oracle": "O-01",
+      "owner": "T7",
+      "entry": "tests/physical/test_restore_without_registry.py::test_p_rejects_registry_restore",
+      "injection": "substitute calibration scale inside restoration",
+      "variant": "default-calibration",
+      "reference": "frozen or independent analytic reference; never mutated",
+      "target": "independent physical-content comparison",
+      "baseline": "planned",
+      "injected": "planned",
+      "restored": "planned",
+      "guard_audit": "prove unique interceptor or record each removed guard layer",
+      "nodes": [
+        "tests/physical/test_restore_without_registry.py::test_p_rejects_registry_restore[a]",
+        "tests/physical/test_restore_without_registry.py::test_p_rejects_registry_restore[b]"
+      ],
+      "mechanism_nodes": []
+    },
+    {
+      "id": "AC-02/factor-reversal",
+      "ac": "AC-02",
+      "oracle": "O-02",
+      "owner": "T7",
+      "entry": "tests/physical/test_asymmetric_tensor.py::test_p_rejects_tensor_factor_swap",
+      "injection": "reverse tensor factors inside consumer A",
+      "variant": "factor-reversal",
+      "reference": "frozen or independent analytic reference; never mutated",
+      "target": "all matrix elements against literal index arithmetic",
+      "baseline": "planned",
+      "injected": "planned",
+      "restored": "planned",
+      "guard_audit": "prove unique interceptor or record each removed guard layer",
+      "nodes": [
+        "tests/physical/test_asymmetric_tensor.py::test_p_rejects_tensor_factor_swap[a]",
+        "tests/physical/test_asymmetric_tensor.py::test_p_rejects_tensor_factor_swap[b]"
+      ],
+      "mechanism_nodes": [
+        "tests/physical/test_six_internal_mutations.py::test_p_six_internal_mutations[AC-02/factor-reversal/a]",
+        "tests/physical/test_six_internal_mutations.py::test_p_six_internal_mutations[AC-02/factor-reversal/b]"
+      ]
+    },
+    {
+      "id": "AC-03/extra-2pi",
+      "ac": "AC-03",
+      "oracle": "O-03",
+      "owner": "T7",
+      "entry": "tests/physical/test_units_phase_hermitian_sum.py::test_p_rejects_phase_unit_sign",
+      "injection": "repeat 2*pi, reverse Y, or reverse commutator sign separately",
+      "variant": "extra-2pi",
+      "reference": "frozen or independent analytic reference; never mutated",
+      "target": "density matrix, signed Y expectation, and Hermitian total",
+      "baseline": "planned",
+      "injected": "planned",
+      "restored": "planned",
+      "guard_audit": "prove unique interceptor or record each removed guard layer",
+      "nodes": [
+        "tests/physical/test_units_phase_hermitian_sum.py::test_p_rejects_phase_unit_sign[extra-2pi-a]",
+        "tests/physical/test_units_phase_hermitian_sum.py::test_p_rejects_phase_unit_sign[extra-2pi-b]"
+      ],
+      "mechanism_nodes": [
+        "tests/physical/test_six_internal_mutations.py::test_p_six_internal_mutations[AC-03/extra-2pi/a]",
+        "tests/physical/test_six_internal_mutations.py::test_p_six_internal_mutations[AC-03/extra-2pi/b]"
+      ]
+    },
+    {
+      "id": "AC-03/reverse-Y",
+      "ac": "AC-03",
+      "oracle": "O-03",
+      "owner": "T7",
+      "entry": "tests/physical/test_units_phase_hermitian_sum.py::test_p_rejects_phase_unit_sign",
+      "injection": "repeat 2*pi, reverse Y, or reverse commutator sign separately",
+      "variant": "reverse-Y",
+      "reference": "frozen or independent analytic reference; never mutated",
+      "target": "density matrix, signed Y expectation, and Hermitian total",
+      "baseline": "planned",
+      "injected": "planned",
+      "restored": "planned",
+      "guard_audit": "prove unique interceptor or record each removed guard layer",
+      "nodes": [
+        "tests/physical/test_units_phase_hermitian_sum.py::test_p_rejects_phase_unit_sign[reverse-Y-a]",
+        "tests/physical/test_units_phase_hermitian_sum.py::test_p_rejects_phase_unit_sign[reverse-Y-b]"
+      ],
+      "mechanism_nodes": [
+        "tests/physical/test_six_internal_mutations.py::test_p_six_internal_mutations[AC-03/reverse-Y/a]",
+        "tests/physical/test_six_internal_mutations.py::test_p_six_internal_mutations[AC-03/reverse-Y/b]"
+      ]
+    },
+    {
+      "id": "AC-03/wrong-Hamiltonian-sign",
+      "ac": "AC-03",
+      "oracle": "O-03",
+      "owner": "T7",
+      "entry": "tests/physical/test_units_phase_hermitian_sum.py::test_p_rejects_phase_unit_sign",
+      "injection": "repeat 2*pi, reverse Y, or reverse commutator sign separately",
+      "variant": "wrong-Hamiltonian-sign",
+      "reference": "frozen or independent analytic reference; never mutated",
+      "target": "density matrix, signed Y expectation, and Hermitian total",
+      "baseline": "planned",
+      "injected": "planned",
+      "restored": "planned",
+      "guard_audit": "prove unique interceptor or record each removed guard layer",
+      "nodes": [
+        "tests/physical/test_units_phase_hermitian_sum.py::test_p_rejects_phase_unit_sign[wrong-Hamiltonian-sign-a]",
+        "tests/physical/test_units_phase_hermitian_sum.py::test_p_rejects_phase_unit_sign[wrong-Hamiltonian-sign-b]"
+      ],
+      "mechanism_nodes": [
+        "tests/physical/test_six_internal_mutations.py::test_p_six_internal_mutations[AC-03/wrong-Hamiltonian-sign/a]",
+        "tests/physical/test_six_internal_mutations.py::test_p_six_internal_mutations[AC-03/wrong-Hamiltonian-sign/b]"
+      ]
+    },
+    {
+      "id": "AC-04/rate-as-amplitude",
+      "ac": "AC-04",
+      "oracle": "O-04",
+      "owner": "T7",
+      "entry": "tests/physical/test_lindblad_rate.py::test_p_rejects_rate_as_amplitude",
+      "injection": "use gamma as collapse amplitude inside dissipator adaptation",
+      "variant": "rate-as-amplitude",
+      "reference": "frozen or independent analytic reference; never mutated",
+      "target": "excited population against exp(-1)",
+      "baseline": "planned",
+      "injected": "planned",
+      "restored": "planned",
+      "guard_audit": "prove unique interceptor or record each removed guard layer",
+      "nodes": [
+        "tests/physical/test_lindblad_rate.py::test_p_rejects_rate_as_amplitude[a]",
+        "tests/physical/test_lindblad_rate.py::test_p_rejects_rate_as_amplitude[b]"
+      ],
+      "mechanism_nodes": [
+        "tests/physical/test_six_internal_mutations.py::test_p_six_internal_mutations[AC-04/rate-as-amplitude/a]",
+        "tests/physical/test_six_internal_mutations.py::test_p_six_internal_mutations[AC-04/rate-as-amplitude/b]"
+      ]
+    },
+    {
+      "id": "AC-05/left-boundary",
+      "ac": "AC-05",
+      "oracle": "O-05",
+      "owner": "T7",
+      "entry": "tests/physical/test_zoh_and_output_values.py::test_p_rejects_zoh_and_state_snap",
+      "injection": "left-continuous boundary, sampled-rate extension, label snap, and state-only snap separately",
+      "variant": "left-boundary",
+      "reference": "frozen or independent analytic reference; never mutated",
+      "target": "u(1)=0.4; populations [0,sin(0.1)^2,sin(0.2)^2,sin(1)^2]; exp(-0.7)",
+      "baseline": "planned",
+      "injected": "planned",
+      "restored": "planned",
+      "guard_audit": "prove unique interceptor or record each removed guard layer",
+      "nodes": [
+        "tests/physical/test_zoh_and_output_values.py::test_p_rejects_zoh_and_state_snap[left-boundary-a]",
+        "tests/physical/test_zoh_and_output_values.py::test_p_rejects_zoh_and_state_snap[left-boundary-b]"
+      ],
+      "mechanism_nodes": [
+        "tests/physical/test_six_internal_mutations.py::test_p_six_internal_mutations[AC-05/left-boundary/a]",
+        "tests/physical/test_six_internal_mutations.py::test_p_six_internal_mutations[AC-05/left-boundary/b]"
+      ]
+    },
+    {
+      "id": "AC-05/snapped-time-label",
+      "ac": "AC-05",
+      "oracle": "O-05",
+      "owner": "T7",
+      "entry": "tests/physical/test_zoh_and_output_values.py::test_p_rejects_zoh_and_state_snap",
+      "injection": "left-continuous boundary, sampled-rate extension, label snap, and state-only snap separately",
+      "variant": "snapped-time-label",
+      "reference": "frozen or independent analytic reference; never mutated",
+      "target": "u(1)=0.4; populations [0,sin(0.1)^2,sin(0.2)^2,sin(1)^2]; exp(-0.7)",
+      "baseline": "planned",
+      "injected": "planned",
+      "restored": "planned",
+      "guard_audit": "prove unique interceptor or record each removed guard layer",
+      "nodes": [
+        "tests/physical/test_zoh_and_output_values.py::test_p_rejects_zoh_and_state_snap[snapped-time-label-a]",
+        "tests/physical/test_zoh_and_output_values.py::test_p_rejects_zoh_and_state_snap[snapped-time-label-b]"
+      ],
+      "mechanism_nodes": [
+        "tests/physical/test_six_internal_mutations.py::test_p_six_internal_mutations[AC-05/snapped-time-label/a]",
+        "tests/physical/test_six_internal_mutations.py::test_p_six_internal_mutations[AC-05/snapped-time-label/b]"
+      ]
+    },
+    {
+      "id": "AC-05/left-edge-state-with-original-label",
+      "ac": "AC-05",
+      "oracle": "O-05",
+      "owner": "T7",
+      "entry": "tests/physical/test_zoh_and_output_values.py::test_p_rejects_zoh_and_state_snap",
+      "injection": "left-continuous boundary, sampled-rate extension, label snap, and state-only snap separately",
+      "variant": "left-edge-state-with-original-label",
+      "reference": "frozen or independent analytic reference; never mutated",
+      "target": "u(1)=0.4; populations [0,sin(0.1)^2,sin(0.2)^2,sin(1)^2]; exp(-0.7)",
+      "baseline": "planned",
+      "injected": "planned",
+      "restored": "planned",
+      "guard_audit": "prove unique interceptor or record each removed guard layer",
+      "nodes": [
+        "tests/physical/test_zoh_and_output_values.py::test_p_rejects_zoh_and_state_snap[left-edge-state-with-original-label-a]",
+        "tests/physical/test_zoh_and_output_values.py::test_p_rejects_zoh_and_state_snap[left-edge-state-with-original-label-b]"
+      ],
+      "mechanism_nodes": [
+        "tests/physical/test_six_internal_mutations.py::test_p_six_internal_mutations[AC-05/left-edge-state-with-original-label/a]",
+        "tests/physical/test_six_internal_mutations.py::test_p_six_internal_mutations[AC-05/left-edge-state-with-original-label/b]"
+      ]
+    },
+    {
+      "id": "AC-05/right-edge-state-with-original-label",
+      "ac": "AC-05",
+      "oracle": "O-05",
+      "owner": "T7",
+      "entry": "tests/physical/test_zoh_and_output_values.py::test_p_rejects_zoh_and_state_snap",
+      "injection": "left-continuous boundary, sampled-rate extension, label snap, and state-only snap separately",
+      "variant": "right-edge-state-with-original-label",
+      "reference": "frozen or independent analytic reference; never mutated",
+      "target": "u(1)=0.4; populations [0,sin(0.1)^2,sin(0.2)^2,sin(1)^2]; exp(-0.7)",
+      "baseline": "planned",
+      "injected": "planned",
+      "restored": "planned",
+      "guard_audit": "prove unique interceptor or record each removed guard layer",
+      "nodes": [
+        "tests/physical/test_zoh_and_output_values.py::test_p_rejects_zoh_and_state_snap[right-edge-state-with-original-label-a]",
+        "tests/physical/test_zoh_and_output_values.py::test_p_rejects_zoh_and_state_snap[right-edge-state-with-original-label-b]"
+      ],
+      "mechanism_nodes": [
+        "tests/physical/test_six_internal_mutations.py::test_p_six_internal_mutations[AC-05/right-edge-state-with-original-label/a]",
+        "tests/physical/test_six_internal_mutations.py::test_p_six_internal_mutations[AC-05/right-edge-state-with-original-label/b]"
+      ]
+    },
+    {
+      "id": "AC-05/first-rate-extended",
+      "ac": "AC-05",
+      "oracle": "O-05",
+      "owner": "T7",
+      "entry": "tests/physical/test_zoh_and_output_values.py::test_p_rejects_zoh_and_state_snap",
+      "injection": "left-continuous boundary, sampled-rate extension, label snap, and state-only snap separately",
+      "variant": "first-rate-extended",
+      "reference": "frozen or independent analytic reference; never mutated",
+      "target": "u(1)=0.4; populations [0,sin(0.1)^2,sin(0.2)^2,sin(1)^2]; exp(-0.7)",
+      "baseline": "planned",
+      "injected": "planned",
+      "restored": "planned",
+      "guard_audit": "prove unique interceptor or record each removed guard layer",
+      "nodes": [
+        "tests/physical/test_zoh_and_output_values.py::test_p_rejects_zoh_and_state_snap[first-rate-extended-a]",
+        "tests/physical/test_zoh_and_output_values.py::test_p_rejects_zoh_and_state_snap[first-rate-extended-b]"
+      ],
+      "mechanism_nodes": [
+        "tests/physical/test_six_internal_mutations.py::test_p_six_internal_mutations[AC-05/first-rate-extended/a]",
+        "tests/physical/test_six_internal_mutations.py::test_p_six_internal_mutations[AC-05/first-rate-extended/b]"
+      ]
+    },
+    {
+      "id": "AC-05/terminal-sample-consumed",
+      "ac": "AC-05",
+      "oracle": "O-05",
+      "owner": "T7",
+      "entry": "tests/physical/test_zoh_and_output_values.py::test_p_rejects_zoh_and_state_snap",
+      "injection": "left-continuous boundary, sampled-rate extension, label snap, and state-only snap separately",
+      "variant": "terminal-sample-consumed",
+      "reference": "frozen or independent analytic reference; never mutated",
+      "target": "u(1)=0.4; populations [0,sin(0.1)^2,sin(0.2)^2,sin(1)^2]; exp(-0.7)",
+      "baseline": "planned",
+      "injected": "planned",
+      "restored": "planned",
+      "guard_audit": "prove unique interceptor or record each removed guard layer",
+      "input": "valid N-1 values; sentinel access at index N-1 fails in the time mechanism",
+      "nodes": [
+        "tests/physical/test_zoh_and_output_values.py::test_p_rejects_zoh_and_state_snap[terminal-sample-consumed-a]",
+        "tests/physical/test_zoh_and_output_values.py::test_p_rejects_zoh_and_state_snap[terminal-sample-consumed-b]"
+      ],
+      "mechanism_nodes": []
+    },
+    {
+      "id": "AC-06/fill-missing-ground-factor",
+      "ac": "AC-06",
+      "oracle": "O-06",
+      "owner": "T7",
+      "entry": "tests/physical/test_product_and_zero_duration.py::test_p_rejects_default_state_or_empty_output",
+      "injection": "fill omitted ground state or discard zero-duration record",
+      "variant": "fill-missing-ground-factor",
+      "reference": "frozen or independent analytic reference; never mutated",
+      "target": "PRODUCT_COVERAGE and initial values; evolution-call trap",
+      "baseline": "planned",
+      "injected": "planned",
+      "restored": "planned",
+      "guard_audit": "prove unique interceptor or record each removed guard layer",
+      "nodes": [
+        "tests/physical/test_product_and_zero_duration.py::test_p_rejects_default_state_or_empty_output[fill-missing-ground-factor-a]",
+        "tests/physical/test_product_and_zero_duration.py::test_p_rejects_default_state_or_empty_output[fill-missing-ground-factor-b]"
+      ],
+      "mechanism_nodes": []
+    },
+    {
+      "id": "AC-06/drop-zero-duration-output",
+      "ac": "AC-06",
+      "oracle": "O-06",
+      "owner": "T7",
+      "entry": "tests/physical/test_product_and_zero_duration.py::test_p_rejects_default_state_or_empty_output",
+      "injection": "fill omitted ground state or discard zero-duration record",
+      "variant": "drop-zero-duration-output",
+      "reference": "frozen or independent analytic reference; never mutated",
+      "target": "PRODUCT_COVERAGE and initial values; evolution-call trap",
+      "baseline": "planned",
+      "injected": "planned",
+      "restored": "planned",
+      "guard_audit": "prove unique interceptor or record each removed guard layer",
+      "nodes": [
+        "tests/physical/test_product_and_zero_duration.py::test_p_rejects_default_state_or_empty_output[drop-zero-duration-output-a]",
+        "tests/physical/test_product_and_zero_duration.py::test_p_rejects_default_state_or_empty_output[drop-zero-duration-output-b]"
+      ],
+      "mechanism_nodes": []
+    },
+    {
+      "id": "AC-06/call-evolution-at-zero-duration",
+      "ac": "AC-06",
+      "oracle": "O-06",
+      "owner": "T7",
+      "entry": "tests/physical/test_product_and_zero_duration.py::test_p_rejects_default_state_or_empty_output",
+      "injection": "fill omitted ground state or discard zero-duration record",
+      "variant": "call-evolution-at-zero-duration",
+      "reference": "frozen or independent analytic reference; never mutated",
+      "target": "PRODUCT_COVERAGE and initial values; evolution-call trap",
+      "baseline": "planned",
+      "injected": "planned",
+      "restored": "planned",
+      "guard_audit": "prove unique interceptor or record each removed guard layer",
+      "nodes": [
+        "tests/physical/test_product_and_zero_duration.py::test_p_rejects_default_state_or_empty_output[call-evolution-at-zero-duration-a]",
+        "tests/physical/test_product_and_zero_duration.py::test_p_rejects_default_state_or_empty_output[call-evolution-at-zero-duration-b]"
+      ],
+      "mechanism_nodes": []
+    },
+    {
+      "id": "AC-07/normalize-block",
+      "ac": "AC-07",
+      "oracle": "O-07",
+      "owner": "T7",
+      "entry": "tests/physical/test_partial_trace_complex_projection.py::test_p_rejects_projection_formula",
+      "injection": "normalize block, replace dagger by transpose, clip leakage, or subtract input_trace separately",
+      "variant": "normalize-block",
+      "reference": "frozen or independent analytic reference; never mutated",
+      "target": "block and scalar comparisons; exact V-08-T leakage=-2^-35 and trace_error=2^-35",
+      "baseline": "planned",
+      "injected": "planned",
+      "restored": "planned",
+      "guard_audit": "prove unique interceptor or record each removed guard layer",
+      "nodes": [
+        "tests/physical/test_partial_trace_complex_projection.py::test_p_rejects_projection_formula[normalize-block-a]",
+        "tests/physical/test_partial_trace_complex_projection.py::test_p_rejects_projection_formula[normalize-block-b]"
+      ],
+      "mechanism_nodes": []
+    },
+    {
+      "id": "AC-07/transpose-without-conjugate",
+      "ac": "AC-07",
+      "oracle": "O-07",
+      "owner": "T7",
+      "entry": "tests/physical/test_partial_trace_complex_projection.py::test_p_rejects_projection_formula",
+      "injection": "normalize block, replace dagger by transpose, clip leakage, or subtract input_trace separately",
+      "variant": "transpose-without-conjugate",
+      "reference": "frozen or independent analytic reference; never mutated",
+      "target": "block and scalar comparisons; exact V-08-T leakage=-2^-35 and trace_error=2^-35",
+      "baseline": "planned",
+      "injected": "planned",
+      "restored": "planned",
+      "guard_audit": "prove unique interceptor or record each removed guard layer",
+      "nodes": [
+        "tests/physical/test_partial_trace_complex_projection.py::test_p_rejects_projection_formula[transpose-without-conjugate-a]",
+        "tests/physical/test_partial_trace_complex_projection.py::test_p_rejects_projection_formula[transpose-without-conjugate-b]"
+      ],
+      "mechanism_nodes": []
+    },
+    {
+      "id": "AC-07/subtract-input-trace",
+      "ac": "AC-07",
+      "oracle": "O-07",
+      "owner": "T7",
+      "entry": "tests/physical/test_partial_trace_complex_projection.py::test_p_rejects_projection_formula",
+      "injection": "normalize block, replace dagger by transpose, clip leakage, or subtract input_trace separately",
+      "variant": "subtract-input-trace",
+      "reference": "frozen or independent analytic reference; never mutated",
+      "target": "block and scalar comparisons; exact V-08-T leakage=-2^-35 and trace_error=2^-35",
+      "baseline": "planned",
+      "injected": "planned",
+      "restored": "planned",
+      "guard_audit": "prove unique interceptor or record each removed guard layer",
+      "nodes": [
+        "tests/physical/test_partial_trace_complex_projection.py::test_p_rejects_projection_formula[subtract-input-trace-a]",
+        "tests/physical/test_partial_trace_complex_projection.py::test_p_rejects_projection_formula[subtract-input-trace-b]"
+      ],
+      "mechanism_nodes": []
+    },
+    {
+      "id": "AC-07/clip-negative-leakage",
+      "ac": "AC-07",
+      "oracle": "O-07",
+      "owner": "T7",
+      "entry": "tests/physical/test_partial_trace_complex_projection.py::test_p_rejects_projection_formula",
+      "injection": "normalize block, replace dagger by transpose, clip leakage, or subtract input_trace separately",
+      "variant": "clip-negative-leakage",
+      "reference": "frozen or independent analytic reference; never mutated",
+      "target": "block and scalar comparisons; exact V-08-T leakage=-2^-35 and trace_error=2^-35",
+      "baseline": "planned",
+      "injected": "planned",
+      "restored": "planned",
+      "guard_audit": "prove unique interceptor or record each removed guard layer",
+      "nodes": [
+        "tests/physical/test_partial_trace_complex_projection.py::test_p_rejects_projection_formula[clip-negative-leakage-a]",
+        "tests/physical/test_partial_trace_complex_projection.py::test_p_rejects_projection_formula[clip-negative-leakage-b]"
+      ],
+      "mechanism_nodes": []
+    },
+    {
+      "id": "AC-07/wrong-partial-trace-order",
+      "ac": "AC-07",
+      "oracle": "O-07",
+      "owner": "T7",
+      "entry": "tests/physical/test_partial_trace_complex_projection.py::test_p_rejects_projection_formula",
+      "injection": "normalize block, replace dagger by transpose, clip leakage, or subtract input_trace separately",
+      "variant": "wrong-partial-trace-order",
+      "reference": "frozen or independent analytic reference; never mutated",
+      "target": "block and scalar comparisons; exact V-08-T leakage=-2^-35 and trace_error=2^-35",
+      "baseline": "planned",
+      "injected": "planned",
+      "restored": "planned",
+      "guard_audit": "prove unique interceptor or record each removed guard layer",
+      "input": "asymmetric 2x3x2 state, keep_sites=[b,a]; compare every matrix element in declared order",
+      "nodes": [
+        "tests/physical/test_partial_trace_complex_projection.py::test_p_rejects_projection_formula[wrong-partial-trace-order-a]",
+        "tests/physical/test_partial_trace_complex_projection.py::test_p_rejects_projection_formula[wrong-partial-trace-order-b]"
+      ],
+      "mechanism_nodes": []
+    },
+    {
+      "id": "AC-08/drop-imaginary",
+      "ac": "AC-08",
+      "oracle": "O-08",
+      "owner": "T2",
+      "entry": "tests/physical/test_strict_exchange.py::test_p_rejects_codec_semantics",
+      "injection": "drop imaginary parts, replace axes, accept unknown key or duplicate keys separately",
+      "variant": "drop-imaginary",
+      "reference": "frozen or independent analytic reference; never mutated",
+      "target": "independent field inventory and frozen exchange bytes",
+      "baseline": "planned",
+      "injected": "planned",
+      "restored": "planned",
+      "guard_audit": "prove unique interceptor or record each removed guard layer",
+      "nodes": [
+        "tests/physical/test_strict_exchange.py::test_p_rejects_codec_semantics[drop-imaginary]"
+      ],
+      "mechanism_nodes": [
+        "tests/physical/test_six_internal_mutations.py::test_p_six_internal_mutations[AC-08/drop-imaginary/codec]"
+      ]
+    },
+    {
+      "id": "AC-08/replace-axis",
+      "ac": "AC-08",
+      "oracle": "O-08",
+      "owner": "T2",
+      "entry": "tests/physical/test_strict_exchange.py::test_p_rejects_codec_semantics",
+      "injection": "drop imaginary parts, replace axes, accept unknown key or duplicate keys separately",
+      "variant": "replace-axis",
+      "reference": "frozen or independent analytic reference; never mutated",
+      "target": "independent field inventory and frozen exchange bytes",
+      "baseline": "planned",
+      "injected": "planned",
+      "restored": "planned",
+      "guard_audit": "prove unique interceptor or record each removed guard layer",
+      "nodes": [
+        "tests/physical/test_strict_exchange.py::test_p_rejects_codec_semantics[replace-axis]"
+      ],
+      "mechanism_nodes": [
+        "tests/physical/test_six_internal_mutations.py::test_p_six_internal_mutations[AC-08/replace-axis/codec]"
+      ]
+    },
+    {
+      "id": "AC-08/accept-unknown-key",
+      "ac": "AC-08",
+      "oracle": "O-08",
+      "owner": "T2",
+      "entry": "tests/physical/test_strict_exchange.py::test_p_rejects_codec_semantics",
+      "injection": "drop imaginary parts, replace axes, accept unknown key or duplicate keys separately",
+      "variant": "accept-unknown-key",
+      "reference": "frozen or independent analytic reference; never mutated",
+      "target": "independent field inventory and frozen exchange bytes",
+      "baseline": "planned",
+      "injected": "planned",
+      "restored": "planned",
+      "guard_audit": "prove unique interceptor or record each removed guard layer",
+      "nodes": [
+        "tests/physical/test_strict_exchange.py::test_p_rejects_codec_semantics[accept-unknown-key]"
+      ],
+      "mechanism_nodes": [
+        "tests/physical/test_six_internal_mutations.py::test_p_six_internal_mutations[AC-08/accept-unknown-key/codec]"
+      ]
+    },
+    {
+      "id": "AC-08/accept-duplicate-key",
+      "ac": "AC-08",
+      "oracle": "O-08",
+      "owner": "T2",
+      "entry": "tests/physical/test_strict_exchange.py::test_p_rejects_codec_semantics",
+      "injection": "drop imaginary parts, replace axes, accept unknown key or duplicate keys separately",
+      "variant": "accept-duplicate-key",
+      "reference": "frozen or independent analytic reference; never mutated",
+      "target": "independent field inventory and frozen exchange bytes",
+      "baseline": "planned",
+      "injected": "planned",
+      "restored": "planned",
+      "guard_audit": "prove unique interceptor or record each removed guard layer",
+      "nodes": [
+        "tests/physical/test_strict_exchange.py::test_p_rejects_codec_semantics[accept-duplicate-key]"
+      ],
+      "mechanism_nodes": [
+        "tests/physical/test_six_internal_mutations.py::test_p_six_internal_mutations[AC-08/accept-duplicate-key/codec]"
+      ]
+    },
+    {
+      "id": "AC-08/accept-nonfinite",
+      "ac": "AC-08",
+      "oracle": "O-08",
+      "owner": "T2",
+      "entry": "tests/physical/test_strict_exchange.py::test_p_rejects_codec_semantics",
+      "injection": "drop imaginary parts, replace axes, accept unknown key or duplicate keys separately",
+      "variant": "accept-nonfinite",
+      "reference": "frozen or independent analytic reference; never mutated",
+      "target": "independent field inventory and frozen exchange bytes",
+      "baseline": "planned",
+      "injected": "planned",
+      "restored": "planned",
+      "guard_audit": "prove unique interceptor or record each removed guard layer",
+      "nodes": [
+        "tests/physical/test_strict_exchange.py::test_p_rejects_codec_semantics[accept-nonfinite]"
+      ],
+      "mechanism_nodes": []
+    },
+    {
+      "id": "AC-08/accept-unknown-minor",
+      "ac": "AC-08",
+      "oracle": "O-08",
+      "owner": "T2",
+      "entry": "tests/physical/test_strict_exchange.py::test_p_rejects_codec_semantics",
+      "injection": "drop imaginary parts, replace axes, accept unknown key or duplicate keys separately",
+      "variant": "accept-unknown-minor",
+      "reference": "frozen or independent analytic reference; never mutated",
+      "target": "independent field inventory and frozen exchange bytes",
+      "baseline": "planned",
+      "injected": "planned",
+      "restored": "planned",
+      "guard_audit": "prove unique interceptor or record each removed guard layer",
+      "nodes": [
+        "tests/physical/test_strict_exchange.py::test_p_rejects_codec_semantics[accept-unknown-minor]"
+      ],
+      "mechanism_nodes": []
+    },
+    {
+      "id": "AC-09/omit-phase",
+      "ac": "AC-09",
+      "oracle": "O-09",
+      "owner": "T3",
+      "entry": "tests/physical/test_identity_sensitivity.py::test_p_rejects_identity_omission",
+      "injection": "omit each identity component inside identity projection",
+      "variant": "omit-phase",
+      "reference": "frozen or independent analytic reference; never mutated",
+      "target": "independent domain SHA-256 and component sensitivity",
+      "baseline": "planned",
+      "injected": "planned",
+      "restored": "planned",
+      "guard_audit": "prove unique interceptor or record each removed guard layer",
+      "nodes": [
+        "tests/physical/test_identity_sensitivity.py::test_p_rejects_identity_omission[omit-phase]"
+      ],
+      "mechanism_nodes": []
+    },
+    {
+      "id": "AC-09/omit-target",
+      "ac": "AC-09",
+      "oracle": "O-09",
+      "owner": "T3",
+      "entry": "tests/physical/test_identity_sensitivity.py::test_p_rejects_identity_omission",
+      "injection": "omit each identity component inside identity projection",
+      "variant": "omit-target",
+      "reference": "frozen or independent analytic reference; never mutated",
+      "target": "independent domain SHA-256 and component sensitivity",
+      "baseline": "planned",
+      "injected": "planned",
+      "restored": "planned",
+      "guard_audit": "prove unique interceptor or record each removed guard layer",
+      "nodes": [
+        "tests/physical/test_identity_sensitivity.py::test_p_rejects_identity_omission[omit-target]"
+      ],
+      "mechanism_nodes": []
+    },
+    {
+      "id": "AC-09/omit-rate",
+      "ac": "AC-09",
+      "oracle": "O-09",
+      "owner": "T3",
+      "entry": "tests/physical/test_identity_sensitivity.py::test_p_rejects_identity_omission",
+      "injection": "omit each identity component inside identity projection",
+      "variant": "omit-rate",
+      "reference": "frozen or independent analytic reference; never mutated",
+      "target": "independent domain SHA-256 and component sensitivity",
+      "baseline": "planned",
+      "injected": "planned",
+      "restored": "planned",
+      "guard_audit": "prove unique interceptor or record each removed guard layer",
+      "nodes": [
+        "tests/physical/test_identity_sensitivity.py::test_p_rejects_identity_omission[omit-rate]"
+      ],
+      "mechanism_nodes": []
+    },
+    {
+      "id": "AC-09/omit-extension",
+      "ac": "AC-09",
+      "oracle": "O-09",
+      "owner": "T3",
+      "entry": "tests/physical/test_identity_sensitivity.py::test_p_rejects_identity_omission",
+      "injection": "omit each identity component inside identity projection",
+      "variant": "omit-extension",
+      "reference": "frozen or independent analytic reference; never mutated",
+      "target": "independent domain SHA-256 and component sensitivity",
+      "baseline": "planned",
+      "injected": "planned",
+      "restored": "planned",
+      "guard_audit": "prove unique interceptor or record each removed guard layer",
+      "nodes": [
+        "tests/physical/test_identity_sensitivity.py::test_p_rejects_identity_omission[omit-extension]"
+      ],
+      "mechanism_nodes": []
+    },
+    {
+      "id": "AC-09/omit-observation",
+      "ac": "AC-09",
+      "oracle": "O-09",
+      "owner": "T3",
+      "entry": "tests/physical/test_identity_sensitivity.py::test_p_rejects_identity_omission",
+      "injection": "omit each identity component inside identity projection",
+      "variant": "omit-observation",
+      "reference": "frozen or independent analytic reference; never mutated",
+      "target": "independent domain SHA-256 and component sensitivity",
+      "baseline": "planned",
+      "injected": "planned",
+      "restored": "planned",
+      "guard_audit": "prove unique interceptor or record each removed guard layer",
+      "nodes": [
+        "tests/physical/test_identity_sensitivity.py::test_p_rejects_identity_omission[omit-observation]"
+      ],
+      "mechanism_nodes": []
+    },
+    {
+      "id": "AC-09/omit-policy",
+      "ac": "AC-09",
+      "oracle": "O-09",
+      "owner": "T3",
+      "entry": "tests/physical/test_identity_sensitivity.py::test_p_rejects_identity_omission",
+      "injection": "omit each identity component inside identity projection",
+      "variant": "omit-policy",
+      "reference": "frozen or independent analytic reference; never mutated",
+      "target": "independent domain SHA-256 and component sensitivity",
+      "baseline": "planned",
+      "injected": "planned",
+      "restored": "planned",
+      "guard_audit": "prove unique interceptor or record each removed guard layer",
+      "nodes": [
+        "tests/physical/test_identity_sensitivity.py::test_p_rejects_identity_omission[omit-policy]"
+      ],
+      "mechanism_nodes": []
+    },
+    {
+      "id": "AC-09/include-provenance",
+      "ac": "AC-09",
+      "oracle": "O-09",
+      "owner": "T3",
+      "entry": "tests/physical/test_identity_sensitivity.py::test_p_rejects_identity_omission",
+      "injection": "omit each identity component inside identity projection",
+      "variant": "include-provenance",
+      "reference": "frozen or independent analytic reference; never mutated",
+      "target": "independent domain SHA-256 and component sensitivity",
+      "baseline": "planned",
+      "injected": "planned",
+      "restored": "planned",
+      "guard_audit": "prove unique interceptor or record each removed guard layer",
+      "nodes": [
+        "tests/physical/test_identity_sensitivity.py::test_p_rejects_identity_omission[include-provenance]"
+      ],
+      "mechanism_nodes": []
+    },
+    {
+      "id": "AC-10/drop-required-extension",
+      "ac": "AC-10",
+      "oracle": "O-10",
+      "owner": "T4",
+      "entry": "tests/physical/test_required_bath_extension.py::test_p_rejects_bath_drop_or_certify",
+      "injection": "drop extension in loader or permit unknown extension in physical gate separately",
+      "variant": "drop-required-extension",
+      "reference": "frozen or independent analytic reference; never mutated",
+      "target": "exact transport; REQUIRED_EXTENSION before dense assembly",
+      "baseline": "planned",
+      "injected": "planned",
+      "restored": "planned",
+      "guard_audit": "prove unique interceptor or record each removed guard layer",
+      "nodes": [
+        "tests/physical/test_required_bath_extension.py::test_p_rejects_bath_drop_or_certify[drop-required-extension]"
+      ],
+      "mechanism_nodes": []
+    },
+    {
+      "id": "AC-10/certify-unknown-bath",
+      "ac": "AC-10",
+      "oracle": "O-10",
+      "owner": "T4",
+      "entry": "tests/physical/test_required_bath_extension.py::test_p_rejects_bath_drop_or_certify",
+      "injection": "drop extension in loader or permit unknown extension in physical gate separately",
+      "variant": "certify-unknown-bath",
+      "reference": "frozen or independent analytic reference; never mutated",
+      "target": "exact transport; REQUIRED_EXTENSION before dense assembly",
+      "baseline": "planned",
+      "injected": "planned",
+      "restored": "planned",
+      "guard_audit": "prove unique interceptor or record each removed guard layer",
+      "nodes": [
+        "tests/physical/test_required_bath_extension.py::test_p_rejects_bath_drop_or_certify[certify-unknown-bath]"
+      ],
+      "mechanism_nodes": []
+    },
+    {
+      "id": "AC-10/execute-unknown-bath",
+      "ac": "AC-10",
+      "oracle": "O-10",
+      "owner": "T4",
+      "entry": "tests/physical/test_required_bath_extension.py::test_p_rejects_bath_drop_or_certify",
+      "injection": "drop extension in loader or permit unknown extension in physical gate separately",
+      "variant": "execute-unknown-bath",
+      "reference": "frozen or independent analytic reference; never mutated",
+      "target": "exact transport; REQUIRED_EXTENSION before dense assembly",
+      "baseline": "planned",
+      "injected": "planned",
+      "restored": "planned",
+      "guard_audit": "prove unique interceptor or record each removed guard layer",
+      "nodes": [
+        "tests/physical/test_required_bath_extension.py::test_p_rejects_bath_drop_or_certify[execute-unknown-bath]"
+      ],
+      "mechanism_nodes": []
+    },
+    {
+      "id": "AC-10/infer-array-from-ordinary-object",
+      "ac": "AC-10",
+      "oracle": "O-10",
+      "owner": "T4",
+      "entry": "tests/physical/test_required_bath_extension.py::test_p_rejects_bath_drop_or_certify",
+      "injection": "drop extension in loader or permit unknown extension in physical gate separately",
+      "variant": "infer-array-from-ordinary-object",
+      "reference": "frozen or independent analytic reference; never mutated",
+      "target": "exact transport; REQUIRED_EXTENSION before dense assembly",
+      "baseline": "planned",
+      "injected": "planned",
+      "restored": "planned",
+      "guard_audit": "prove unique interceptor or record each removed guard layer",
+      "nodes": [
+        "tests/physical/test_required_bath_extension.py::test_p_rejects_bath_drop_or_certify[infer-array-from-ordinary-object]"
+      ],
+      "mechanism_nodes": []
+    },
+    {
+      "id": "AC-11/compress-idle",
+      "ac": "AC-11",
+      "oracle": "O-11",
+      "owner": "T6",
+      "entry": "tests/physical/test_policy_permissions.py::test_p_rejects_report_as_permission",
+      "injection": "accept unrequested bound/transform, omit or invent a policy difference separately",
+      "variant": "compress-idle",
+      "reference": "frozen or independent analytic reference; never mutated",
+      "target": "POLICY_FIXED, POLICY_BOUND, POLICY_REPORT, TRANSFORM_FORBIDDEN",
+      "baseline": "planned",
+      "injected": "planned",
+      "restored": "planned",
+      "guard_audit": "prove unique interceptor or record each removed guard layer",
+      "nodes": [
+        "tests/physical/test_policy_permissions.py::test_p_rejects_report_as_permission[compress-idle]"
+      ],
+      "mechanism_nodes": []
+    },
+    {
+      "id": "AC-11/truncate-readout",
+      "ac": "AC-11",
+      "oracle": "O-11",
+      "owner": "T6",
+      "entry": "tests/physical/test_policy_permissions.py::test_p_rejects_report_as_permission",
+      "injection": "accept unrequested bound/transform, omit or invent a policy difference separately",
+      "variant": "truncate-readout",
+      "reference": "frozen or independent analytic reference; never mutated",
+      "target": "POLICY_FIXED, POLICY_BOUND, POLICY_REPORT, TRANSFORM_FORBIDDEN",
+      "baseline": "planned",
+      "injected": "planned",
+      "restored": "planned",
+      "guard_audit": "prove unique interceptor or record each removed guard layer",
+      "nodes": [
+        "tests/physical/test_policy_permissions.py::test_p_rejects_report_as_permission[truncate-readout]"
+      ],
+      "mechanism_nodes": []
+    },
+    {
+      "id": "AC-11/quantize-edge",
+      "ac": "AC-11",
+      "oracle": "O-11",
+      "owner": "T6",
+      "entry": "tests/physical/test_policy_permissions.py::test_p_rejects_report_as_permission",
+      "injection": "accept unrequested bound/transform, omit or invent a policy difference separately",
+      "variant": "quantize-edge",
+      "reference": "frozen or independent analytic reference; never mutated",
+      "target": "POLICY_FIXED, POLICY_BOUND, POLICY_REPORT, TRANSFORM_FORBIDDEN",
+      "baseline": "planned",
+      "injected": "planned",
+      "restored": "planned",
+      "guard_audit": "prove unique interceptor or record each removed guard layer",
+      "nodes": [
+        "tests/physical/test_policy_permissions.py::test_p_rejects_report_as_permission[quantize-edge]"
+      ],
+      "mechanism_nodes": []
+    },
+    {
+      "id": "AC-11/change-zoh-by-resampling",
+      "ac": "AC-11",
+      "oracle": "O-11",
+      "owner": "T6",
+      "entry": "tests/physical/test_policy_permissions.py::test_p_rejects_report_as_permission",
+      "injection": "accept unrequested bound/transform, omit or invent a policy difference separately",
+      "variant": "change-zoh-by-resampling",
+      "reference": "frozen or independent analytic reference; never mutated",
+      "target": "POLICY_FIXED, POLICY_BOUND, POLICY_REPORT, TRANSFORM_FORBIDDEN",
+      "baseline": "planned",
+      "injected": "planned",
+      "restored": "planned",
+      "guard_audit": "prove unique interceptor or record each removed guard layer",
+      "nodes": [
+        "tests/physical/test_policy_permissions.py::test_p_rejects_report_as_permission[change-zoh-by-resampling]"
+      ],
+      "mechanism_nodes": []
+    },
+    {
+      "id": "AC-11/apply-rwa",
+      "ac": "AC-11",
+      "oracle": "O-11",
+      "owner": "T6",
+      "entry": "tests/physical/test_policy_permissions.py::test_p_rejects_report_as_permission",
+      "injection": "accept unrequested bound/transform, omit or invent a policy difference separately",
+      "variant": "apply-rwa",
+      "reference": "frozen or independent analytic reference; never mutated",
+      "target": "POLICY_FIXED, POLICY_BOUND, POLICY_REPORT, TRANSFORM_FORBIDDEN",
+      "baseline": "planned",
+      "injected": "planned",
+      "restored": "planned",
+      "guard_audit": "prove unique interceptor or record each removed guard layer",
+      "nodes": [
+        "tests/physical/test_policy_permissions.py::test_p_rejects_report_as_permission[apply-rwa]"
+      ],
+      "mechanism_nodes": []
+    },
+    {
+      "id": "AC-11/change-fixed-bound",
+      "ac": "AC-11",
+      "oracle": "O-11",
+      "owner": "T6",
+      "entry": "tests/physical/test_policy_permissions.py::test_p_rejects_report_as_permission",
+      "injection": "accept unrequested bound/transform, omit or invent a policy difference separately",
+      "variant": "change-fixed-bound",
+      "reference": "frozen or independent analytic reference; never mutated",
+      "target": "POLICY_FIXED, POLICY_BOUND, POLICY_REPORT, TRANSFORM_FORBIDDEN",
+      "baseline": "planned",
+      "injected": "planned",
+      "restored": "planned",
+      "guard_audit": "prove unique interceptor or record each removed guard layer",
+      "nodes": [
+        "tests/physical/test_policy_permissions.py::test_p_rejects_report_as_permission[change-fixed-bound]"
+      ],
+      "mechanism_nodes": []
+    },
+    {
+      "id": "AC-11/omit-difference",
+      "ac": "AC-11",
+      "oracle": "O-11",
+      "owner": "T6",
+      "entry": "tests/physical/test_policy_permissions.py::test_p_rejects_report_as_permission",
+      "injection": "accept unrequested bound/transform, omit or invent a policy difference separately",
+      "variant": "omit-difference",
+      "reference": "frozen or independent analytic reference; never mutated",
+      "target": "POLICY_FIXED, POLICY_BOUND, POLICY_REPORT, TRANSFORM_FORBIDDEN",
+      "baseline": "planned",
+      "injected": "planned",
+      "restored": "planned",
+      "guard_audit": "prove unique interceptor or record each removed guard layer",
+      "nodes": [
+        "tests/physical/test_policy_permissions.py::test_p_rejects_report_as_permission[omit-difference]"
+      ],
+      "mechanism_nodes": []
+    },
+    {
+      "id": "AC-11/invent-difference",
+      "ac": "AC-11",
+      "oracle": "O-11",
+      "owner": "T6",
+      "entry": "tests/physical/test_policy_permissions.py::test_p_rejects_report_as_permission",
+      "injection": "accept unrequested bound/transform, omit or invent a policy difference separately",
+      "variant": "invent-difference",
+      "reference": "frozen or independent analytic reference; never mutated",
+      "target": "POLICY_FIXED, POLICY_BOUND, POLICY_REPORT, TRANSFORM_FORBIDDEN",
+      "baseline": "planned",
+      "injected": "planned",
+      "restored": "planned",
+      "guard_audit": "prove unique interceptor or record each removed guard layer",
+      "nodes": [
+        "tests/physical/test_policy_permissions.py::test_p_rejects_report_as_permission[invent-difference]"
+      ],
+      "mechanism_nodes": []
+    },
+    {
+      "id": "AC-11/out-of-allowed-method",
+      "ac": "AC-11",
+      "oracle": "O-11",
+      "owner": "T6",
+      "entry": "tests/physical/test_policy_permissions.py::test_p_rejects_report_as_permission",
+      "injection": "accept unrequested bound/transform, omit or invent a policy difference separately",
+      "variant": "out-of-allowed-method",
+      "reference": "frozen or independent analytic reference; never mutated",
+      "target": "POLICY_FIXED, POLICY_BOUND, POLICY_REPORT, TRANSFORM_FORBIDDEN",
+      "baseline": "planned",
+      "injected": "planned",
+      "restored": "planned",
+      "guard_audit": "prove unique interceptor or record each removed guard layer",
+      "nodes": [
+        "tests/physical/test_policy_permissions.py::test_p_rejects_report_as_permission[out-of-allowed-method]"
+      ],
+      "mechanism_nodes": []
+    },
+    {
+      "id": "AC-11/illegal-either-resolution",
+      "ac": "AC-11",
+      "oracle": "O-11",
+      "owner": "T6",
+      "entry": "tests/physical/test_policy_permissions.py::test_p_rejects_report_as_permission",
+      "injection": "accept unrequested bound/transform, omit or invent a policy difference separately",
+      "variant": "illegal-either-resolution",
+      "reference": "frozen or independent analytic reference; never mutated",
+      "target": "POLICY_FIXED, POLICY_BOUND, POLICY_REPORT, TRANSFORM_FORBIDDEN",
+      "baseline": "planned",
+      "injected": "planned",
+      "restored": "planned",
+      "guard_audit": "prove unique interceptor or record each removed guard layer",
+      "nodes": [
+        "tests/physical/test_policy_permissions.py::test_p_rejects_report_as_permission[illegal-either-resolution]"
+      ],
+      "mechanism_nodes": []
+    },
+    {
+      "id": "AC-12/empty-success-invalid-request",
+      "ac": "AC-12",
+      "oracle": "O-12",
+      "owner": "T6",
+      "entry": "tests/physical/test_diagnostic_ordering.py::test_p_rejects_failure_classification",
+      "injection": "classify as empty success or sort array indices lexically",
+      "variant": "empty-success-invalid-request",
+      "reference": "frozen or independent analytic reference; never mutated",
+      "target": "category/code/path/details; phase/token/code ordering; cause",
+      "baseline": "planned",
+      "injected": "planned",
+      "restored": "planned",
+      "guard_audit": "prove unique interceptor or record each removed guard layer",
+      "nodes": [
+        "tests/physical/test_diagnostic_ordering.py::test_p_rejects_failure_classification[empty-success-invalid-request]"
+      ],
+      "mechanism_nodes": []
+    },
+    {
+      "id": "AC-12/empty-success-unsupported",
+      "ac": "AC-12",
+      "oracle": "O-12",
+      "owner": "T6",
+      "entry": "tests/physical/test_diagnostic_ordering.py::test_p_rejects_failure_classification",
+      "injection": "classify as empty success or sort array indices lexically",
+      "variant": "empty-success-unsupported",
+      "reference": "frozen or independent analytic reference; never mutated",
+      "target": "category/code/path/details; phase/token/code ordering; cause",
+      "baseline": "planned",
+      "injected": "planned",
+      "restored": "planned",
+      "guard_audit": "prove unique interceptor or record each removed guard layer",
+      "nodes": [
+        "tests/physical/test_diagnostic_ordering.py::test_p_rejects_failure_classification[empty-success-unsupported]"
+      ],
+      "mechanism_nodes": []
+    },
+    {
+      "id": "AC-12/empty-success-resource",
+      "ac": "AC-12",
+      "oracle": "O-12",
+      "owner": "T6",
+      "entry": "tests/physical/test_diagnostic_ordering.py::test_p_rejects_failure_classification",
+      "injection": "classify as empty success or sort array indices lexically",
+      "variant": "empty-success-resource",
+      "reference": "frozen or independent analytic reference; never mutated",
+      "target": "category/code/path/details; phase/token/code ordering; cause",
+      "baseline": "planned",
+      "injected": "planned",
+      "restored": "planned",
+      "guard_audit": "prove unique interceptor or record each removed guard layer",
+      "nodes": [
+        "tests/physical/test_diagnostic_ordering.py::test_p_rejects_failure_classification[empty-success-resource]"
+      ],
+      "mechanism_nodes": []
+    },
+    {
+      "id": "AC-12/empty-success-solver",
+      "ac": "AC-12",
+      "oracle": "O-12",
+      "owner": "T6",
+      "entry": "tests/physical/test_diagnostic_ordering.py::test_p_rejects_failure_classification",
+      "injection": "classify as empty success or sort array indices lexically",
+      "variant": "empty-success-solver",
+      "reference": "frozen or independent analytic reference; never mutated",
+      "target": "category/code/path/details; phase/token/code ordering; cause",
+      "baseline": "planned",
+      "injected": "planned",
+      "restored": "planned",
+      "guard_audit": "prove unique interceptor or record each removed guard layer",
+      "nodes": [
+        "tests/physical/test_diagnostic_ordering.py::test_p_rejects_failure_classification[empty-success-solver]"
+      ],
+      "mechanism_nodes": []
+    },
+    {
+      "id": "AC-12/empty-success-invalid-result",
+      "ac": "AC-12",
+      "oracle": "O-12",
+      "owner": "T6",
+      "entry": "tests/physical/test_diagnostic_ordering.py::test_p_rejects_failure_classification",
+      "injection": "classify as empty success or sort array indices lexically",
+      "variant": "empty-success-invalid-result",
+      "reference": "frozen or independent analytic reference; never mutated",
+      "target": "category/code/path/details; phase/token/code ordering; cause",
+      "baseline": "planned",
+      "injected": "planned",
+      "restored": "planned",
+      "guard_audit": "prove unique interceptor or record each removed guard layer",
+      "nodes": [
+        "tests/physical/test_diagnostic_ordering.py::test_p_rejects_failure_classification[empty-success-invalid-result]"
+      ],
+      "mechanism_nodes": []
+    },
+    {
+      "id": "AC-12/lexical-index-sort",
+      "ac": "AC-12",
+      "oracle": "O-12",
+      "owner": "T6",
+      "entry": "tests/physical/test_diagnostic_ordering.py::test_p_rejects_failure_classification",
+      "injection": "classify as empty success or sort array indices lexically",
+      "variant": "lexical-index-sort",
+      "reference": "frozen or independent analytic reference; never mutated",
+      "target": "category/code/path/details; phase/token/code ordering; cause",
+      "baseline": "planned",
+      "injected": "planned",
+      "restored": "planned",
+      "guard_audit": "prove unique interceptor or record each removed guard layer",
+      "nodes": [
+        "tests/physical/test_diagnostic_ordering.py::test_p_rejects_failure_classification[lexical-index-sort]"
+      ],
+      "mechanism_nodes": []
+    },
+    {
+      "id": "AC-12/unescaped-json-pointer",
+      "ac": "AC-12",
+      "oracle": "O-12",
+      "owner": "T6",
+      "entry": "tests/physical/test_diagnostic_ordering.py::test_p_rejects_failure_classification",
+      "injection": "classify as empty success or sort array indices lexically",
+      "variant": "unescaped-json-pointer",
+      "reference": "frozen or independent analytic reference; never mutated",
+      "target": "category/code/path/details; phase/token/code ordering; cause",
+      "baseline": "planned",
+      "injected": "planned",
+      "restored": "planned",
+      "guard_audit": "prove unique interceptor or record each removed guard layer",
+      "nodes": [
+        "tests/physical/test_diagnostic_ordering.py::test_p_rejects_failure_classification[unescaped-json-pointer]"
+      ],
+      "mechanism_nodes": []
+    },
+    {
+      "id": "AC-13/skip-request-id",
+      "ac": "AC-13",
+      "oracle": "O-13",
+      "owner": "T6",
+      "entry": "tests/physical/test_result_binding.py::test_p_rejects_result_guard_omission",
+      "injection": "remove exactly one checker comparison for each individually invalid result",
+      "variant": "skip-request-id",
+      "reference": "frozen or independent analytic reference; never mutated",
+      "target": "INVALID_RESULT at the changed field; valid request diagnostics retain their categories",
+      "baseline": "planned",
+      "injected": "planned",
+      "restored": "planned",
+      "guard_audit": "prove unique interceptor or record each removed guard layer",
+      "nodes": [
+        "tests/physical/test_result_binding.py::test_p_rejects_result_guard_omission[skip-request-id]"
+      ],
+      "mechanism_nodes": []
+    },
+    {
+      "id": "AC-13/skip-time",
+      "ac": "AC-13",
+      "oracle": "O-13",
+      "owner": "T6",
+      "entry": "tests/physical/test_result_binding.py::test_p_rejects_result_guard_omission",
+      "injection": "remove exactly one checker comparison for each individually invalid result",
+      "variant": "skip-time",
+      "reference": "frozen or independent analytic reference; never mutated",
+      "target": "INVALID_RESULT at the changed field; valid request diagnostics retain their categories",
+      "baseline": "planned",
+      "injected": "planned",
+      "restored": "planned",
+      "guard_audit": "prove unique interceptor or record each removed guard layer",
+      "nodes": [
+        "tests/physical/test_result_binding.py::test_p_rejects_result_guard_omission[skip-time]"
+      ],
+      "mechanism_nodes": []
+    },
+    {
+      "id": "AC-13/skip-shape",
+      "ac": "AC-13",
+      "oracle": "O-13",
+      "owner": "T6",
+      "entry": "tests/physical/test_result_binding.py::test_p_rejects_result_guard_omission",
+      "injection": "remove exactly one checker comparison for each individually invalid result",
+      "variant": "skip-shape",
+      "reference": "frozen or independent analytic reference; never mutated",
+      "target": "INVALID_RESULT at the changed field; valid request diagnostics retain their categories",
+      "baseline": "planned",
+      "injected": "planned",
+      "restored": "planned",
+      "guard_audit": "prove unique interceptor or record each removed guard layer",
+      "nodes": [
+        "tests/physical/test_result_binding.py::test_p_rejects_result_guard_omission[skip-shape]"
+      ],
+      "mechanism_nodes": []
+    },
+    {
+      "id": "AC-13/skip-tensor-order",
+      "ac": "AC-13",
+      "oracle": "O-13",
+      "owner": "T6",
+      "entry": "tests/physical/test_result_binding.py::test_p_rejects_result_guard_omission",
+      "injection": "remove exactly one checker comparison for each individually invalid result",
+      "variant": "skip-tensor-order",
+      "reference": "frozen or independent analytic reference; never mutated",
+      "target": "INVALID_RESULT at the changed field; valid request diagnostics retain their categories",
+      "baseline": "planned",
+      "injected": "planned",
+      "restored": "planned",
+      "guard_audit": "prove unique interceptor or record each removed guard layer",
+      "nodes": [
+        "tests/physical/test_result_binding.py::test_p_rejects_result_guard_omission[skip-tensor-order]"
+      ],
+      "mechanism_nodes": []
+    },
+    {
+      "id": "AC-13/skip-frame",
+      "ac": "AC-13",
+      "oracle": "O-13",
+      "owner": "T6",
+      "entry": "tests/physical/test_result_binding.py::test_p_rejects_result_guard_omission",
+      "injection": "remove exactly one checker comparison for each individually invalid result",
+      "variant": "skip-frame",
+      "reference": "frozen or independent analytic reference; never mutated",
+      "target": "INVALID_RESULT at the changed field; valid request diagnostics retain their categories",
+      "baseline": "planned",
+      "injected": "planned",
+      "restored": "planned",
+      "guard_audit": "prove unique interceptor or record each removed guard layer",
+      "nodes": [
+        "tests/physical/test_result_binding.py::test_p_rejects_result_guard_omission[skip-frame]"
+      ],
+      "mechanism_nodes": []
+    },
+    {
+      "id": "AC-13/skip-policy-report",
+      "ac": "AC-13",
+      "oracle": "O-13",
+      "owner": "T6",
+      "entry": "tests/physical/test_result_binding.py::test_p_rejects_result_guard_omission",
+      "injection": "remove exactly one checker comparison for each individually invalid result",
+      "variant": "skip-policy-report",
+      "reference": "frozen or independent analytic reference; never mutated",
+      "target": "INVALID_RESULT at the changed field; valid request diagnostics retain their categories",
+      "baseline": "planned",
+      "injected": "planned",
+      "restored": "planned",
+      "guard_audit": "prove unique interceptor or record each removed guard layer",
+      "nodes": [
+        "tests/physical/test_result_binding.py::test_p_rejects_result_guard_omission[skip-policy-report]"
+      ],
+      "mechanism_nodes": []
+    },
+    {
+      "id": "AC-13/skip-observation-set",
+      "ac": "AC-13",
+      "oracle": "O-13",
+      "owner": "T6",
+      "entry": "tests/physical/test_result_binding.py::test_p_rejects_result_guard_omission",
+      "injection": "remove exactly one checker comparison for each individually invalid result",
+      "variant": "skip-observation-set",
+      "reference": "frozen or independent analytic reference; never mutated",
+      "target": "INVALID_RESULT at the changed field; valid request diagnostics retain their categories",
+      "baseline": "planned",
+      "injected": "planned",
+      "restored": "planned",
+      "guard_audit": "prove unique interceptor or record each removed guard layer",
+      "nodes": [
+        "tests/physical/test_result_binding.py::test_p_rejects_result_guard_omission[skip-observation-set]"
+      ],
+      "mechanism_nodes": []
+    },
+    {
+      "id": "AC-14/psd-loose-1e-7",
+      "ac": "AC-14",
+      "oracle": "O-14",
+      "owner": "T5",
+      "entry": "tests/physical/test_tiered_physical_budget.py::test_p_rejects_physical_budget_or_psd",
+      "injection": "loosen/tighten PSD tolerance, diagonal-only PSD, skip budget, reset per-value counter, repair input separately",
+      "variant": "psd-loose-1e-7",
+      "reference": "frozen or independent analytic reference; never mutated",
+      "target": "PSD truth table, no-assembly traps, RESOURCE_LIMIT and complete=False",
+      "baseline": "planned",
+      "injected": "planned",
+      "restored": "planned",
+      "guard_audit": "prove unique interceptor or record each removed guard layer",
+      "nodes": [
+        "tests/physical/test_tiered_physical_budget.py::test_p_rejects_physical_budget_or_psd[psd-loose-1e-7]"
+      ],
+      "mechanism_nodes": []
+    },
+    {
+      "id": "AC-14/psd-tight-zero",
+      "ac": "AC-14",
+      "oracle": "O-14",
+      "owner": "T5",
+      "entry": "tests/physical/test_tiered_physical_budget.py::test_p_rejects_physical_budget_or_psd",
+      "injection": "loosen/tighten PSD tolerance, diagonal-only PSD, skip budget, reset per-value counter, repair input separately",
+      "variant": "psd-tight-zero",
+      "reference": "frozen or independent analytic reference; never mutated",
+      "target": "PSD truth table, no-assembly traps, RESOURCE_LIMIT and complete=False",
+      "baseline": "planned",
+      "injected": "planned",
+      "restored": "planned",
+      "guard_audit": "prove unique interceptor or record each removed guard layer",
+      "nodes": [
+        "tests/physical/test_tiered_physical_budget.py::test_p_rejects_physical_budget_or_psd[psd-tight-zero]"
+      ],
+      "mechanism_nodes": []
+    },
+    {
+      "id": "AC-14/psd-diagonal-only",
+      "ac": "AC-14",
+      "oracle": "O-14",
+      "owner": "T5",
+      "entry": "tests/physical/test_tiered_physical_budget.py::test_p_rejects_physical_budget_or_psd",
+      "injection": "loosen/tighten PSD tolerance, diagonal-only PSD, skip budget, reset per-value counter, repair input separately",
+      "variant": "psd-diagonal-only",
+      "reference": "frozen or independent analytic reference; never mutated",
+      "target": "PSD truth table, no-assembly traps, RESOURCE_LIMIT and complete=False",
+      "baseline": "planned",
+      "injected": "planned",
+      "restored": "planned",
+      "guard_audit": "prove unique interceptor or record each removed guard layer",
+      "nodes": [
+        "tests/physical/test_tiered_physical_budget.py::test_p_rejects_physical_budget_or_psd[psd-diagonal-only]"
+      ],
+      "mechanism_nodes": []
+    },
+    {
+      "id": "AC-14/skip-budget",
+      "ac": "AC-14",
+      "oracle": "O-14",
+      "owner": "T5",
+      "entry": "tests/physical/test_tiered_physical_budget.py::test_p_rejects_physical_budget_or_psd",
+      "injection": "loosen/tighten PSD tolerance, diagonal-only PSD, skip budget, reset per-value counter, repair input separately",
+      "variant": "skip-budget",
+      "reference": "frozen or independent analytic reference; never mutated",
+      "target": "PSD truth table, no-assembly traps, RESOURCE_LIMIT and complete=False",
+      "baseline": "planned",
+      "injected": "planned",
+      "restored": "planned",
+      "guard_audit": "prove unique interceptor or record each removed guard layer",
+      "nodes": [
+        "tests/physical/test_tiered_physical_budget.py::test_p_rejects_physical_budget_or_psd[skip-budget]"
+      ],
+      "mechanism_nodes": []
+    },
+    {
+      "id": "AC-14/reset-cumulative-counter",
+      "ac": "AC-14",
+      "oracle": "O-14",
+      "owner": "T5",
+      "entry": "tests/physical/test_tiered_physical_budget.py::test_p_rejects_physical_budget_or_psd",
+      "injection": "loosen/tighten PSD tolerance, diagonal-only PSD, skip budget, reset per-value counter, repair input separately",
+      "variant": "reset-cumulative-counter",
+      "reference": "frozen or independent analytic reference; never mutated",
+      "target": "PSD truth table, no-assembly traps, RESOURCE_LIMIT and complete=False",
+      "baseline": "planned",
+      "injected": "planned",
+      "restored": "planned",
+      "guard_audit": "prove unique interceptor or record each removed guard layer",
+      "input": "two dim-1 density product factors plus dim-1 global density; each PSD costs 1 update; limit=1",
+      "nodes": [
+        "tests/physical/test_tiered_physical_budget.py::test_p_rejects_physical_budget_or_psd[reset-cumulative-counter]"
+      ],
+      "mechanism_nodes": []
+    },
+    {
+      "id": "AC-14/reset-request-result-counter",
+      "ac": "AC-14",
+      "oracle": "O-14",
+      "owner": "T6",
+      "entry": "tests/physical/test_tiered_physical_budget.py::test_p_request_and_result_share_budget",
+      "injection": "loosen/tighten PSD tolerance, diagonal-only PSD, skip budget, reset per-value counter, repair input separately",
+      "variant": "reset-request-result-counter",
+      "reference": "frozen or independent analytic reference; never mutated",
+      "target": "PSD truth table, no-assembly traps, RESOURCE_LIMIT and complete=False",
+      "baseline": "planned",
+      "injected": "planned",
+      "restored": "planned",
+      "guard_audit": "prove unique interceptor or record each removed guard layer",
+      "input": "one dim-2 density input and matching zero-duration full density result; budget permits one PSD only",
+      "nodes": [
+        "tests/physical/test_tiered_physical_budget.py::test_p_request_and_result_share_budget[reset-request-result-counter]"
+      ],
+      "mechanism_nodes": []
+    },
+    {
+      "id": "AC-14/repair-input",
+      "ac": "AC-14",
+      "oracle": "O-14",
+      "owner": "T5",
+      "entry": "tests/physical/test_tiered_physical_budget.py::test_p_rejects_physical_budget_or_psd",
+      "injection": "loosen/tighten PSD tolerance, diagonal-only PSD, skip budget, reset per-value counter, repair input separately",
+      "variant": "repair-input",
+      "reference": "frozen or independent analytic reference; never mutated",
+      "target": "PSD truth table, no-assembly traps, RESOURCE_LIMIT and complete=False",
+      "baseline": "planned",
+      "injected": "planned",
+      "restored": "planned",
+      "guard_audit": "prove unique interceptor or record each removed guard layer",
+      "nodes": [
+        "tests/physical/test_tiered_physical_budget.py::test_p_rejects_physical_budget_or_psd[repair-input]"
+      ],
+      "mechanism_nodes": []
+    },
+    {
+      "id": "AC-14/skip-global-product-normalization",
+      "ac": "AC-14",
+      "oracle": "O-14",
+      "owner": "T5",
+      "entry": "tests/physical/test_tiered_physical_budget.py::test_p_rejects_physical_budget_or_psd",
+      "injection": "loosen/tighten PSD tolerance, diagonal-only PSD, skip budget, reset per-value counter, repair input separately",
+      "variant": "skip-global-product-normalization",
+      "reference": "frozen or independent analytic reference; never mutated",
+      "target": "PSD truth table, no-assembly traps, RESOURCE_LIMIT and complete=False",
+      "baseline": "planned",
+      "injected": "planned",
+      "restored": "planned",
+      "guard_audit": "prove unique interceptor or record each removed guard layer",
+      "input": "two dimension-2 density factors diag(1+0.75e-10,0); D=4; adequate all other budgets",
+      "nodes": [
+        "tests/physical/test_tiered_physical_budget.py::test_p_rejects_physical_budget_or_psd[skip-global-product-normalization]"
+      ],
+      "mechanism_nodes": []
+    },
+    {
+      "id": "AC-14/skip-zero-pivot-offdiagonal",
+      "ac": "AC-14",
+      "oracle": "O-14",
+      "owner": "T5",
+      "entry": "tests/physical/test_tiered_physical_budget.py::test_p_rejects_physical_budget_or_psd",
+      "injection": "loosen/tighten PSD tolerance, diagonal-only PSD, skip budget, reset per-value counter, repair input separately",
+      "variant": "skip-zero-pivot-offdiagonal",
+      "reference": "frozen or independent analytic reference; never mutated",
+      "target": "PSD truth table, no-assembly traps, RESOURCE_LIMIT and complete=False",
+      "baseline": "planned",
+      "injected": "planned",
+      "restored": "planned",
+      "guard_audit": "prove unique interceptor or record each removed guard layer",
+      "nodes": [
+        "tests/physical/test_tiered_physical_budget.py::test_p_rejects_physical_budget_or_psd[skip-zero-pivot-offdiagonal]"
+      ],
+      "mechanism_nodes": []
+    },
+    {
+      "id": "AC-14/unchecked-integer-product",
+      "ac": "AC-14",
+      "oracle": "O-14",
+      "owner": "T5",
+      "entry": "tests/physical/test_tiered_physical_budget.py::test_p_rejects_physical_budget_or_psd",
+      "injection": "loosen/tighten PSD tolerance, diagonal-only PSD, skip budget, reset per-value counter, repair input separately",
+      "variant": "unchecked-integer-product",
+      "reference": "frozen or independent analytic reference; never mutated",
+      "target": "PSD truth table, no-assembly traps, RESOURCE_LIMIT and complete=False",
+      "baseline": "planned",
+      "injected": "planned",
+      "restored": "planned",
+      "guard_audit": "prove unique interceptor or record each removed guard layer",
+      "nodes": [
+        "tests/physical/test_tiered_physical_budget.py::test_p_rejects_physical_budget_or_psd[unchecked-integer-product]"
+      ],
+      "mechanism_nodes": []
+    },
+    {
+      "id": "AC-15/A-only-target-change",
+      "ac": "AC-15",
+      "oracle": "O-15",
+      "owner": "T7",
+      "entry": "tests/physical/test_independent_consumers.py::test_p_rejects_consumer_target_site",
+      "injection": "change target only inside consumer A's operator assembly",
+      "variant": "A-only-target-change",
+      "reference": "frozen or independent analytic reference; never mutated",
+      "target": "each consumer versus independent literal/analytic references, then A versus B",
+      "baseline": "planned",
+      "injected": "planned",
+      "restored": "planned",
+      "guard_audit": "prove unique interceptor or record each removed guard layer",
+      "nodes": [
+        "tests/physical/test_independent_consumers.py::test_p_rejects_consumer_target_site"
+      ],
+      "mechanism_nodes": [
+        "tests/physical/test_six_internal_mutations.py::test_p_six_internal_mutations[AC-15/A-only-target-change/a]"
+      ]
+    },
+    {
+      "id": "AC-16/remove-family",
+      "ac": "AC-16",
+      "oracle": "O-16",
+      "owner": "T8",
+      "entry": "tests/physical/test_six_internal_mutations.py::test_p_rejects_mutation_inventory",
+      "injection": "remove, relabel, bypass, or falsely mark one required child killed",
+      "variant": "remove-family",
+      "reference": "frozen or independent analytic reference; never mutated",
+      "target": "set equality and designated target assertion; restored baseline",
+      "baseline": "planned",
+      "injected": "planned",
+      "restored": "planned",
+      "guard_audit": "prove unique interceptor or record each removed guard layer",
+      "nodes": [
+        "tests/physical/test_six_internal_mutations.py::test_p_rejects_mutation_inventory[remove-family]"
+      ],
+      "mechanism_nodes": []
+    },
+    {
+      "id": "AC-16/rename-family",
+      "ac": "AC-16",
+      "oracle": "O-16",
+      "owner": "T8",
+      "entry": "tests/physical/test_six_internal_mutations.py::test_p_rejects_mutation_inventory",
+      "injection": "remove, relabel, bypass, or falsely mark one required child killed",
+      "variant": "rename-family",
+      "reference": "frozen or independent analytic reference; never mutated",
+      "target": "set equality and designated target assertion; restored baseline",
+      "baseline": "planned",
+      "injected": "planned",
+      "restored": "planned",
+      "guard_audit": "prove unique interceptor or record each removed guard layer",
+      "nodes": [
+        "tests/physical/test_six_internal_mutations.py::test_p_rejects_mutation_inventory[rename-family]"
+      ],
+      "mechanism_nodes": []
+    },
+    {
+      "id": "AC-16/skip-child",
+      "ac": "AC-16",
+      "oracle": "O-16",
+      "owner": "T8",
+      "entry": "tests/physical/test_six_internal_mutations.py::test_p_rejects_mutation_inventory",
+      "injection": "remove, relabel, bypass, or falsely mark one required child killed",
+      "variant": "skip-child",
+      "reference": "frozen or independent analytic reference; never mutated",
+      "target": "set equality and designated target assertion; restored baseline",
+      "baseline": "planned",
+      "injected": "planned",
+      "restored": "planned",
+      "guard_audit": "prove unique interceptor or record each removed guard layer",
+      "nodes": [
+        "tests/physical/test_six_internal_mutations.py::test_p_rejects_mutation_inventory[skip-child]"
+      ],
+      "mechanism_nodes": []
+    },
+    {
+      "id": "AC-16/wrong-assertion-counted-as-kill",
+      "ac": "AC-16",
+      "oracle": "O-16",
+      "owner": "T8",
+      "entry": "tests/physical/test_six_internal_mutations.py::test_p_rejects_mutation_inventory",
+      "injection": "remove, relabel, bypass, or falsely mark one required child killed",
+      "variant": "wrong-assertion-counted-as-kill",
+      "reference": "frozen or independent analytic reference; never mutated",
+      "target": "set equality and designated target assertion; restored baseline",
+      "baseline": "planned",
+      "injected": "planned",
+      "restored": "planned",
+      "guard_audit": "prove unique interceptor or record each removed guard layer",
+      "nodes": [
+        "tests/physical/test_six_internal_mutations.py::test_p_rejects_mutation_inventory[wrong-assertion-counted-as-kill]"
+      ],
+      "mechanism_nodes": []
+    },
+    {
+      "id": "AC-16/fake-kill-record",
+      "ac": "AC-16",
+      "oracle": "O-16",
+      "owner": "T8",
+      "entry": "tests/physical/test_six_internal_mutations.py::test_p_rejects_mutation_inventory",
+      "injection": "remove, relabel, bypass, or falsely mark one required child killed",
+      "variant": "fake-kill-record",
+      "reference": "frozen or independent analytic reference; never mutated",
+      "target": "set equality and designated target assertion; restored baseline",
+      "baseline": "planned",
+      "injected": "planned",
+      "restored": "planned",
+      "guard_audit": "prove unique interceptor or record each removed guard layer",
+      "nodes": [
+        "tests/physical/test_six_internal_mutations.py::test_p_rejects_mutation_inventory[fake-kill-record]"
+      ],
+      "mechanism_nodes": []
+    },
+    {
+      "id": "AC-17/numerical-wheel-dependency",
+      "ac": "AC-17",
+      "oracle": "O-17",
+      "owner": "T9",
+      "entry": "tests/physical/test_legacy_and_minimal_install.py::test_p_rejects_dependency_or_eager_import",
+      "injection": "inject numerical requirement into isolated wheel metadata or eager P/solver import",
+      "variant": "numerical-wheel-dependency",
+      "reference": "frozen or independent analytic reference; never mutated",
+      "target": "dependency allowlist, import delta, and executable stdlib acceptance",
+      "baseline": "planned",
+      "injected": "planned",
+      "restored": "planned",
+      "guard_audit": "prove unique interceptor or record each removed guard layer",
+      "nodes": [
+        "tests/physical/test_legacy_and_minimal_install.py::test_p_rejects_dependency_or_eager_import[numerical-wheel-dependency]"
+      ],
+      "mechanism_nodes": []
+    },
+    {
+      "id": "AC-17/eager-P-root-import",
+      "ac": "AC-17",
+      "oracle": "O-17",
+      "owner": "T9",
+      "entry": "tests/physical/test_legacy_and_minimal_install.py::test_p_rejects_dependency_or_eager_import",
+      "injection": "inject numerical requirement into isolated wheel metadata or eager P/solver import",
+      "variant": "eager-P-root-import",
+      "reference": "frozen or independent analytic reference; never mutated",
+      "target": "dependency allowlist, import delta, and executable stdlib acceptance",
+      "baseline": "planned",
+      "injected": "planned",
+      "restored": "planned",
+      "guard_audit": "prove unique interceptor or record each removed guard layer",
+      "nodes": [
+        "tests/physical/test_legacy_and_minimal_install.py::test_p_rejects_dependency_or_eager_import[eager-P-root-import]"
+      ],
+      "mechanism_nodes": []
+    },
+    {
+      "id": "AC-17/eager-solver-import",
+      "ac": "AC-17",
+      "oracle": "O-17",
+      "owner": "T9",
+      "entry": "tests/physical/test_legacy_and_minimal_install.py::test_p_rejects_dependency_or_eager_import",
+      "injection": "inject numerical requirement into isolated wheel metadata or eager P/solver import",
+      "variant": "eager-solver-import",
+      "reference": "frozen or independent analytic reference; never mutated",
+      "target": "dependency allowlist, import delta, and executable stdlib acceptance",
+      "baseline": "planned",
+      "injected": "planned",
+      "restored": "planned",
+      "guard_audit": "prove unique interceptor or record each removed guard layer",
+      "nodes": [
+        "tests/physical/test_legacy_and_minimal_install.py::test_p_rejects_dependency_or_eager_import[eager-solver-import]"
+      ],
+      "mechanism_nodes": []
+    },
+    {
+      "id": "AC-17/source-tree-shadowing-install",
+      "ac": "AC-17",
+      "oracle": "O-17",
+      "owner": "T9",
+      "entry": "tests/physical/test_legacy_and_minimal_install.py::test_p_rejects_dependency_or_eager_import",
+      "injection": "inject numerical requirement into isolated wheel metadata or eager P/solver import",
+      "variant": "source-tree-shadowing-install",
+      "reference": "frozen or independent analytic reference; never mutated",
+      "target": "dependency allowlist, import delta, and executable stdlib acceptance",
+      "baseline": "planned",
+      "injected": "planned",
+      "restored": "planned",
+      "guard_audit": "prove unique interceptor or record each removed guard layer",
+      "nodes": [
+        "tests/physical/test_legacy_and_minimal_install.py::test_p_rejects_dependency_or_eager_import[source-tree-shadowing-install]"
+      ],
+      "mechanism_nodes": []
+    },
+    {
+      "id": "AC-18/skip-attachment-digest",
+      "ac": "AC-18",
+      "oracle": "O-18",
+      "owner": "T3",
+      "entry": "tests/physical/test_provenance_and_attachments.py::test_p_rejects_attachment_digest_bypass",
+      "injection": "bypass digest validation inside array restoration",
+      "variant": "skip-attachment-digest",
+      "reference": "frozen or independent analytic reference; never mutated",
+      "target": "source retained and identities equal; ATTACHMENT_MISSING/DIGEST",
+      "baseline": "planned",
+      "injected": "planned",
+      "restored": "planned",
+      "guard_audit": "prove unique interceptor or record each removed guard layer",
+      "nodes": [
+        "tests/physical/test_provenance_and_attachments.py::test_p_rejects_attachment_digest_bypass[skip-attachment-digest]"
+      ],
+      "mechanism_nodes": []
+    },
+    {
+      "id": "AC-18/drop-provenance",
+      "ac": "AC-18",
+      "oracle": "O-18",
+      "owner": "T3",
+      "entry": "tests/physical/test_provenance_and_attachments.py::test_p_rejects_attachment_digest_bypass",
+      "injection": "bypass digest validation inside array restoration",
+      "variant": "drop-provenance",
+      "reference": "frozen or independent analytic reference; never mutated",
+      "target": "source retained and identities equal; ATTACHMENT_MISSING/DIGEST",
+      "baseline": "planned",
+      "injected": "planned",
+      "restored": "planned",
+      "guard_audit": "prove unique interceptor or record each removed guard layer",
+      "nodes": [
+        "tests/physical/test_provenance_and_attachments.py::test_p_rejects_attachment_digest_bypass[drop-provenance]"
+      ],
+      "mechanism_nodes": []
+    }
+  ],
+  "implementation_forms": [
+    [
+      "boundary-plus-minus-one",
+      "array cardinality, depth, PSD and time boundary"
+    ],
+    [
+      "regex-quantifier-character-class",
+      "binary64 and digest grammar"
+    ],
+    [
+      "sort-reverse-deduplicate",
+      "tensor/observation order and diagnostic tokens"
+    ],
+    [
+      "missing-inner-guard",
+      "nested field and extension envelope checks"
+    ],
+    [
+      "implicit-default-fill",
+      "product state and provenance"
+    ],
+    [
+      "tighten-permitted-reader",
+      "key order and whitespace acceptance"
+    ],
+    [
+      "mutable-wrapper",
+      "buffer and FrozenJSON aliasing"
+    ]
+  ],
+  "guard_rule": "A different guard rejecting the child is not a designated kill. Split the child or audit each layer.",
+  "instances": [
+    {
+      "child": "AC-02/factor-reversal",
+      "mechanism": "tensor assembly",
+      "implementation": "a",
+      "node": "tests/physical/test_six_internal_mutations.py::test_p_six_internal_mutations[AC-02/factor-reversal/a]",
+      "target": "_p_consumer_a.assemble",
+      "assertion": "tensor-physical-values"
+    },
+    {
+      "child": "AC-02/factor-reversal",
+      "mechanism": "tensor assembly",
+      "implementation": "b",
+      "node": "tests/physical/test_six_internal_mutations.py::test_p_six_internal_mutations[AC-02/factor-reversal/b]",
+      "target": "_p_consumer_b.assemble",
+      "assertion": "tensor-physical-values"
+    },
+    {
+      "child": "AC-03/reverse-Y",
+      "mechanism": "operator assembly",
+      "implementation": "a",
+      "node": "tests/physical/test_six_internal_mutations.py::test_p_six_internal_mutations[AC-03/reverse-Y/a]",
+      "target": "_p_consumer_a.assemble",
+      "assertion": "evolved-physical-values"
+    },
+    {
+      "child": "AC-03/reverse-Y",
+      "mechanism": "operator assembly",
+      "implementation": "b",
+      "node": "tests/physical/test_six_internal_mutations.py::test_p_six_internal_mutations[AC-03/reverse-Y/b]",
+      "target": "_p_consumer_b.assemble",
+      "assertion": "evolved-physical-values"
+    },
+    {
+      "child": "AC-03/wrong-Hamiltonian-sign",
+      "mechanism": "operator assembly",
+      "implementation": "a",
+      "node": "tests/physical/test_six_internal_mutations.py::test_p_six_internal_mutations[AC-03/wrong-Hamiltonian-sign/a]",
+      "target": "_p_consumer_a.generator",
+      "assertion": "evolved-physical-values"
+    },
+    {
+      "child": "AC-03/wrong-Hamiltonian-sign",
+      "mechanism": "operator assembly",
+      "implementation": "b",
+      "node": "tests/physical/test_six_internal_mutations.py::test_p_six_internal_mutations[AC-03/wrong-Hamiltonian-sign/b]",
+      "target": "_p_consumer_b.generator",
+      "assertion": "evolved-physical-values"
+    },
+    {
+      "child": "AC-15/A-only-target-change",
+      "mechanism": "operator assembly",
+      "implementation": "a",
+      "node": "tests/physical/test_six_internal_mutations.py::test_p_six_internal_mutations[AC-15/A-only-target-change/a]",
+      "target": "_p_consumer_a.assemble",
+      "assertion": "tensor-physical-values"
+    },
+    {
+      "child": "AC-03/extra-2pi",
+      "mechanism": "unit interpretation",
+      "implementation": "a",
+      "node": "tests/physical/test_six_internal_mutations.py::test_p_six_internal_mutations[AC-03/extra-2pi/a]",
+      "target": "_p_consumer_a.hamiltonian",
+      "assertion": "evolved-physical-values"
+    },
+    {
+      "child": "AC-03/extra-2pi",
+      "mechanism": "unit interpretation",
+      "implementation": "b",
+      "node": "tests/physical/test_six_internal_mutations.py::test_p_six_internal_mutations[AC-03/extra-2pi/b]",
+      "target": "_p_consumer_b.hamiltonian",
+      "assertion": "evolved-physical-values"
+    },
+    {
+      "child": "AC-04/rate-as-amplitude",
+      "mechanism": "dissipator adaptation",
+      "implementation": "a",
+      "node": "tests/physical/test_six_internal_mutations.py::test_p_six_internal_mutations[AC-04/rate-as-amplitude/a]",
+      "target": "_p_consumer_a.signal_value",
+      "assertion": "evolved-physical-values"
+    },
+    {
+      "child": "AC-04/rate-as-amplitude",
+      "mechanism": "dissipator adaptation",
+      "implementation": "b",
+      "node": "tests/physical/test_six_internal_mutations.py::test_p_six_internal_mutations[AC-04/rate-as-amplitude/b]",
+      "target": "_p_consumer_b.signal_value",
+      "assertion": "evolved-physical-values"
+    },
+    {
+      "child": "AC-05/left-boundary",
+      "mechanism": "time interpretation",
+      "implementation": "a",
+      "node": "tests/physical/test_six_internal_mutations.py::test_p_six_internal_mutations[AC-05/left-boundary/a]",
+      "target": "_p_consumer_a.signal_value",
+      "assertion": "left-boundary"
+    },
+    {
+      "child": "AC-05/left-boundary",
+      "mechanism": "time interpretation",
+      "implementation": "b",
+      "node": "tests/physical/test_six_internal_mutations.py::test_p_six_internal_mutations[AC-05/left-boundary/b]",
+      "target": "_p_consumer_b.signal_value",
+      "assertion": "left-boundary"
+    },
+    {
+      "child": "AC-05/snapped-time-label",
+      "mechanism": "time interpretation",
+      "implementation": "a",
+      "node": "tests/physical/test_six_internal_mutations.py::test_p_six_internal_mutations[AC-05/snapped-time-label/a]",
+      "target": "_p_consumer_a.output_times",
+      "assertion": "snapped-time-label"
+    },
+    {
+      "child": "AC-05/snapped-time-label",
+      "mechanism": "time interpretation",
+      "implementation": "b",
+      "node": "tests/physical/test_six_internal_mutations.py::test_p_six_internal_mutations[AC-05/snapped-time-label/b]",
+      "target": "_p_consumer_b.output_times",
+      "assertion": "snapped-time-label"
+    },
+    {
+      "child": "AC-05/left-edge-state-with-original-label",
+      "mechanism": "time interpretation",
+      "implementation": "a",
+      "node": "tests/physical/test_six_internal_mutations.py::test_p_six_internal_mutations[AC-05/left-edge-state-with-original-label/a]",
+      "target": "_p_consumer_a.state_time",
+      "assertion": "left-edge-state-with-original-label"
+    },
+    {
+      "child": "AC-05/left-edge-state-with-original-label",
+      "mechanism": "time interpretation",
+      "implementation": "b",
+      "node": "tests/physical/test_six_internal_mutations.py::test_p_six_internal_mutations[AC-05/left-edge-state-with-original-label/b]",
+      "target": "_p_consumer_b.state_time",
+      "assertion": "left-edge-state-with-original-label"
+    },
+    {
+      "child": "AC-05/right-edge-state-with-original-label",
+      "mechanism": "time interpretation",
+      "implementation": "a",
+      "node": "tests/physical/test_six_internal_mutations.py::test_p_six_internal_mutations[AC-05/right-edge-state-with-original-label/a]",
+      "target": "_p_consumer_a.state_time",
+      "assertion": "right-edge-state-with-original-label"
+    },
+    {
+      "child": "AC-05/right-edge-state-with-original-label",
+      "mechanism": "time interpretation",
+      "implementation": "b",
+      "node": "tests/physical/test_six_internal_mutations.py::test_p_six_internal_mutations[AC-05/right-edge-state-with-original-label/b]",
+      "target": "_p_consumer_b.state_time",
+      "assertion": "right-edge-state-with-original-label"
+    },
+    {
+      "child": "AC-05/first-rate-extended",
+      "mechanism": "time interpretation",
+      "implementation": "a",
+      "node": "tests/physical/test_six_internal_mutations.py::test_p_six_internal_mutations[AC-05/first-rate-extended/a]",
+      "target": "_p_consumer_a.signal_value",
+      "assertion": "first-rate-extended"
+    },
+    {
+      "child": "AC-05/first-rate-extended",
+      "mechanism": "time interpretation",
+      "implementation": "b",
+      "node": "tests/physical/test_six_internal_mutations.py::test_p_six_internal_mutations[AC-05/first-rate-extended/b]",
+      "target": "_p_consumer_b.signal_value",
+      "assertion": "first-rate-extended"
+    },
+    {
+      "child": "AC-08/drop-imaginary",
+      "mechanism": "codec",
+      "implementation": "codec",
+      "node": "tests/physical/test_six_internal_mutations.py::test_p_six_internal_mutations[AC-08/drop-imaginary/codec]",
+      "target": "qaiji.core.physical.codec._decode",
+      "assertion": "drop-imaginary"
+    },
+    {
+      "child": "AC-08/replace-axis",
+      "mechanism": "codec",
+      "implementation": "codec",
+      "node": "tests/physical/test_six_internal_mutations.py::test_p_six_internal_mutations[AC-08/replace-axis/codec]",
+      "target": "qaiji.core.physical.codec._decode_record",
+      "assertion": "replace-axis"
+    },
+    {
+      "child": "AC-08/accept-unknown-key",
+      "mechanism": "codec",
+      "implementation": "codec",
+      "node": "tests/physical/test_six_internal_mutations.py::test_p_six_internal_mutations[AC-08/accept-unknown-key/codec]",
+      "target": "qaiji.core.physical.codec._keys",
+      "assertion": "accept-unknown-key"
+    },
+    {
+      "child": "AC-08/accept-duplicate-key",
+      "mechanism": "codec",
+      "implementation": "codec",
+      "node": "tests/physical/test_six_internal_mutations.py::test_p_six_internal_mutations[AC-08/accept-duplicate-key/codec]",
+      "target": "qaiji.core.physical.codec._materialize",
+      "assertion": "accept-duplicate-key"
+    },
+    {
+      "child": "FORM/boundary-plus-minus-one",
+      "mechanism": "implementation form",
+      "implementation": "form",
+      "node": "tests/physical/test_six_internal_mutations.py::test_p_six_internal_mutations[FORM/boundary-plus-minus-one/form]",
+      "target": "_Context.limit",
+      "assertion": "boundary-plus-minus-one"
+    },
+    {
+      "child": "FORM/regex-quantifier-character-class",
+      "mechanism": "implementation form",
+      "implementation": "form",
+      "node": "tests/physical/test_six_internal_mutations.py::test_p_six_internal_mutations[FORM/regex-quantifier-character-class/form]",
+      "target": "qaiji.core.physical.codec._f64",
+      "assertion": "regex-quantifier-character-class"
+    },
+    {
+      "child": "FORM/sort-reverse-deduplicate",
+      "mechanism": "implementation form",
+      "implementation": "form",
+      "node": "tests/physical/test_six_internal_mutations.py::test_p_six_internal_mutations[FORM/sort-reverse-deduplicate/form]",
+      "target": "qaiji.core.physical.codec._decode_record",
+      "assertion": "replace-axis"
+    },
+    {
+      "child": "FORM/missing-inner-guard",
+      "mechanism": "implementation form",
+      "implementation": "form",
+      "node": "tests/physical/test_six_internal_mutations.py::test_p_six_internal_mutations[FORM/missing-inner-guard/form]",
+      "target": "qaiji.core.physical.codec._keys",
+      "assertion": "missing-inner-guard"
+    },
+    {
+      "child": "FORM/implicit-default-fill",
+      "mechanism": "implementation form",
+      "implementation": "form",
+      "node": "tests/physical/test_six_internal_mutations.py::test_p_six_internal_mutations[FORM/implicit-default-fill/form]",
+      "target": "_p_consumer_a.initial_density",
+      "assertion": "implicit-default-fill"
+    },
+    {
+      "child": "FORM/tighten-permitted-reader",
+      "mechanism": "implementation form",
+      "implementation": "form",
+      "node": "tests/physical/test_six_internal_mutations.py::test_p_six_internal_mutations[FORM/tighten-permitted-reader/form]",
+      "target": "qaiji.core.physical.codec._parse",
+      "assertion": "tighten-permitted-reader"
+    },
+    {
+      "child": "FORM/mutable-wrapper",
+      "mechanism": "implementation form",
+      "implementation": "form",
+      "node": "tests/physical/test_six_internal_mutations.py::test_p_six_internal_mutations[FORM/mutable-wrapper/form]",
+      "target": "qaiji.core.physical.arrays._buffer",
+      "assertion": "buffer-copy"
+    }
+  ]
+}

@@ -1,0 +1,1020 @@
+[
+  {
+    "ac": "AC-01",
+    "oracle": "O-01",
+    "owner": "T7",
+    "status": "planned",
+    "test_file": "tests/physical/test_restore_without_registry.py",
+    "positive": "test_p_bound_restore",
+    "negative": "test_p_rejects_registry_restore",
+    "input": "artifact physical values",
+    "injection": "substitute calibration scale inside restoration",
+    "target_assertion": "independent physical-content comparison",
+    "unique_interceptor": "prove per atomic child; split masking inputs before acceptance",
+    "note": "P registry reads are forbidden",
+    "scenarios": [
+      "AC-01 Restore a bound problem without a device registry"
+    ],
+    "requirements": [
+      "F-01"
+    ],
+    "adrs": [
+      "ADR-801",
+      "ADR-802"
+    ],
+    "nodes": [
+      "tests/physical/test_restore_without_registry.py::test_p_bound_restore[a]",
+      "tests/physical/test_restore_without_registry.py::test_p_bound_restore[b]",
+      "tests/physical/test_restore_without_registry.py::test_p_rejects_registry_restore[a]",
+      "tests/physical/test_restore_without_registry.py::test_p_rejects_registry_restore[b]"
+    ],
+    "children": [
+      "AC-01/default-calibration"
+    ],
+    "support_nodes": []
+  },
+  {
+    "ac": "AC-02",
+    "oracle": "O-02",
+    "owner": "T7",
+    "status": "planned",
+    "test_file": "tests/physical/test_asymmetric_tensor.py",
+    "positive": "test_p_asymmetric_tensor",
+    "negative": "test_p_rejects_tensor_factor_swap",
+    "input": "V-01: [a,b], [2,3], column 2 has its only 1 at row 5",
+    "injection": "reverse tensor factors inside consumer A",
+    "target_assertion": "all matrix elements against literal index arithmetic",
+    "unique_interceptor": "prove per atomic child; split masking inputs before acceptance",
+    "note": "P-TENSOR",
+    "scenarios": [
+      "AC-02 Apply an operator in an explicit asymmetric tensor order"
+    ],
+    "requirements": [
+      "F-02"
+    ],
+    "adrs": [
+      "ADR-801",
+      "ADR-806"
+    ],
+    "nodes": [
+      "tests/physical/test_asymmetric_tensor.py::test_p_asymmetric_tensor[ab-a]",
+      "tests/physical/test_asymmetric_tensor.py::test_p_asymmetric_tensor[ab-b]",
+      "tests/physical/test_asymmetric_tensor.py::test_p_asymmetric_tensor[ba-a]",
+      "tests/physical/test_asymmetric_tensor.py::test_p_asymmetric_tensor[ba-b]",
+      "tests/physical/test_asymmetric_tensor.py::test_p_rejects_tensor_factor_swap[a]",
+      "tests/physical/test_asymmetric_tensor.py::test_p_rejects_tensor_factor_swap[b]"
+    ],
+    "children": [
+      "AC-02/factor-reversal"
+    ],
+    "support_nodes": []
+  },
+  {
+    "ac": "AC-03",
+    "oracle": "O-03",
+    "owner": "T7",
+    "status": "planned",
+    "test_file": "tests/physical/test_units_phase_hermitian_sum.py",
+    "positive": "test_p_units_phase_sum",
+    "negative": "test_p_rejects_phase_unit_sign",
+    "input": "V-02, V-03, V-10",
+    "injection": "repeat 2*pi, reverse Y, or reverse commutator sign separately",
+    "target_assertion": "density matrix, signed Y expectation, and Hermitian total",
+    "unique_interceptor": "prove per atomic child; split masking inputs before acceptance",
+    "note": "accepted decomposition is a positive control",
+    "scenarios": [
+      "AC-03 Preserve units, phase, and Hermitian sums"
+    ],
+    "requirements": [
+      "F-02"
+    ],
+    "adrs": [
+      "ADR-801",
+      "ADR-803",
+      "ADR-806"
+    ],
+    "nodes": [
+      "tests/physical/test_units_phase_hermitian_sum.py::test_p_units_phase_sum[a]",
+      "tests/physical/test_units_phase_hermitian_sum.py::test_p_units_phase_sum[b]",
+      "tests/physical/test_units_phase_hermitian_sum.py::test_p_rejects_phase_unit_sign[extra-2pi-a]",
+      "tests/physical/test_units_phase_hermitian_sum.py::test_p_rejects_phase_unit_sign[extra-2pi-b]",
+      "tests/physical/test_units_phase_hermitian_sum.py::test_p_rejects_phase_unit_sign[reverse-Y-a]",
+      "tests/physical/test_units_phase_hermitian_sum.py::test_p_rejects_phase_unit_sign[reverse-Y-b]",
+      "tests/physical/test_units_phase_hermitian_sum.py::test_p_rejects_phase_unit_sign[wrong-Hamiltonian-sign-a]",
+      "tests/physical/test_units_phase_hermitian_sum.py::test_p_rejects_phase_unit_sign[wrong-Hamiltonian-sign-b]"
+    ],
+    "children": [
+      "AC-03/extra-2pi",
+      "AC-03/reverse-Y",
+      "AC-03/wrong-Hamiltonian-sign"
+    ],
+    "support_nodes": []
+  },
+  {
+    "ac": "AC-04",
+    "oracle": "O-04",
+    "owner": "T7",
+    "status": "planned",
+    "test_file": "tests/physical/test_lindblad_rate.py",
+    "positive": "test_p_lindblad_rate",
+    "negative": "test_p_rejects_rate_as_amplitude",
+    "input": "V-04: gamma=0.02/ns, T=50ns, p1=exp(-1)",
+    "injection": "use gamma as collapse amplitude inside dissipator adaptation",
+    "target_assertion": "excited population against exp(-1)",
+    "unique_interceptor": "prove per atomic child; split masking inputs before acceptance",
+    "note": "also check generator derivative -0.02",
+    "scenarios": [
+      "AC-04 Treat a Lindblad coefficient as a rate"
+    ],
+    "requirements": [
+      "F-02"
+    ],
+    "adrs": [
+      "ADR-801",
+      "ADR-806"
+    ],
+    "nodes": [
+      "tests/physical/test_lindblad_rate.py::test_p_lindblad_rate[a]",
+      "tests/physical/test_lindblad_rate.py::test_p_lindblad_rate[b]",
+      "tests/physical/test_lindblad_rate.py::test_p_rejects_rate_as_amplitude[a]",
+      "tests/physical/test_lindblad_rate.py::test_p_rejects_rate_as_amplitude[b]"
+    ],
+    "children": [
+      "AC-04/rate-as-amplitude"
+    ],
+    "support_nodes": []
+  },
+  {
+    "ac": "AC-05",
+    "oracle": "O-05",
+    "owner": "T7",
+    "status": "planned",
+    "test_file": "tests/physical/test_zoh_and_output_values.py",
+    "positive": "test_p_zoh_output_values",
+    "negative": "test_p_rejects_zoh_and_state_snap",
+    "input": "V-05 and V-06; each of [0,0.5,1,3]",
+    "injection": "left-continuous boundary, sampled-rate extension, label snap, and state-only snap separately",
+    "target_assertion": "u(1)=0.4; populations [0,sin(0.1)^2,sin(0.2)^2,sin(1)^2]; exp(-0.7)",
+    "unique_interceptor": "prove per atomic child; split masking inputs before acceptance",
+    "note": "state-only snap retains the requested time labels",
+    "scenarios": [
+      "AC-05 Keep signal intervals and output times independent",
+      "AC-05 Interpret a sampled rate on the same intervals"
+    ],
+    "requirements": [
+      "F-03"
+    ],
+    "adrs": [
+      "ADR-801",
+      "ADR-806"
+    ],
+    "nodes": [
+      "tests/physical/test_zoh_and_output_values.py::test_p_zoh_output_values[a]",
+      "tests/physical/test_zoh_and_output_values.py::test_p_zoh_output_values[b]",
+      "tests/physical/test_zoh_and_output_values.py::test_p_rejects_zoh_and_state_snap[left-boundary-a]",
+      "tests/physical/test_zoh_and_output_values.py::test_p_rejects_zoh_and_state_snap[left-boundary-b]",
+      "tests/physical/test_zoh_and_output_values.py::test_p_rejects_zoh_and_state_snap[snapped-time-label-a]",
+      "tests/physical/test_zoh_and_output_values.py::test_p_rejects_zoh_and_state_snap[snapped-time-label-b]",
+      "tests/physical/test_zoh_and_output_values.py::test_p_rejects_zoh_and_state_snap[left-edge-state-with-original-label-a]",
+      "tests/physical/test_zoh_and_output_values.py::test_p_rejects_zoh_and_state_snap[left-edge-state-with-original-label-b]",
+      "tests/physical/test_zoh_and_output_values.py::test_p_rejects_zoh_and_state_snap[right-edge-state-with-original-label-a]",
+      "tests/physical/test_zoh_and_output_values.py::test_p_rejects_zoh_and_state_snap[right-edge-state-with-original-label-b]",
+      "tests/physical/test_zoh_and_output_values.py::test_p_rejects_zoh_and_state_snap[first-rate-extended-a]",
+      "tests/physical/test_zoh_and_output_values.py::test_p_rejects_zoh_and_state_snap[first-rate-extended-b]",
+      "tests/physical/test_zoh_and_output_values.py::test_p_rejects_zoh_and_state_snap[terminal-sample-consumed-a]",
+      "tests/physical/test_zoh_and_output_values.py::test_p_rejects_zoh_and_state_snap[terminal-sample-consumed-b]"
+    ],
+    "children": [
+      "AC-05/left-boundary",
+      "AC-05/snapped-time-label",
+      "AC-05/left-edge-state-with-original-label",
+      "AC-05/right-edge-state-with-original-label",
+      "AC-05/first-rate-extended",
+      "AC-05/terminal-sample-consumed"
+    ],
+    "support_nodes": []
+  },
+  {
+    "ac": "AC-06",
+    "oracle": "O-06",
+    "owner": "T7",
+    "status": "planned",
+    "test_file": "tests/physical/test_product_and_zero_duration.py",
+    "positive": "test_p_product_zero_duration",
+    "negative": "test_p_rejects_default_state_or_empty_output",
+    "input": "missing product factor and V-09: edges=outputs=[7]",
+    "injection": "fill omitted ground state or discard zero-duration record",
+    "target_assertion": "PRODUCT_COVERAGE and initial values; evolution-call trap",
+    "unique_interceptor": "prove per atomic child; split masking inputs before acceptance",
+    "note": "zero-duration rate lookup is also forbidden",
+    "scenarios": [
+      "AC-06 Reject an omitted local initial state",
+      "AC-06 Return explicit zero-duration observations"
+    ],
+    "requirements": [
+      "F-03",
+      "F-04"
+    ],
+    "adrs": [
+      "ADR-801",
+      "ADR-806"
+    ],
+    "nodes": [
+      "tests/physical/test_product_and_zero_duration.py::test_p_product_zero_duration[a]",
+      "tests/physical/test_product_and_zero_duration.py::test_p_product_zero_duration[b]",
+      "tests/physical/test_product_and_zero_duration.py::test_p_rejects_default_state_or_empty_output[fill-missing-ground-factor-a]",
+      "tests/physical/test_product_and_zero_duration.py::test_p_rejects_default_state_or_empty_output[fill-missing-ground-factor-b]",
+      "tests/physical/test_product_and_zero_duration.py::test_p_rejects_default_state_or_empty_output[drop-zero-duration-output-a]",
+      "tests/physical/test_product_and_zero_duration.py::test_p_rejects_default_state_or_empty_output[drop-zero-duration-output-b]",
+      "tests/physical/test_product_and_zero_duration.py::test_p_rejects_default_state_or_empty_output[call-evolution-at-zero-duration-a]",
+      "tests/physical/test_product_and_zero_duration.py::test_p_rejects_default_state_or_empty_output[call-evolution-at-zero-duration-b]"
+    ],
+    "children": [
+      "AC-06/fill-missing-ground-factor",
+      "AC-06/drop-zero-duration-output",
+      "AC-06/call-evolution-at-zero-duration"
+    ],
+    "support_nodes": []
+  },
+  {
+    "ac": "AC-07",
+    "oracle": "O-07",
+    "owner": "T7",
+    "status": "planned",
+    "test_file": "tests/physical/test_partial_trace_complex_projection.py",
+    "positive": "test_p_partial_trace_projection",
+    "negative": "test_p_rejects_projection_formula",
+    "input": "V-07, V-08, V-08-C, V-08-T",
+    "injection": "normalize block, replace dagger by transpose, clip leakage, or subtract input_trace separately",
+    "target_assertion": "block and scalar comparisons; exact V-08-T leakage=-2^-35 and trace_error=2^-35",
+    "unique_interceptor": "prove per atomic child; split masking inputs before acceptance",
+    "note": "no normalization guard on projected block",
+    "scenarios": [
+      "AC-07 Keep partial trace distinct from subspace projection",
+      "AC-07 Use a conjugate transpose for a complex isometry",
+      "AC-07 Preserve the raw leakage estimate when input trace has numerical error"
+    ],
+    "requirements": [
+      "F-04"
+    ],
+    "adrs": [
+      "ADR-801",
+      "ADR-803",
+      "ADR-805",
+      "ADR-806"
+    ],
+    "nodes": [
+      "tests/physical/test_partial_trace_complex_projection.py::test_p_partial_trace_projection[a]",
+      "tests/physical/test_partial_trace_complex_projection.py::test_p_partial_trace_projection[b]",
+      "tests/physical/test_partial_trace_complex_projection.py::test_p_rejects_projection_formula[normalize-block-a]",
+      "tests/physical/test_partial_trace_complex_projection.py::test_p_rejects_projection_formula[normalize-block-b]",
+      "tests/physical/test_partial_trace_complex_projection.py::test_p_rejects_projection_formula[transpose-without-conjugate-a]",
+      "tests/physical/test_partial_trace_complex_projection.py::test_p_rejects_projection_formula[transpose-without-conjugate-b]",
+      "tests/physical/test_partial_trace_complex_projection.py::test_p_rejects_projection_formula[subtract-input-trace-a]",
+      "tests/physical/test_partial_trace_complex_projection.py::test_p_rejects_projection_formula[subtract-input-trace-b]",
+      "tests/physical/test_partial_trace_complex_projection.py::test_p_rejects_projection_formula[clip-negative-leakage-a]",
+      "tests/physical/test_partial_trace_complex_projection.py::test_p_rejects_projection_formula[clip-negative-leakage-b]",
+      "tests/physical/test_partial_trace_complex_projection.py::test_p_rejects_projection_formula[wrong-partial-trace-order-a]",
+      "tests/physical/test_partial_trace_complex_projection.py::test_p_rejects_projection_formula[wrong-partial-trace-order-b]"
+    ],
+    "children": [
+      "AC-07/normalize-block",
+      "AC-07/transpose-without-conjugate",
+      "AC-07/subtract-input-trace",
+      "AC-07/clip-negative-leakage",
+      "AC-07/wrong-partial-trace-order"
+    ],
+    "support_nodes": [
+      "tests/physical/test_partial_trace_complex_projection.py::test_p_partial_trace_declared_order[a]",
+      "tests/physical/test_partial_trace_complex_projection.py::test_p_partial_trace_declared_order[b]"
+    ]
+  },
+  {
+    "ac": "AC-08",
+    "oracle": "O-08",
+    "owner": "T2",
+    "status": "planned",
+    "test_file": "tests/physical/test_strict_exchange.py",
+    "positive": "test_p_strict_exchange",
+    "negative": "test_p_rejects_codec_semantics",
+    "input": "all five schemas; complex, signed zero, shape, units, time, and order",
+    "injection": "drop imaginary parts, replace axes, accept unknown key or duplicate keys separately",
+    "target_assertion": "independent field inventory and frozen exchange bytes",
+    "unique_interceptor": "prove per atomic child; split masking inputs before acceptance",
+    "note": "P-CODEC; nested decoder matrix remains planned",
+    "scenarios": [
+      "AC-08 Preserve all core exchange semantics",
+      "AC-08 Reject non-finite values and unknown versions"
+    ],
+    "requirements": [
+      "F-07"
+    ],
+    "adrs": [
+      "ADR-802"
+    ],
+    "nodes": [
+      "tests/physical/test_strict_exchange.py::test_p_strict_exchange[inline-problem]",
+      "tests/physical/test_strict_exchange.py::test_p_strict_exchange[inline-request]",
+      "tests/physical/test_strict_exchange.py::test_p_strict_exchange[inline-result]",
+      "tests/physical/test_strict_exchange.py::test_p_strict_exchange[inline-requirements]",
+      "tests/physical/test_strict_exchange.py::test_p_strict_exchange[inline-capabilities]",
+      "tests/physical/test_strict_exchange.py::test_p_strict_exchange[attachments-problem]",
+      "tests/physical/test_strict_exchange.py::test_p_strict_exchange[attachments-request]",
+      "tests/physical/test_strict_exchange.py::test_p_strict_exchange[attachments-result]",
+      "tests/physical/test_strict_exchange.py::test_p_strict_exchange[attachments-requirements]",
+      "tests/physical/test_strict_exchange.py::test_p_strict_exchange[attachments-capabilities]",
+      "tests/physical/test_strict_exchange.py::test_p_rejects_codec_semantics[drop-imaginary]",
+      "tests/physical/test_strict_exchange.py::test_p_rejects_codec_semantics[replace-axis]",
+      "tests/physical/test_strict_exchange.py::test_p_rejects_codec_semantics[accept-unknown-key]",
+      "tests/physical/test_strict_exchange.py::test_p_rejects_codec_semantics[accept-duplicate-key]",
+      "tests/physical/test_strict_exchange.py::test_p_rejects_codec_semantics[accept-nonfinite]",
+      "tests/physical/test_strict_exchange.py::test_p_rejects_codec_semantics[accept-unknown-minor]"
+    ],
+    "children": [
+      "AC-08/drop-imaginary",
+      "AC-08/replace-axis",
+      "AC-08/accept-unknown-key",
+      "AC-08/accept-duplicate-key",
+      "AC-08/accept-nonfinite",
+      "AC-08/accept-unknown-minor"
+    ],
+    "support_nodes": []
+  },
+  {
+    "ac": "AC-09",
+    "oracle": "O-09",
+    "owner": "T3",
+    "status": "planned",
+    "test_file": "tests/physical/test_identity_sensitivity.py",
+    "positive": "test_p_identity_sensitivity",
+    "negative": "test_p_rejects_identity_omission",
+    "input": "revision-2 vectors plus individually changed phase, target, rate, extension, observation, policy",
+    "injection": "omit each identity component inside identity projection",
+    "target_assertion": "independent domain SHA-256 and component sensitivity",
+    "unique_interceptor": "prove per atomic child; split masking inputs before acceptance",
+    "note": "target-site variant uses legal same-dimension sites",
+    "scenarios": [
+      "AC-09 Separate content identity from provenance and physics equivalence"
+    ],
+    "requirements": [
+      "F-07"
+    ],
+    "adrs": [
+      "ADR-802"
+    ],
+    "nodes": [
+      "tests/physical/test_identity_sensitivity.py::test_p_identity_sensitivity[baseline]",
+      "tests/physical/test_identity_sensitivity.py::test_p_identity_sensitivity[bath]",
+      "tests/physical/test_identity_sensitivity.py::test_p_identity_sensitivity[cross-process]",
+      "tests/physical/test_identity_sensitivity.py::test_p_identity_sensitivity[required]",
+      "tests/physical/test_identity_sensitivity.py::test_p_identity_sensitivity[affects_physics]",
+      "tests/physical/test_identity_sensitivity.py::test_p_identity_sensitivity[phase]",
+      "tests/physical/test_identity_sensitivity.py::test_p_identity_sensitivity[target]",
+      "tests/physical/test_identity_sensitivity.py::test_p_identity_sensitivity[rate]",
+      "tests/physical/test_identity_sensitivity.py::test_p_identity_sensitivity[extension]",
+      "tests/physical/test_identity_sensitivity.py::test_p_identity_sensitivity[observation]",
+      "tests/physical/test_identity_sensitivity.py::test_p_identity_sensitivity[policy]",
+      "tests/physical/test_identity_sensitivity.py::test_p_identity_sensitivity[coefficient]",
+      "tests/physical/test_identity_sensitivity.py::test_p_identity_sensitivity[basis]",
+      "tests/physical/test_identity_sensitivity.py::test_p_identity_sensitivity[dimension]",
+      "tests/physical/test_identity_sensitivity.py::test_p_identity_sensitivity[site-id]",
+      "tests/physical/test_identity_sensitivity.py::test_p_identity_sensitivity[tensor-order]",
+      "tests/physical/test_identity_sensitivity.py::test_p_identity_sensitivity[frame]",
+      "tests/physical/test_identity_sensitivity.py::test_p_identity_sensitivity[signal-unit]",
+      "tests/physical/test_identity_sensitivity.py::test_p_identity_sensitivity[negative-zero]",
+      "tests/physical/test_identity_sensitivity.py::test_p_identity_sensitivity[signal-value]",
+      "tests/physical/test_identity_sensitivity.py::test_p_identity_sensitivity[initial-state]",
+      "tests/physical/test_identity_sensitivity.py::test_p_identity_sensitivity[signal-edges]",
+      "tests/physical/test_identity_sensitivity.py::test_p_identity_sensitivity[output-times]",
+      "tests/physical/test_identity_sensitivity.py::test_p_identity_sensitivity[observation-id]",
+      "tests/physical/test_identity_sensitivity.py::test_p_identity_sensitivity[observation-order]",
+      "tests/physical/test_identity_sensitivity.py::test_p_identity_sensitivity[keep-sites]",
+      "tests/physical/test_identity_sensitivity.py::test_p_identity_sensitivity[projection-target]",
+      "tests/physical/test_identity_sensitivity.py::test_p_identity_sensitivity[policy-rtol]",
+      "tests/physical/test_identity_sensitivity.py::test_p_identity_sensitivity[policy-step]",
+      "tests/physical/test_identity_sensitivity.py::test_p_identity_sensitivity[policy-method]",
+      "tests/physical/test_identity_sensitivity.py::test_p_identity_sensitivity[policy-representation]",
+      "tests/physical/test_identity_sensitivity.py::test_p_identity_sensitivity[extension-version]",
+      "tests/physical/test_identity_sensitivity.py::test_p_identity_sensitivity[extension-namespace]",
+      "tests/physical/test_identity_sensitivity.py::test_p_identity_sensitivity[array-shape]",
+      "tests/physical/test_identity_sensitivity.py::test_p_identity_sensitivity[array-dtype]",
+      "tests/physical/test_identity_sensitivity.py::test_p_identity_sensitivity[unicode-composed]",
+      "tests/physical/test_identity_sensitivity.py::test_p_identity_sensitivity[unicode-decomposed]",
+      "tests/physical/test_identity_sensitivity.py::test_p_identity_sensitivity[term-order]",
+      "tests/physical/test_identity_sensitivity.py::test_p_rejects_identity_omission[omit-phase]",
+      "tests/physical/test_identity_sensitivity.py::test_p_rejects_identity_omission[omit-target]",
+      "tests/physical/test_identity_sensitivity.py::test_p_rejects_identity_omission[omit-rate]",
+      "tests/physical/test_identity_sensitivity.py::test_p_rejects_identity_omission[omit-extension]",
+      "tests/physical/test_identity_sensitivity.py::test_p_rejects_identity_omission[omit-observation]",
+      "tests/physical/test_identity_sensitivity.py::test_p_rejects_identity_omission[omit-policy]",
+      "tests/physical/test_identity_sensitivity.py::test_p_rejects_identity_omission[include-provenance]"
+    ],
+    "children": [
+      "AC-09/omit-phase",
+      "AC-09/omit-target",
+      "AC-09/omit-rate",
+      "AC-09/omit-extension",
+      "AC-09/omit-observation",
+      "AC-09/omit-policy",
+      "AC-09/include-provenance"
+    ],
+    "support_nodes": []
+  },
+  {
+    "ac": "AC-10",
+    "oracle": "O-10",
+    "owner": "T4",
+    "status": "planned",
+    "test_file": "tests/physical/test_required_bath_extension.py",
+    "positive": "test_p_required_bath",
+    "negative": "test_p_rejects_bath_drop_or_certify",
+    "input": "frozen bath envelope; ordinary JSON object resembling an array",
+    "injection": "drop extension in loader or permit unknown extension in physical gate separately",
+    "target_assertion": "exact transport; REQUIRED_EXTENSION before dense assembly",
+    "unique_interceptor": "prove per atomic child; split masking inputs before acceptance",
+    "note": "include namespace and version; execution refused by both consumers in T7",
+    "scenarios": [
+      "AC-10 Preserve a required bath extension while refusing interpretation"
+    ],
+    "requirements": [
+      "F-08"
+    ],
+    "adrs": [
+      "ADR-802",
+      "ADR-804"
+    ],
+    "nodes": [
+      "tests/physical/test_required_bath_extension.py::test_p_required_bath",
+      "tests/physical/test_required_bath_extension.py::test_p_rejects_bath_drop_or_certify[drop-required-extension]",
+      "tests/physical/test_required_bath_extension.py::test_p_rejects_bath_drop_or_certify[certify-unknown-bath]",
+      "tests/physical/test_required_bath_extension.py::test_p_rejects_bath_drop_or_certify[execute-unknown-bath]",
+      "tests/physical/test_required_bath_extension.py::test_p_rejects_bath_drop_or_certify[infer-array-from-ordinary-object]"
+    ],
+    "children": [
+      "AC-10/drop-required-extension",
+      "AC-10/certify-unknown-bath",
+      "AC-10/execute-unknown-bath",
+      "AC-10/infer-array-from-ordinary-object"
+    ],
+    "support_nodes": []
+  },
+  {
+    "ac": "AC-11",
+    "oracle": "O-11",
+    "owner": "T6",
+    "status": "planned",
+    "test_file": "tests/physical/test_policy_permissions.py",
+    "positive": "test_p_policy_permissions",
+    "negative": "test_p_rejects_report_as_permission",
+    "input": "fixed policy, delegated method, either representation, five forbidden transforms",
+    "injection": "accept unrequested bound/transform, omit or invent a policy difference separately",
+    "target_assertion": "POLICY_FIXED, POLICY_BOUND, POLICY_REPORT, TRANSFORM_FORBIDDEN",
+    "unique_interceptor": "prove per atomic child; split masking inputs before acceptance",
+    "note": "actual-policy difference set is recomputed independently",
+    "scenarios": [
+      "AC-11 A report does not authorize a physical transformation",
+      "AC-11 Resolve only explicitly delegated numerical policy fields"
+    ],
+    "requirements": [
+      "F-05"
+    ],
+    "adrs": [
+      "ADR-805"
+    ],
+    "nodes": [
+      "tests/physical/test_policy_permissions.py::test_p_policy_permissions[fixed]",
+      "tests/physical/test_policy_permissions.py::test_p_policy_permissions[delegated]",
+      "tests/physical/test_policy_permissions.py::test_p_policy_permissions[either]",
+      "tests/physical/test_policy_permissions.py::test_p_policy_permissions[sparse]",
+      "tests/physical/test_policy_permissions.py::test_p_policy_permissions[substep]",
+      "tests/physical/test_policy_permissions.py::test_p_rejects_report_as_permission[compress-idle]",
+      "tests/physical/test_policy_permissions.py::test_p_rejects_report_as_permission[truncate-readout]",
+      "tests/physical/test_policy_permissions.py::test_p_rejects_report_as_permission[quantize-edge]",
+      "tests/physical/test_policy_permissions.py::test_p_rejects_report_as_permission[change-zoh-by-resampling]",
+      "tests/physical/test_policy_permissions.py::test_p_rejects_report_as_permission[apply-rwa]",
+      "tests/physical/test_policy_permissions.py::test_p_rejects_report_as_permission[change-fixed-bound]",
+      "tests/physical/test_policy_permissions.py::test_p_rejects_report_as_permission[omit-difference]",
+      "tests/physical/test_policy_permissions.py::test_p_rejects_report_as_permission[invent-difference]",
+      "tests/physical/test_policy_permissions.py::test_p_rejects_report_as_permission[out-of-allowed-method]",
+      "tests/physical/test_policy_permissions.py::test_p_rejects_report_as_permission[illegal-either-resolution]"
+    ],
+    "children": [
+      "AC-11/compress-idle",
+      "AC-11/truncate-readout",
+      "AC-11/quantize-edge",
+      "AC-11/change-zoh-by-resampling",
+      "AC-11/apply-rwa",
+      "AC-11/change-fixed-bound",
+      "AC-11/omit-difference",
+      "AC-11/invent-difference",
+      "AC-11/out-of-allowed-method",
+      "AC-11/illegal-either-resolution"
+    ],
+    "support_nodes": [
+      "tests/physical/test_policy_permissions.py::test_known_transform_requires_its_authorization[sparse_storage-exact_representation-authorization0]",
+      "tests/physical/test_policy_permissions.py::test_known_transform_requires_its_authorization[sparse_storage-numerical_substep-authorization1]",
+      "tests/physical/test_policy_permissions.py::test_known_transform_requires_its_authorization[integration_substep-numerical_substep-authorization2]",
+      "tests/physical/test_policy_permissions.py::test_known_transform_requires_its_authorization[integration_substep-exact_representation-authorization3]",
+      "tests/physical/test_policy_permissions.py::test_only_method_can_be_delegated[atol]",
+      "tests/physical/test_policy_permissions.py::test_only_method_can_be_delegated[rtol]",
+      "tests/physical/test_policy_permissions.py::test_only_method_can_be_delegated[max_step_ns]",
+      "tests/physical/test_policy_permissions.py::test_either_resolution_must_satisfy_every_full_state",
+      "tests/physical/test_policy_permissions.py::test_either_resolution_obeys_physical_representation_limits[density_initial]",
+      "tests/physical/test_policy_permissions.py::test_either_resolution_obeys_physical_representation_limits[markovian]"
+    ]
+  },
+  {
+    "ac": "AC-12",
+    "oracle": "O-12",
+    "owner": "T6",
+    "status": "planned",
+    "test_file": "tests/physical/test_diagnostic_ordering.py",
+    "positive": "test_p_diagnostic_ordering",
+    "negative": "test_p_rejects_failure_classification",
+    "input": "five categories; simultaneous independent errors; paths containing ~ and /; indices 2 and 10",
+    "injection": "classify as empty success or sort array indices lexically",
+    "target_assertion": "category/code/path/details; phase/token/code ordering; cause",
+    "unique_interceptor": "prove per atomic child; split masking inputs before acceptance",
+    "note": "SOLVER_FAILURE is produced only by a test consumer",
+    "scenarios": [
+      "AC-12 Distinguish failures without returning successful empty results"
+    ],
+    "requirements": [
+      "F-09"
+    ],
+    "adrs": [
+      "ADR-803",
+      "ADR-804",
+      "ADR-805"
+    ],
+    "nodes": [
+      "tests/physical/test_diagnostic_ordering.py::test_p_diagnostic_ordering",
+      "tests/physical/test_diagnostic_ordering.py::test_p_rejects_failure_classification[empty-success-invalid-request]",
+      "tests/physical/test_diagnostic_ordering.py::test_p_rejects_failure_classification[empty-success-unsupported]",
+      "tests/physical/test_diagnostic_ordering.py::test_p_rejects_failure_classification[empty-success-resource]",
+      "tests/physical/test_diagnostic_ordering.py::test_p_rejects_failure_classification[empty-success-solver]",
+      "tests/physical/test_diagnostic_ordering.py::test_p_rejects_failure_classification[empty-success-invalid-result]",
+      "tests/physical/test_diagnostic_ordering.py::test_p_rejects_failure_classification[lexical-index-sort]",
+      "tests/physical/test_diagnostic_ordering.py::test_p_rejects_failure_classification[unescaped-json-pointer]"
+    ],
+    "children": [
+      "AC-12/empty-success-invalid-request",
+      "AC-12/empty-success-unsupported",
+      "AC-12/empty-success-resource",
+      "AC-12/empty-success-solver",
+      "AC-12/empty-success-invalid-result",
+      "AC-12/lexical-index-sort",
+      "AC-12/unescaped-json-pointer"
+    ],
+    "support_nodes": [
+      "tests/physical/test_diagnostic_ordering.py::test_unicode_digits_are_object_keys",
+      "tests/physical/test_diagnostic_ordering.py::test_explicit_stage_distinguishes_same_code",
+      "tests/physical/test_diagnostic_ordering.py::test_backend_level_does_not_certify_result",
+      "tests/physical/test_diagnostic_ordering.py::test_incomplete_report_cannot_pass_require_valid",
+      "tests/physical/test_diagnostic_ordering.py::test_state_representation_ids_are_object_keys",
+      "tests/physical/test_diagnostic_ordering.py::test_opaque_pointer_sorting_uses_declared_container_types[kinds0-expected0]",
+      "tests/physical/test_diagnostic_ordering.py::test_opaque_pointer_sorting_uses_declared_container_types[kinds1-expected1]",
+      "tests/physical/test_diagnostic_ordering.py::test_invalid_pointer_context_preserves_default_index_sorting[None]",
+      "tests/physical/test_diagnostic_ordering.py::test_invalid_pointer_context_preserves_default_index_sorting[hint1]",
+      "tests/physical/test_diagnostic_ordering.py::test_invalid_pointer_context_preserves_default_index_sorting[hint2]",
+      "tests/physical/test_diagnostic_ordering.py::test_invalid_pointer_context_preserves_default_index_sorting[hint3]",
+      "tests/physical/test_diagnostic_ordering.py::test_invalid_pointer_context_preserves_default_index_sorting[hint4]",
+      "tests/physical/test_diagnostic_ordering.py::test_pointer_context_cannot_retype_known_representation_keys",
+      "tests/physical/test_diagnostic_ordering.py::test_known_schema_arrays_ignore_object_key_hints[/observations]",
+      "tests/physical/test_diagnostic_ordering.py::test_known_schema_arrays_ignore_object_key_hints[/report/policy_differences]",
+      "tests/physical/test_diagnostic_ordering.py::test_known_schema_arrays_ignore_object_key_hints[/report/transforms]",
+      "tests/physical/test_diagnostic_ordering.py::test_known_schema_arrays_ignore_object_key_hints[/report/diagnostics]",
+      "tests/physical/test_diagnostic_ordering.py::test_known_schema_arrays_ignore_object_key_hints[/sites]",
+      "tests/physical/test_diagnostic_ordering.py::test_known_schema_arrays_ignore_object_key_hints[/sites/0/basis]",
+      "tests/physical/test_diagnostic_ordering.py::test_known_schema_arrays_ignore_object_key_hints[/problem/tensor_order]",
+      "tests/physical/test_diagnostic_ordering.py::test_known_schema_arrays_ignore_object_key_hints[/problem/drives]",
+      "tests/physical/test_diagnostic_ordering.py::test_known_schema_arrays_ignore_object_key_hints[/problem/environment/jumps]",
+      "tests/physical/test_diagnostic_ordering.py::test_known_schema_arrays_ignore_object_key_hints[/problem/initial_state/factors]",
+      "tests/physical/test_diagnostic_ordering.py::test_known_schema_arrays_ignore_object_key_hints[/problem/approximations]",
+      "tests/physical/test_diagnostic_ordering.py::test_known_schema_arrays_ignore_object_key_hints[/problem/extensions]",
+      "tests/physical/test_diagnostic_ordering.py::test_known_schema_arrays_ignore_object_key_hints[/policy/method/allowed]",
+      "tests/physical/test_diagnostic_ordering.py::test_known_schema_arrays_ignore_object_key_hints[/provenance/basis_mapping]",
+      "tests/physical/test_diagnostic_ordering.py::test_known_schema_arrays_ignore_object_key_hints[/provenance/prior_transforms]",
+      "tests/physical/test_diagnostic_ordering.py::test_known_schema_arrays_ignore_object_key_hints[/profiles]",
+      "tests/physical/test_diagnostic_ordering.py::test_known_schema_arrays_ignore_object_key_hints[/required_extensions]",
+      "tests/physical/test_diagnostic_ordering.py::test_known_schema_arrays_ignore_object_key_hints[/required_extensions/0]",
+      "tests/physical/test_diagnostic_ordering.py::test_known_schema_arrays_ignore_object_key_hints[/output_kinds]",
+      "tests/physical/test_diagnostic_ordering.py::test_known_schema_arrays_ignore_object_key_hints[/methods]",
+      "tests/physical/test_diagnostic_ordering.py::test_known_schema_arrays_ignore_object_key_hints[/problem/h0/terms]",
+      "tests/physical/test_diagnostic_ordering.py::test_known_schema_arrays_ignore_object_key_hints[/problem/h0/terms/0/factors]",
+      "tests/physical/test_diagnostic_ordering.py::test_known_schema_arrays_ignore_object_key_hints[/problem/h0/terms/0/coefficient]",
+      "tests/physical/test_diagnostic_ordering.py::test_known_schema_arrays_ignore_object_key_hints[/observations/0/keep_sites]",
+      "tests/physical/test_diagnostic_ordering.py::test_known_schema_arrays_ignore_object_key_hints[/observations/0/input_sites]",
+      "tests/physical/test_diagnostic_ordering.py::test_known_schema_arrays_ignore_object_key_hints[/observations/0/data/shape]",
+      "tests/physical/test_diagnostic_ordering.py::test_known_schema_arrays_ignore_object_key_hints[/shape]",
+      "tests/physical/test_diagnostic_ordering.py::test_known_schema_arrays_ignore_object_key_hints[/$p_array/shape]",
+      "tests/physical/test_diagnostic_ordering.py::test_known_schema_arrays_ignore_object_key_hints[/problem/extensions/0/payload/$p_array/shape]",
+      "tests/physical/test_diagnostic_ordering.py::test_known_schema_objects_ignore_numeric_index_hints[]",
+      "tests/physical/test_diagnostic_ordering.py::test_known_schema_objects_ignore_numeric_index_hints[/problem]",
+      "tests/physical/test_diagnostic_ordering.py::test_known_schema_objects_ignore_numeric_index_hints[/sites/0]",
+      "tests/physical/test_diagnostic_ordering.py::test_known_schema_objects_ignore_numeric_index_hints[/problem/drives/0]",
+      "tests/physical/test_diagnostic_ordering.py::test_known_schema_objects_ignore_numeric_index_hints[/problem/drives/0/signal]",
+      "tests/physical/test_diagnostic_ordering.py::test_known_schema_objects_ignore_numeric_index_hints[/problem/environment]",
+      "tests/physical/test_diagnostic_ordering.py::test_known_schema_objects_ignore_numeric_index_hints[/problem/environment/jumps/0]",
+      "tests/physical/test_diagnostic_ordering.py::test_known_schema_objects_ignore_numeric_index_hints[/problem/initial_state]",
+      "tests/physical/test_diagnostic_ordering.py::test_known_schema_objects_ignore_numeric_index_hints[/problem/initial_state/factors/0]",
+      "tests/physical/test_diagnostic_ordering.py::test_known_schema_objects_ignore_numeric_index_hints[/problem/h0]",
+      "tests/physical/test_diagnostic_ordering.py::test_known_schema_objects_ignore_numeric_index_hints[/problem/h0/terms/0]",
+      "tests/physical/test_diagnostic_ordering.py::test_known_schema_objects_ignore_numeric_index_hints[/problem/h0/terms/0/factors/0]",
+      "tests/physical/test_diagnostic_ordering.py::test_known_schema_objects_ignore_numeric_index_hints[/observations/0]",
+      "tests/physical/test_diagnostic_ordering.py::test_known_schema_objects_ignore_numeric_index_hints[/policy]",
+      "tests/physical/test_diagnostic_ordering.py::test_known_schema_objects_ignore_numeric_index_hints[/policy/method]",
+      "tests/physical/test_diagnostic_ordering.py::test_known_schema_objects_ignore_numeric_index_hints[/provenance]",
+      "tests/physical/test_diagnostic_ordering.py::test_known_schema_objects_ignore_numeric_index_hints[/provenance/device_snapshot]",
+      "tests/physical/test_diagnostic_ordering.py::test_known_schema_objects_ignore_numeric_index_hints[/provenance/basis_mapping/0]",
+      "tests/physical/test_diagnostic_ordering.py::test_known_schema_objects_ignore_numeric_index_hints[/problem/extensions/0]",
+      "tests/physical/test_diagnostic_ordering.py::test_known_schema_objects_ignore_numeric_index_hints[/report]",
+      "tests/physical/test_diagnostic_ordering.py::test_known_schema_objects_ignore_numeric_index_hints[/report/policy_differences/0]",
+      "tests/physical/test_diagnostic_ordering.py::test_known_schema_objects_ignore_numeric_index_hints[/report/transforms/0]",
+      "tests/physical/test_diagnostic_ordering.py::test_known_schema_objects_ignore_numeric_index_hints[/report/transforms/0/authorization]",
+      "tests/physical/test_diagnostic_ordering.py::test_known_schema_objects_ignore_numeric_index_hints[/report/diagnostics/0]",
+      "tests/physical/test_diagnostic_ordering.py::test_known_schema_objects_ignore_numeric_index_hints[/report/state_representations]",
+      "tests/physical/test_diagnostic_ordering.py::test_known_schema_objects_ignore_numeric_index_hints[/report/actual_policy]",
+      "tests/physical/test_diagnostic_ordering.py::test_known_schema_objects_ignore_numeric_index_hints[/precision]",
+      "tests/physical/test_diagnostic_ordering.py::test_known_schema_objects_ignore_numeric_index_hints[/profiles/0]",
+      "tests/physical/test_diagnostic_ordering.py::test_known_schema_objects_ignore_numeric_index_hints[/observations/0/data]",
+      "tests/physical/test_diagnostic_ordering.py::test_opaque_paths_do_not_inherit_schema_field_names[/opaque/observations]",
+      "tests/physical/test_diagnostic_ordering.py::test_opaque_paths_do_not_inherit_schema_field_names[/problem/extensions/0/payload/observations]",
+      "tests/physical/test_diagnostic_ordering.py::test_opaque_paths_do_not_inherit_schema_field_names[/provenance/prior_transforms/0/observations]",
+      "tests/physical/test_diagnostic_ordering.py::test_opaque_paths_do_not_inherit_schema_field_names[/report/policy_differences/0/requested/observations]",
+      "tests/physical/test_diagnostic_ordering.py::test_opaque_paths_do_not_inherit_schema_field_names[/report/policy_differences/0/actual/observations]",
+      "tests/physical/test_diagnostic_ordering.py::test_opaque_paths_do_not_inherit_schema_field_names[/report/diagnostics/0/details/observations]",
+      "tests/physical/test_diagnostic_ordering.py::test_opaque_paths_do_not_inherit_schema_field_names[/profiles/0/state_representations]",
+      "tests/physical/test_diagnostic_ordering.py::test_long_numeric_pointer_tokens_do_not_require_integer_conversion[key]",
+      "tests/physical/test_diagnostic_ordering.py::test_long_numeric_pointer_tokens_do_not_require_integer_conversion[index]",
+      "tests/physical/test_diagnostic_ordering.py::test_long_numeric_pointer_tokens_use_length_then_digits"
+    ]
+  },
+  {
+    "ac": "AC-13",
+    "oracle": "O-13",
+    "owner": "T6",
+    "status": "planned",
+    "test_file": "tests/physical/test_result_binding.py",
+    "positive": "test_p_result_binding",
+    "negative": "test_p_rejects_result_guard_omission",
+    "input": "one valid result per observation branch, plus every Gherkin mismatch field",
+    "injection": "remove exactly one checker comparison for each individually invalid result",
+    "target_assertion": "INVALID_RESULT at the changed field; valid request diagnostics retain their categories",
+    "unique_interceptor": "prove per atomic child; split masking inputs before acceptance",
+    "note": "no extra full-state requirement for expectation-only results",
+    "scenarios": [
+      "AC-13 Detect each result-contract mismatch"
+    ],
+    "requirements": [
+      "F-06"
+    ],
+    "adrs": [
+      "ADR-805"
+    ],
+    "nodes": [
+      "tests/physical/test_result_binding.py::test_p_result_binding[transport]",
+      "tests/physical/test_result_binding.py::test_p_result_binding[structure]",
+      "tests/physical/test_result_binding.py::test_p_result_binding[physical]",
+      "tests/physical/test_result_binding.py::test_p_rejects_result_guard_omission[skip-request-id]",
+      "tests/physical/test_result_binding.py::test_p_rejects_result_guard_omission[skip-time]",
+      "tests/physical/test_result_binding.py::test_p_rejects_result_guard_omission[skip-shape]",
+      "tests/physical/test_result_binding.py::test_p_rejects_result_guard_omission[skip-tensor-order]",
+      "tests/physical/test_result_binding.py::test_p_rejects_result_guard_omission[skip-frame]",
+      "tests/physical/test_result_binding.py::test_p_rejects_result_guard_omission[skip-policy-report]",
+      "tests/physical/test_result_binding.py::test_p_rejects_result_guard_omission[skip-observation-set]"
+    ],
+    "children": [
+      "AC-13/skip-request-id",
+      "AC-13/skip-time",
+      "AC-13/skip-shape",
+      "AC-13/skip-tensor-order",
+      "AC-13/skip-frame",
+      "AC-13/skip-policy-report",
+      "AC-13/skip-observation-set"
+    ],
+    "support_nodes": [
+      "tests/physical/test_result_binding.py::test_expectation_only_needs_no_full_state",
+      "tests/physical/test_result_binding.py::test_returned_state_physical_conditions[ket]",
+      "tests/physical/test_result_binding.py::test_returned_state_physical_conditions[density]",
+      "tests/physical/test_result_binding.py::test_returned_state_physical_conditions[partial_trace]",
+      "tests/physical/test_result_binding.py::test_returned_state_physical_conditions[projection]",
+      "tests/physical/test_result_binding.py::test_projection_scalar_relations_are_exact[leakage]",
+      "tests/physical/test_result_binding.py::test_projection_scalar_relations_are_exact[trace_error]",
+      "tests/physical/test_result_binding.py::test_invalid_shape_skips_dependent_physics",
+      "tests/physical/test_result_binding.py::test_invalid_request_structure_keeps_original_classification",
+      "tests/physical/test_result_binding.py::test_transport_result_failure_uses_invalid_result",
+      "tests/physical/test_result_binding.py::test_unknown_check_level_raises",
+      "tests/physical/test_result_binding.py::test_result_identity_respects_explicit_wire_budget",
+      "tests/physical/test_result_binding.py::test_identity_encoding_failure_returns_report"
+    ]
+  },
+  {
+    "ac": "AC-14",
+    "oracle": "O-14",
+    "owner": "T5",
+    "status": "planned",
+    "test_file": "tests/physical/test_tiered_physical_budget.py",
+    "positive": "test_p_tiered_physical_budget",
+    "negative": "test_p_rejects_physical_budget_or_psd",
+    "input": "PSD boundary quartet, complex offdiagonal state, valid projection, dimension/slot/op/bit budgets",
+    "injection": "loosen/tighten PSD tolerance, diagonal-only PSD, skip budget, reset per-value counter, repair input separately",
+    "target_assertion": "PSD truth table, no-assembly traps, RESOURCE_LIMIT and complete=False",
+    "unique_interceptor": "prove per atomic child; split masking inputs before acceptance",
+    "note": "P-PSD-LOOSE/TIGHT/OFFDIAGONAL; cumulative production path remains planned",
+    "scenarios": [
+      "AC-14 Physical checks do not silently repair inputs",
+      "AC-14 Check both sides of the declared PSD numerical boundary",
+      "AC-14 A resource limit is not a completed physical check"
+    ],
+    "requirements": [
+      "F-09"
+    ],
+    "adrs": [
+      "ADR-803"
+    ],
+    "nodes": [
+      "tests/physical/test_tiered_physical_budget.py::test_p_tiered_physical_budget[ket]",
+      "tests/physical/test_tiered_physical_budget.py::test_p_tiered_physical_budget[density]",
+      "tests/physical/test_tiered_physical_budget.py::test_p_tiered_physical_budget[product]",
+      "tests/physical/test_tiered_physical_budget.py::test_p_tiered_physical_budget[nonhermitian_terms]",
+      "tests/physical/test_tiered_physical_budget.py::test_p_rejects_physical_budget_or_psd[psd-loose-1e-7]",
+      "tests/physical/test_tiered_physical_budget.py::test_p_rejects_physical_budget_or_psd[psd-tight-zero]",
+      "tests/physical/test_tiered_physical_budget.py::test_p_rejects_physical_budget_or_psd[psd-diagonal-only]",
+      "tests/physical/test_tiered_physical_budget.py::test_p_rejects_physical_budget_or_psd[skip-budget]",
+      "tests/physical/test_tiered_physical_budget.py::test_p_rejects_physical_budget_or_psd[reset-cumulative-counter]",
+      "tests/physical/test_tiered_physical_budget.py::test_p_rejects_physical_budget_or_psd[repair-input]",
+      "tests/physical/test_tiered_physical_budget.py::test_p_rejects_physical_budget_or_psd[skip-global-product-normalization]",
+      "tests/physical/test_tiered_physical_budget.py::test_p_rejects_physical_budget_or_psd[skip-zero-pivot-offdiagonal]",
+      "tests/physical/test_tiered_physical_budget.py::test_p_rejects_physical_budget_or_psd[unchecked-integer-product]"
+    ],
+    "children": [
+      "AC-14/psd-loose-1e-7",
+      "AC-14/psd-tight-zero",
+      "AC-14/psd-diagonal-only",
+      "AC-14/skip-budget",
+      "AC-14/reset-cumulative-counter",
+      "AC-14/reset-request-result-counter",
+      "AC-14/repair-input",
+      "AC-14/skip-global-product-normalization",
+      "AC-14/skip-zero-pivot-offdiagonal",
+      "AC-14/unchecked-integer-product"
+    ],
+    "support_nodes": [
+      "tests/physical/test_tiered_physical_budget.py::test_psd_boundary_uses_exact_binary64[-5e-11-True]",
+      "tests/physical/test_tiered_physical_budget.py::test_psd_boundary_uses_exact_binary64[-1e-10-True]",
+      "tests/physical/test_tiered_physical_budget.py::test_psd_boundary_uses_exact_binary64[-1.0000000000000002e-10-False]",
+      "tests/physical/test_tiered_physical_budget.py::test_psd_boundary_uses_exact_binary64[-1.01e-10-False]",
+      "tests/physical/test_tiered_physical_budget.py::test_psd_boundary_uses_exact_binary64[-1e-08-False]",
+      "tests/physical/test_tiered_physical_budget.py::test_psd_boundary_uses_exact_binary64[-1e-06-False]",
+      "tests/physical/test_tiered_physical_budget.py::test_psd_boundary_uses_exact_binary64[-2e-10-False]",
+      "tests/physical/test_tiered_physical_budget.py::test_physical_invalid_request_and_resource_diagnostics[nonhermitian_total-HERMITIAN]",
+      "tests/physical/test_tiered_physical_budget.py::test_physical_invalid_request_and_resource_diagnostics[unnormalized_ket-NORMALIZATION]",
+      "tests/physical/test_tiered_physical_budget.py::test_physical_invalid_request_and_resource_diagnostics[imaginary_trace-NORMALIZATION]",
+      "tests/physical/test_tiered_physical_budget.py::test_physical_invalid_request_and_resource_diagnostics[complex_non_psd-PSD]",
+      "tests/physical/test_tiered_physical_budget.py::test_physical_invalid_request_and_resource_diagnostics[negative_pivot-PSD]",
+      "tests/physical/test_tiered_physical_budget.py::test_physical_invalid_request_and_resource_diagnostics[zero_pivot_column-PSD]",
+      "tests/physical/test_tiered_physical_budget.py::test_physical_invalid_request_and_resource_diagnostics[global_normalization-NORMALIZATION]",
+      "tests/physical/test_tiered_physical_budget.py::test_physical_invalid_request_and_resource_diagnostics[dense_dimension-DENSE_DIMENSION]",
+      "tests/physical/test_tiered_physical_budget.py::test_physical_invalid_request_and_resource_diagnostics[numeric_elements-NUMERIC_ELEMENTS]",
+      "tests/physical/test_tiered_physical_budget.py::test_physical_invalid_request_and_resource_diagnostics[rational_ops-RATIONAL_OPS]",
+      "tests/physical/test_tiered_physical_budget.py::test_physical_invalid_request_and_resource_diagnostics[rational_bits-RATIONAL_BITS]",
+      "tests/physical/test_tiered_physical_budget.py::test_physical_invalid_request_and_resource_diagnostics[numeric_range-NUMERIC_RANGE]",
+      "tests/physical/test_tiered_physical_budget.py::test_physical_invalid_request_and_resource_diagnostics[isometry-ISOMETRY]",
+      "tests/physical/test_tiered_physical_budget.py::test_p_request_budget_is_cumulative",
+      "tests/physical/test_tiered_physical_budget.py::test_dimension_and_slots_refuse_before_assembly",
+      "tests/physical/test_tiered_physical_budget.py::test_schur_counts_across_multiple_states",
+      "tests/physical/test_tiered_physical_budget.py::test_fraction_cross_cancellation_precedes_products",
+      "tests/physical/test_tiered_physical_budget.py::test_operator_assembly_respects_tensor_order_and_identity",
+      "tests/physical/test_tiered_physical_budget.py::test_operator_releases_local_workspace_between_terms",
+      "tests/physical/test_tiered_physical_budget.py::test_p_request_and_result_share_budget[reset-request-result-counter]",
+      "tests/physical/test_tiered_physical_budget.py::test_result_numeric_budget_precedes_array_materialization"
+    ]
+  },
+  {
+    "ac": "AC-15",
+    "oracle": "O-15",
+    "owner": "T7",
+    "status": "planned",
+    "test_file": "tests/physical/test_independent_consumers.py",
+    "positive": "test_p_independent_consumers",
+    "negative": "test_p_rejects_consumer_target_site",
+    "input": "same exchanged V-01 through V-10 variants",
+    "injection": "change target only inside consumer A's operator assembly",
+    "target_assertion": "each consumer versus independent literal/analytic references, then A versus B",
+    "unique_interceptor": "prove per atomic child; split masking inputs before acceptance",
+    "note": "assembly and equation-construction functions cannot be shared",
+    "scenarios": [
+      "AC-15 Compare two independent consumers with analytic references"
+    ],
+    "requirements": [
+      "F-10"
+    ],
+    "adrs": [
+      "ADR-806"
+    ],
+    "nodes": [
+      "tests/physical/test_independent_consumers.py::test_p_independent_consumers[asymmetric]",
+      "tests/physical/test_independent_consumers.py::test_p_independent_consumers[rotation]",
+      "tests/physical/test_independent_consumers.py::test_p_independent_consumers[phase]",
+      "tests/physical/test_independent_consumers.py::test_p_independent_consumers[decay]",
+      "tests/physical/test_independent_consumers.py::test_p_independent_consumers[zoh-drive]",
+      "tests/physical/test_independent_consumers.py::test_p_independent_consumers[zoh-rate]",
+      "tests/physical/test_independent_consumers.py::test_p_independent_consumers[bell]",
+      "tests/physical/test_independent_consumers.py::test_p_independent_consumers[basic-projection]",
+      "tests/physical/test_independent_consumers.py::test_p_independent_consumers[complex-projection]",
+      "tests/physical/test_independent_consumers.py::test_p_independent_consumers[trace-projection]",
+      "tests/physical/test_independent_consumers.py::test_p_independent_consumers[zero]",
+      "tests/physical/test_independent_consumers.py::test_p_independent_consumers[hermitian-sum]",
+      "tests/physical/test_independent_consumers.py::test_p_independent_consumers[product]",
+      "tests/physical/test_independent_consumers.py::test_p_rejects_consumer_target_site"
+    ],
+    "children": [
+      "AC-15/A-only-target-change"
+    ],
+    "support_nodes": [
+      "tests/physical/test_independent_consumers.py::test_p_unknown_bath_refused_before_execution[a]",
+      "tests/physical/test_independent_consumers.py::test_p_unknown_bath_refused_before_execution[b]",
+      "tests/physical/test_independent_consumers.py::test_p_consumers_have_separate_equations"
+    ]
+  },
+  {
+    "ac": "AC-16",
+    "oracle": "O-16",
+    "owner": "T8",
+    "status": "planned",
+    "test_file": "tests/physical/test_six_internal_mutations.py",
+    "positive": "test_p_six_internal_mutations",
+    "negative": "test_p_rejects_mutation_inventory",
+    "input": "Gherkin's exact six named mechanisms plus atomic children",
+    "injection": "remove, relabel, bypass, or falsely mark one required child killed",
+    "target_assertion": "set equality and designated target assertion; restored baseline",
+    "unique_interceptor": "prove per atomic child; split masking inputs before acceptance",
+    "note": "a test failure at an unrelated guard does not kill the child",
+    "scenarios": [
+      "AC-16 Require all six internal negative-control mechanisms"
+    ],
+    "requirements": [
+      "F-10"
+    ],
+    "adrs": [
+      "ADR-806"
+    ],
+    "nodes": [
+      "tests/physical/test_six_internal_mutations.py::test_p_six_internal_mutations[AC-02/factor-reversal/a]",
+      "tests/physical/test_six_internal_mutations.py::test_p_six_internal_mutations[AC-02/factor-reversal/b]",
+      "tests/physical/test_six_internal_mutations.py::test_p_six_internal_mutations[AC-03/reverse-Y/a]",
+      "tests/physical/test_six_internal_mutations.py::test_p_six_internal_mutations[AC-03/reverse-Y/b]",
+      "tests/physical/test_six_internal_mutations.py::test_p_six_internal_mutations[AC-03/wrong-Hamiltonian-sign/a]",
+      "tests/physical/test_six_internal_mutations.py::test_p_six_internal_mutations[AC-03/wrong-Hamiltonian-sign/b]",
+      "tests/physical/test_six_internal_mutations.py::test_p_six_internal_mutations[AC-15/A-only-target-change/a]",
+      "tests/physical/test_six_internal_mutations.py::test_p_six_internal_mutations[AC-03/extra-2pi/a]",
+      "tests/physical/test_six_internal_mutations.py::test_p_six_internal_mutations[AC-03/extra-2pi/b]",
+      "tests/physical/test_six_internal_mutations.py::test_p_six_internal_mutations[AC-04/rate-as-amplitude/a]",
+      "tests/physical/test_six_internal_mutations.py::test_p_six_internal_mutations[AC-04/rate-as-amplitude/b]",
+      "tests/physical/test_six_internal_mutations.py::test_p_six_internal_mutations[AC-05/left-boundary/a]",
+      "tests/physical/test_six_internal_mutations.py::test_p_six_internal_mutations[AC-05/left-boundary/b]",
+      "tests/physical/test_six_internal_mutations.py::test_p_six_internal_mutations[AC-05/snapped-time-label/a]",
+      "tests/physical/test_six_internal_mutations.py::test_p_six_internal_mutations[AC-05/snapped-time-label/b]",
+      "tests/physical/test_six_internal_mutations.py::test_p_six_internal_mutations[AC-05/left-edge-state-with-original-label/a]",
+      "tests/physical/test_six_internal_mutations.py::test_p_six_internal_mutations[AC-05/left-edge-state-with-original-label/b]",
+      "tests/physical/test_six_internal_mutations.py::test_p_six_internal_mutations[AC-05/right-edge-state-with-original-label/a]",
+      "tests/physical/test_six_internal_mutations.py::test_p_six_internal_mutations[AC-05/right-edge-state-with-original-label/b]",
+      "tests/physical/test_six_internal_mutations.py::test_p_six_internal_mutations[AC-05/first-rate-extended/a]",
+      "tests/physical/test_six_internal_mutations.py::test_p_six_internal_mutations[AC-05/first-rate-extended/b]",
+      "tests/physical/test_six_internal_mutations.py::test_p_six_internal_mutations[AC-08/drop-imaginary/codec]",
+      "tests/physical/test_six_internal_mutations.py::test_p_six_internal_mutations[AC-08/replace-axis/codec]",
+      "tests/physical/test_six_internal_mutations.py::test_p_six_internal_mutations[AC-08/accept-unknown-key/codec]",
+      "tests/physical/test_six_internal_mutations.py::test_p_six_internal_mutations[AC-08/accept-duplicate-key/codec]",
+      "tests/physical/test_six_internal_mutations.py::test_p_six_internal_mutations[FORM/boundary-plus-minus-one/form]",
+      "tests/physical/test_six_internal_mutations.py::test_p_six_internal_mutations[FORM/regex-quantifier-character-class/form]",
+      "tests/physical/test_six_internal_mutations.py::test_p_six_internal_mutations[FORM/sort-reverse-deduplicate/form]",
+      "tests/physical/test_six_internal_mutations.py::test_p_six_internal_mutations[FORM/missing-inner-guard/form]",
+      "tests/physical/test_six_internal_mutations.py::test_p_six_internal_mutations[FORM/implicit-default-fill/form]",
+      "tests/physical/test_six_internal_mutations.py::test_p_six_internal_mutations[FORM/tighten-permitted-reader/form]",
+      "tests/physical/test_six_internal_mutations.py::test_p_six_internal_mutations[FORM/mutable-wrapper/form]",
+      "tests/physical/test_six_internal_mutations.py::test_p_rejects_mutation_inventory[remove-family]",
+      "tests/physical/test_six_internal_mutations.py::test_p_rejects_mutation_inventory[rename-family]",
+      "tests/physical/test_six_internal_mutations.py::test_p_rejects_mutation_inventory[skip-child]",
+      "tests/physical/test_six_internal_mutations.py::test_p_rejects_mutation_inventory[wrong-assertion-counted-as-kill]",
+      "tests/physical/test_six_internal_mutations.py::test_p_rejects_mutation_inventory[fake-kill-record]",
+      "tests/physical/test_six_internal_mutations.py::test_p_rejects_mutation_inventory[extra-child]",
+      "tests/physical/test_six_internal_mutations.py::test_p_rejects_mutation_inventory[duplicate-child]",
+      "tests/physical/test_six_internal_mutations.py::test_p_rejects_mutation_inventory[import-error]",
+      "tests/physical/test_six_internal_mutations.py::test_p_rejects_mutation_inventory[uncollected]",
+      "tests/physical/test_six_internal_mutations.py::test_p_rejects_mutation_inventory[skip]",
+      "tests/physical/test_six_internal_mutations.py::test_p_rejects_mutation_inventory[xfail]",
+      "tests/physical/test_six_internal_mutations.py::test_p_rejects_mutation_inventory[remove-form]",
+      "tests/physical/test_six_internal_mutations.py::test_p_rejects_mutation_inventory[remove-catalogue-child]"
+    ],
+    "children": [
+      "AC-16/remove-family",
+      "AC-16/rename-family",
+      "AC-16/skip-child",
+      "AC-16/wrong-assertion-counted-as-kill",
+      "AC-16/fake-kill-record"
+    ],
+    "support_nodes": [
+      "tests/physical/test_six_internal_mutations.py::test_p_mutation_inventory",
+      "tests/physical/test_six_internal_mutations.py::test_p_rejects_acceptance_map[missing-ac]",
+      "tests/physical/test_six_internal_mutations.py::test_p_rejects_acceptance_map[extra-ac]",
+      "tests/physical/test_six_internal_mutations.py::test_p_rejects_acceptance_map[missing-child]",
+      "tests/physical/test_six_internal_mutations.py::test_p_rejects_acceptance_map[wrong-node]"
+    ]
+  },
+  {
+    "ac": "AC-17",
+    "oracle": "O-17",
+    "owner": "T9",
+    "status": "planned",
+    "test_file": "tests/physical/test_legacy_and_minimal_install.py",
+    "positive": "test_p_legacy_minimal_install",
+    "negative": "test_p_rejects_dependency_or_eager_import",
+    "input": "required-only wheel installation; fresh root import; explicit P acceptance",
+    "injection": "inject numerical requirement into isolated wheel metadata or eager P/solver import",
+    "target_assertion": "dependency allowlist, import delta, and executable stdlib acceptance",
+    "unique_interceptor": "prove per atomic child; split masking inputs before acceptance",
+    "note": "T10 additionally runs full legacy regression and existing coverage gates",
+    "scenarios": [
+      "AC-17 Preserve existing behavior and keep the contract installation isolated"
+    ],
+    "requirements": [
+      "F-10"
+    ],
+    "adrs": [
+      "ADR-801",
+      "ADR-806"
+    ],
+    "nodes": [
+      "tests/physical/test_legacy_and_minimal_install.py::test_p_legacy_minimal_install",
+      "tests/physical/test_legacy_and_minimal_install.py::test_p_rejects_dependency_or_eager_import[numerical-wheel-dependency]",
+      "tests/physical/test_legacy_and_minimal_install.py::test_p_rejects_dependency_or_eager_import[eager-P-root-import]",
+      "tests/physical/test_legacy_and_minimal_install.py::test_p_rejects_dependency_or_eager_import[eager-solver-import]",
+      "tests/physical/test_legacy_and_minimal_install.py::test_p_rejects_dependency_or_eager_import[source-tree-shadowing-install]"
+    ],
+    "children": [
+      "AC-17/numerical-wheel-dependency",
+      "AC-17/eager-P-root-import",
+      "AC-17/eager-solver-import",
+      "AC-17/source-tree-shadowing-install"
+    ],
+    "support_nodes": [
+      "tests/physical/test_p_public_api.py::test_p_final_public_exports_are_exact",
+      "tests/physical/test_p_public_api.py::test_p_root_import_does_not_load_physical",
+      "tests/physical/test_p_public_api.py::test_p_each_module_import_is_isolated[qaiji.core.physical]",
+      "tests/physical/test_p_public_api.py::test_p_each_module_import_is_isolated[qaiji.core.physical._numeric]",
+      "tests/physical/test_p_public_api.py::test_p_each_module_import_is_isolated[qaiji.core.physical.arrays]",
+      "tests/physical/test_p_public_api.py::test_p_each_module_import_is_isolated[qaiji.core.physical.capabilities]",
+      "tests/physical/test_p_public_api.py::test_p_each_module_import_is_isolated[qaiji.core.physical.codec]",
+      "tests/physical/test_p_public_api.py::test_p_each_module_import_is_isolated[qaiji.core.physical.diagnostics]",
+      "tests/physical/test_p_public_api.py::test_p_each_module_import_is_isolated[qaiji.core.physical.identity]",
+      "tests/physical/test_p_public_api.py::test_p_each_module_import_is_isolated[qaiji.core.physical.model]",
+      "tests/physical/test_p_public_api.py::test_p_each_module_import_is_isolated[qaiji.core.physical.results]",
+      "tests/physical/test_p_public_api.py::test_p_each_module_import_is_isolated[qaiji.core.physical.validation]"
+    ]
+  },
+  {
+    "ac": "AC-18",
+    "oracle": "O-18",
+    "owner": "T3",
+    "status": "planned",
+    "test_file": "tests/physical/test_provenance_and_attachments.py",
+    "positive": "test_p_provenance_attachments",
+    "negative": "test_p_rejects_attachment_digest_bypass",
+    "input": "source-only change, absent attachment, one-byte corrupted array",
+    "injection": "bypass digest validation inside array restoration",
+    "target_assertion": "source retained and identities equal; ATTACHMENT_MISSING/DIGEST",
+    "unique_interceptor": "prove per atomic child; split masking inputs before acceptance",
+    "note": "digest failure is reached before decoding corrupted numeric components",
+    "scenarios": [
+      "AC-18 Keep binding provenance and check every physical attachment"
+    ],
+    "requirements": [
+      "F-01",
+      "F-07"
+    ],
+    "adrs": [
+      "ADR-802"
+    ],
+    "nodes": [
+      "tests/physical/test_provenance_and_attachments.py::test_p_provenance_attachments[inline]",
+      "tests/physical/test_provenance_and_attachments.py::test_p_provenance_attachments[attachments]",
+      "tests/physical/test_provenance_and_attachments.py::test_p_provenance_attachments[mixed]",
+      "tests/physical/test_provenance_and_attachments.py::test_p_provenance_attachments[manual]",
+      "tests/physical/test_provenance_and_attachments.py::test_p_provenance_attachments[program_ref]",
+      "tests/physical/test_provenance_and_attachments.py::test_p_provenance_attachments[binder_version]",
+      "tests/physical/test_provenance_and_attachments.py::test_p_provenance_attachments[device_snapshot]",
+      "tests/physical/test_provenance_and_attachments.py::test_p_provenance_attachments[calibration_snapshot]",
+      "tests/physical/test_provenance_and_attachments.py::test_p_provenance_attachments[basis_mapping]",
+      "tests/physical/test_provenance_and_attachments.py::test_p_provenance_attachments[prior_transforms]",
+      "tests/physical/test_provenance_and_attachments.py::test_p_rejects_attachment_digest_bypass[skip-attachment-digest]",
+      "tests/physical/test_provenance_and_attachments.py::test_p_rejects_attachment_digest_bypass[missing-attachment]",
+      "tests/physical/test_provenance_and_attachments.py::test_p_rejects_attachment_digest_bypass[drop-provenance]"
+    ],
+    "children": [
+      "AC-18/skip-attachment-digest",
+      "AC-18/drop-provenance"
+    ],
+    "support_nodes": []
+  }
+]

@@ -43,6 +43,10 @@ L4 语义授权层，``qaiji.core.program`` 提供 L5 程序描述与校验，�
 ``qaiji.core.native`` 提供 L2 时序与认证，``qaiji.core.program_native`` 提供
 L5 / L2 桥接，均不向包根或 ``qaiji.core`` 顶层重新导出。
 
+``qaiji.core.physical`` 提供 P 层的 53 个公开名称。
+P 层同样使用显式模块入口。
+单位与检查边界见 :doc:`physical`。
+
 .. toctree::
    :maxdepth: 1
 
@@ -51,6 +55,7 @@ L5 / L2 桥接，均不向包根或 ``qaiji.core`` 顶层重新导出。
    program
    native
    program_native
+   physical
    codec
    exceptions
    constants

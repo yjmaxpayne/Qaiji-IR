@@ -41,14 +41,24 @@
   CZ 基底展开和确定性调度、严格 JSON 往返，以及独立的来源、规则、矩阵与时序认证；
   `qubic_mapping` 输出中性操作记录，程序桥接按 L5 调用关联测量历史与最终位。Python 构造的
   RX90、RX180、ISWAP、SQISWAP 可参与原生调度，OpenQASM 编解码器不支持这四种门。
+- **P 层连续演化契约**（`qaiji.core.physical`）：提供不可变的问题、请求与结果。
+  严格交换支持显式数组附件。
+  内容身份覆盖物理字段与执行策略。
+  分级检查覆盖结构、能力、数值条件与资源预算。
+  P 层只使用标准库，不执行时间演化。
 
 可运行教程：[L4 语义摘要](doc/source/getting-started/semantics.rst)、
 [L5 程序校验](doc/source/getting-started/program.rst)、
-[L2 原生调度](doc/source/getting-started/native-schedule.rst)。
+[L2 原生调度](doc/source/getting-started/native-schedule.rst)、
+[P 层连续演化契约](doc/source/getting-started/physical.rst)。
 
-**范围**：本包不执行采样，不提供反馈运行时，不生成 ISA 或波形，也不声明物理保真度；
-校准集与设备模型引用只做透传。八层模型中的脉冲（L1）、波形（L0）、动力学（P）与
-轨迹（T）层不在本包的公开接口内。
+**范围**：本包不执行采样或时间演化。
+本包不提供反馈运行时，不生成 ISA 或波形。
+本包不声明物理保真度。
+校准集与设备模型引用只做透传。
+脉冲（L1）、波形（L0）与轨迹（T）层尚无公开接口。
+P 层提供交换与检查契约。
+消费者须自行实现求解与硬件适配。
 
 ## 安装
 
