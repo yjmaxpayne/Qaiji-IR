@@ -4,8 +4,10 @@
 # 都会让流水线变红。宽松模式下文档腐烂无人察觉，该 job 也就失去信号价值。
 # --keep-going 让 Sphinx 收集完所有问题再退出，便于一次性修复。
 #
-# 只有推送到 main 的构建会发布到 GitHub Pages；PR 只构建并上传 artifact，
+# 只有 main 上的构建（推送或手动触发）会发布到 GitHub Pages；PR 只构建并上传 artifact，
 # 避免未合并的改动覆盖线上文档。部署拆成独立 job，只有它持有 pages 写权限。
+# 发布 tag 晚于合并推送，推送时的构建看不到新 tag，侧栏版本号会落后一版；
+# 所以 publish.yml 在 Release 发布后手动触发本工作流，在 main 上重建一次。
 name: Docs
 
 on:
@@ -67,18 +69,18 @@ jobs:
           retention-days: 14
 
       - name: Configure GitHub Pages
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
         uses: actions/configure-pages@v5
 
       - name: Upload GitHub Pages artifact
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
         uses: actions/upload-pages-artifact@v3
         with:
           path: doc/build/html/
 
   deploy-pages:
     name: deploy GitHub Pages
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     needs: build-docs
     runs-on: ubuntu-latest
     timeout-minutes: 10

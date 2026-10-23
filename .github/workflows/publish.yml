@@ -186,3 +186,19 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh release upload "$TAG" dist/* SHA256SUMS --repo "$GITHUB_REPOSITORY" --clobber
+
+  refresh-docs:
+    name: Rebuild documentation for the new tag
+    # 合并推送触发的文档构建早于打 tag，侧栏版本号仍是上一版；tag 已存在后在 main 上重建。
+    # github-pages environment 只允许 main 部署，所以触发 main 上的 docs.yml，而非以 tag 构建。
+    needs: attach-release
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      actions: write
+
+    steps:
+      - name: Dispatch docs workflow on main
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run docs.yml --ref main --repo "$GITHUB_REPOSITORY"
