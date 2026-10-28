@@ -122,6 +122,7 @@ EXPECTED_FIELDS: dict[str, tuple[tuple[str, ...], ...]] = {
             "signal_edges",
             "time_unit",
             "frame",
+            "rotation_freqs",
             "approximations",
             "extensions",
             "schema",
@@ -183,11 +184,11 @@ EXPECTED_FIELDS: dict[str, tuple[tuple[str, ...], ...]] = {
 OVERLOADED = frozenset({"Signal", "State", "Observation", "ObservationValue"})
 
 SCHEMA_DEFAULTS = {
-    "Problem": "qaiji.p.problem/1.0",
-    "Request": "qaiji.p.request/1.0",
-    "Result": "qaiji.p.result/1.0",
-    "Requirements": "qaiji.p.requirements/1.0",
-    "Capabilities": "qaiji.p.capabilities/1.0",
+    "Problem": "qaiji.p.problem/1.1",
+    "Request": "qaiji.p.request/1.1",
+    "Result": "qaiji.p.result/1.1",
+    "Requirements": "qaiji.p.requirements/1.1",
+    "Capabilities": "qaiji.p.capabilities/1.1",
 }
 
 BUDGET_DEFAULTS = {
@@ -297,6 +298,7 @@ def _problem() -> Problem:
         signal_edges=_f64_array((0.0, 1.0)),
         time_unit="ns",
         frame="lab",
+        rotation_freqs=(),
         approximations=(),
         extensions=(_extension(),),
     )
@@ -576,6 +578,7 @@ def test_p_records_are_deeply_immutable() -> None:
         signal_edges=_f64_array((0.0, 1.0)),
         time_unit="ns",
         frame="lab",
+        rotation_freqs=[],
         approximations=[],
         extensions=extensions,
     )

@@ -35,16 +35,16 @@ FIXTURE_NAMES = (
 EXPECTED_FIXTURE_SHA256 = {
     "acceptance.feature": "6e88c71ace53cb72dc527cd423be57f9b815768296f6afb7ae73d3e1d7cb0ce6",
     "public-api.json": "bd1629d30a29c7e12424cd26e86fca7a8aa687fd155df64062c05facb2210d6d",
-    "canonical-vectors.json": "756a1dbc4e2f437ae2eb80f2a1a4a09b4674e5fe099829b220b5118e6febb8d8",
-    "bath-fixture.json": "b61faff8ab45144c07e1351255a8a40adbd8d244f7852a0183531e284091fa8a",
+    "canonical-vectors.json": "9538c4bbf9b7345631a87dd58f305c6521000be1318d50ef80e86c88e1d20d88",
+    "bath-fixture.json": "449ef746f9c51dff4c2e07802c7b9ef446765842c1b4a9547adfa3615ce8e537",
 }
 EXPECTED_FIXTURE_BYTES = {
     "acceptance.feature": 16359,
     "public-api.json": 2325,
-    "canonical-vectors.json": 6431,
-    "bath-fixture.json": 1829,
+    "canonical-vectors.json": 6519,
+    "bath-fixture.json": 1849,
 }
-EXPECTED_VECTOR_REVISION = 2
+EXPECTED_VECTOR_REVISION = 3
 EXPECTED_PUBLIC_MODULES = (
     "qaiji",
     "qaiji.core",
@@ -66,8 +66,8 @@ SCALAR_VECTORS = {
     "one": "3ff0000000000000",
     "min_subnormal": "0000000000000001",
 }
-PROBLEM_SCHEMA = "qaiji.p.problem/1.0"
-REQUEST_SCHEMA = "qaiji.p.request/1.0"
+PROBLEM_SCHEMA = "qaiji.p.problem/1.1"
+REQUEST_SCHEMA = "qaiji.p.request/1.1"
 BATH_NAMESPACE = "org.qaiji.fixtures.bath-correlation"
 BATH_CONTENT_TYPE = "application/vnd.qaiji.p.opaque+json"
 ABSOLUTE_PATH_MARKERS = ("/home/", "/Users/", "/root/", "\\\\Users\\\\", "file://")

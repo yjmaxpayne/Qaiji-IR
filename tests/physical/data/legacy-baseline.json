@@ -9,7 +9,7 @@
     "python": "3.13.9",
     "pytest": "9.1.0"
   },
-  "vector_revision": 2,
+  "vector_revision": 3,
   "fixtures": {
     "acceptance.feature": {
       "source": ".plan/prd/p-layer-contract/acceptance.feature",
@@ -23,13 +23,13 @@
     },
     "canonical-vectors.json": {
       "source": ".plan/arch/ADD_QAIJI-008_p-layer-contract/canonical-vectors.json",
-      "sha256": "756a1dbc4e2f437ae2eb80f2a1a4a09b4674e5fe099829b220b5118e6febb8d8",
-      "bytes": 6431
+      "sha256": "9538c4bbf9b7345631a87dd58f305c6521000be1318d50ef80e86c88e1d20d88",
+      "bytes": 6519
     },
     "bath-fixture.json": {
       "source": ".plan/arch/ADD_QAIJI-008_p-layer-contract/bath-fixture.json",
-      "sha256": "b61faff8ab45144c07e1351255a8a40adbd8d244f7852a0183531e284091fa8a",
-      "bytes": 1829
+      "sha256": "449ef746f9c51dff4c2e07802c7b9ef446765842c1b4a9547adfa3615ce8e537",
+      "bytes": 1849
     }
   },
   "public_exports": {

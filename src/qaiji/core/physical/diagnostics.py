@@ -158,6 +158,7 @@ _PATH_FIELDS: dict[str, dict[str, _PathNode]] = {
         "environment": "environment",
         "initial_state": "state",
         "signal_edges": "array",
+        "rotation_freqs": ("array", "pair"),
         "approximations": ("array", "scalar"),
         "extensions": ("array", "extension"),
     },
@@ -205,7 +206,7 @@ _PATH_FIELDS: dict[str, dict[str, _PathNode]] = {
     "transform": {"authorization": "authorization"},
     "authorization": {},
     "diagnostic": {},
-    "profile": {"output_kinds": ("array", "scalar")},
+    "profile": {"output_kinds": ("array", "scalar"), "approximations": ("array", "scalar")},
     "precision": {},
     "array": {"shape": ("array", "scalar")},
 }

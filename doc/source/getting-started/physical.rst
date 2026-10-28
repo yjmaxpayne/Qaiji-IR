@@ -42,6 +42,14 @@ Lindblad 项使用速率乘以耗散子。
 投影使用 ``V†ρV``，不重新归一化。
 ``frame`` 是显式参考系标签。
 本包不自动转换参考系。
+``h0`` 与驱动始终按实验室系给出。
+``frame="rotating"`` 时，``rotation_freqs`` 给出每个站点的旋转频率。
+频率单位为 rad/ns，条目按 ``tensor_order`` 排列，且覆盖全部站点。
+``frame="lab"`` 时，``rotation_freqs`` 必须为空。
+近似列表含 ``rwa`` 时，消费者在该旋转系中丢弃反旋项。
+``rwa`` 只能与 ``frame="rotating"`` 同用，结构检查拒收实验室系中的 ``rwa``。
+旋转频率可以与漂移频率不同，差值作为失谐留在演化中。
+消费者可以施加更严格的规则，例如要求旋转频率等于漂移频率。
 逻辑基组与相位约定见 :doc:`/conventions`。
 
 ``signal_edges`` 定义连续演化区间。
@@ -83,7 +91,7 @@ ZOH 信号要求非空演化区间。
            data=ArrayData.from_values(dtype="c128le", shape=(2,), values=(1, 0)),
        ),
        signal_edges=ArrayData.from_values(dtype="f64le", shape=(2,), values=(0, 10)),
-       time_unit="ns", frame="lab", approximations=(), extensions=(),
+       time_unit="ns", frame="lab", rotation_freqs=(), approximations=(), extensions=(),
    )
    report = check_problem(problem, level="physical")
    require_valid(report)
@@ -138,6 +146,10 @@ JSON 嵌套深度上限为 32。
 检查器不得降级后报告成功。
 当前物理检查仅支持 ``lab`` 参考系。
 非空近似列表返回 ``UNSUPPORTED_CAPABILITY``。
+旋转系请求只认证到 ``structure`` 级。
+结构检查核对 ``rotation_freqs`` 的站点与顺序，不核对数值。
+物理检查不能区分按 GHz 写入、少乘 2π 的频率。
+这类错误只能由消费者的检查或数值回环比对发现。
 
 .. testcode:: physical-contract
 
@@ -154,6 +166,8 @@ JSON 嵌套深度上限为 32。
 
 ``extract_requirements`` 提取请求的能力需求。
 ``match_capabilities`` 检查完整能力组合。
+每个 profile 含 ``approximations``：需求列出请求的近似，能力列出允许的近似。
+请求的近似都在允许集合中，且参考系相同，才能匹配。
 能力摘要不替代物理输入。
 能力匹配不证明求解结果正确。
 执行策略固定或限定算法选择。
@@ -162,6 +176,22 @@ JSON 嵌套深度上限为 32。
 当前版本不提供 bath 求解器。
 显式必需扩展可以携带 bath 数据。
 编解码器保留这些数据。
+扩展 ``qaiji.p.bath`` 版本 ``1.0`` 有公开 schema。
+其内容类型为 ``application/vnd.qaiji.p.bath+json``。
+payload 含耦合算符、谱密度、温度与 PSD 约定四个字段。
+耦合算符是单位为 ``"1"`` 的 ``OperatorSum``，使用交换格式编码。
+谱密度 ``kind`` 取 ``drude_lorentz``、``one_over_f`` 或 ``tabulated``。
+``drude_lorentz`` 的参数为 ``lam`` 与 ``gamma``。
+``one_over_f`` 的参数为 ``eta``、``w_lc`` 与 ``w_hc``，且 ``w_lc < w_hc``。
+``tabulated`` 的参数为一维 f64 数组 ``omega`` 与 ``J``，两者等长，至少 2 个样本。
+``omega`` 从 0 或以上严格递增；``J`` 非负，且在 ``omega = 0`` 处为 0。
+``drude_lorentz`` 与 ``one_over_f`` 的参数都为正。
+温度为 k_BT/ħ，为正。频率类参数与温度的单位都为 rad/ns。
+标量使用 binary64 十六进制字符串编码。
+PSD 约定必填，当前只接受 ``rad/ns``、``one_sided``、``1/pi``。
+结构检查校验该 payload；bath 请求只认证到 ``structure`` 级。
+消费者须在 ``required_extensions`` 中声明 ``("qaiji.p.bath", "1.0")`` 才能匹配。
+一个问题可以带多个 bath 扩展，每个扩展独立描述一个库。
 结构检查可以接受完整的不透明扩展。
 未知必需扩展阻止完整物理认证。
 该拒绝发生在稠密装配之前。
@@ -173,6 +203,8 @@ JSON 嵌套深度上限为 32。
 规范字节保留顺序和显式物理字段。
 身份相同不等于已证明物理等价。
 交换器拒绝未知字段、重复键与未知版本。
+全部 P 文档使用 schema 版本 1.1。
+本版本不读取 1.0 文档。
 附件恢复须检查内容摘要。
 交换器不通过路径或 URL 读取附件。
 

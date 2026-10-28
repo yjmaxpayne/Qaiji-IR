@@ -108,6 +108,7 @@ _FIELDS: dict[type[Any], dict[str, Any]] = {
         signal_edges=ArrayData,
         time_unit=str,
         frame=str,
+        rotation_freqs=("list", ("tuple", (str, "f64"))),
         approximations=("list", str),
         extensions=("list", m.RequiredExtension),
         schema=str,
@@ -180,7 +181,7 @@ _BRANCHES: dict[type[Any], dict[str, tuple[str, ...]]] = {
     },
 }
 _SCHEMAS: dict[type[Any], str] = {
-    cls: "qaiji.p." + cls.__name__.lower() + "/1.0"
+    cls: "qaiji.p." + cls.__name__.lower() + "/1.1"
     for cls in (m.Problem, m.Request, m.Result, m.Requirements, m.Capabilities)
 }
 
@@ -478,6 +479,14 @@ def _decode(value: Any, spec: Any, path: str, ctx: _Context) -> Any:
             return None if value is None else _decode(value, child, path, ctx)
         if type(value) is not list:
             ctx.fail("JSON_TYPE", path, "Expected an array.")
+        if mode == "tuple":
+            # 定长异构数组：每个位置各有自己的规格。
+            if len(value) != len(child):
+                ctx.fail("KEYS", path, f"Expected exactly {len(child)} entries.")
+            return tuple(
+                _decode(item, spec, _at(path, i), ctx)
+                for i, (item, spec) in enumerate(zip(value, child, strict=True))
+            )
         if mode == "pair" and len(value) != 2:
             ctx.fail("KEYS", path, "Expected exactly two entries.")
         return tuple(_decode(item, child, _at(path, i), ctx) for i, item in enumerate(value))
@@ -553,6 +562,57 @@ def _attributes(value: Any, names: Sequence[str], path: str, ctx: _Context) -> d
     return result
 
 
+_BATH = ("qaiji.p.bath", "1.0")
+_BATH_CONTENT_TYPE = "application/vnd.qaiji.p.bath+json"
+# 谱密度参数与 EmuPlat 的 DrudeLorentz、OneOverF、Tabulated 同名，单位都是 rad/ns。
+_SPECTRAL_DENSITIES: dict[str, dict[str, Any]] = {
+    "drude_lorentz": dict(kind=str, lam="f64", gamma="f64"),
+    "one_over_f": dict(kind=str, eta="f64", w_lc="f64", w_hc="f64"),
+    "tabulated": dict(kind=str, omega=ArrayData, J=ArrayData),
+}
+_PSD_FIELDS = dict(frequency_axis=str, sides=str, fourier_measure=str)
+
+
+def _bath_payload(payload: FrozenJSON, path: str) -> dict[str, Any]:
+    """按 ``qaiji.p.bath/1.0`` 的字段与编码解码 payload；值域由结构检查负责。
+
+    Args:
+        payload: 扩展的 payload。
+        path: payload 的 JSON Pointer，用作诊断路径前缀。
+
+    Returns:
+        ``coupling``（OperatorSum）、``spectral_density``、``temperature`` 与 ``psd``。
+
+    Raises:
+        PContractError: 字段集、类型或数值编码不符；只报告第一个错误。
+    """
+    ctx = _Context("INVALID_REQUEST", CheckBudget(), _EMPTY_ATTACHMENTS)
+    raw = _object(_thaw(payload.value, path, ctx), path, ctx)
+    _keys(raw, ("coupling", "spectral_density", "temperature", "psd"), path, ctx)
+    density_path = _at(path, "spectral_density")
+    density = _object(raw["spectral_density"], density_path, ctx)
+    kind = density.get("kind")
+    if type(kind) is not str or kind not in _SPECTRAL_DENSITIES:
+        ctx.fail("BATH", _at(density_path, "kind"), "Unknown spectral density kind.")
+    spec = _SPECTRAL_DENSITIES[kind]
+    _keys(density, tuple(spec), density_path, ctx)
+    psd_path = _at(path, "psd")
+    psd = _object(raw["psd"], psd_path, ctx)
+    _keys(psd, tuple(_PSD_FIELDS), psd_path, ctx)
+    return dict(
+        coupling=_decode(raw["coupling"], m.OperatorSum, _at(path, "coupling"), ctx),
+        spectral_density={
+            name: _decode(density[name], child, _at(density_path, name), ctx)
+            for name, child in spec.items()
+        },
+        temperature=_decode(raw["temperature"], "f64", _at(path, "temperature"), ctx),
+        psd={
+            name: _decode(psd[name], child, _at(psd_path, name), ctx)
+            for name, child in _PSD_FIELDS.items()
+        },
+    )
+
+
 def _encode(value: Any, spec: Any, path: str, ctx: _Context) -> Any:
     if isinstance(spec, tuple):
         mode, child = spec
@@ -562,6 +622,13 @@ def _encode(value: Any, spec: Any, path: str, ctx: _Context) -> Any:
             value, (str, bytes, bytearray, memoryview)
         ):
             ctx.fail("JSON_TYPE", path, "Expected a sequence.")
+        if mode == "tuple":
+            if len(value) != len(child):
+                ctx.fail("KEYS", path, f"Expected exactly {len(child)} entries.")
+            return [
+                _encode(item, spec, _at(path, i), ctx)
+                for i, (item, spec) in enumerate(zip(value, child, strict=True))
+            ]
         return [_encode(item, child, _at(path, i), ctx) for i, item in enumerate(value)]
     if spec == "f64":
         if type(value) not in (int, float):
@@ -660,6 +727,8 @@ def _layout_field(value: Any, spec: Any, attachments: dict[str, bytes]) -> Any:
         mode, child = spec
         if mode == "optional":
             return None if value is None else _layout_field(value, child, attachments)
+        if mode == "tuple":
+            return value
         return [_layout_field(item, child, attachments) for item in value]
     if spec is ArrayData:
         return _externalize_array(value, attachments)
