@@ -4,6 +4,38 @@ All notable changes to this project are documented here. The format follows
 [Conventional Commits](https://www.conventionalcommits.org/) and versions are derived from
 git tags via `poetry-dynamic-versioning`.
 
+## [0.3.0] - 2026-10-29
+
+### Added
+
+- P schema 1.1. `Problem.rotation_freqs` gives the rotation frequency of each site in rad/ns,
+  in `tensor_order`; it must be empty when `frame="lab"` and must cover all sites when
+  `frame="rotating"`. Capability and requirement profiles carry `approximations`. A request
+  matches a profile only when the frames are equal and the requested approximations are a
+  subset of the allowed ones.
+- The `qaiji.p.bath` extension, version `1.0`, with a public schema: coupling operator,
+  spectral density (`drude_lorentz`, `one_over_f`, `tabulated`), temperature and a required
+  PSD convention. A consumer must declare `("qaiji.p.bath", "1.0")` in `required_extensions`.
+- `request_id` and `extract_requirements` accept a keyword-only `budget`. A consumer that
+  raises the check budget for a large request can identify it and extract its requirements.
+  The budget limits resources only; it does not change the identity or the requirements.
+- The physical guide states the rotating-frame state convention:
+  `psi_r(t) = U_r(t) psi(t)` with `U_r(t) = exp(+i sum_k w_k n_k t)` on the absolute problem
+  time axis. Rotating-frame and bath requests are certified to the `structure` level only.
+
+### Changed
+
+- **Breaking:** all five P document kinds (problem, request, result, requirements,
+  capabilities) use schema version `/1.1`. This release reads and writes only `/1.1`; it
+  rejects `/1.0` documents, and 0.2.0 readers reject `/1.1` documents.
+- The documentation site is rebuilt on `main` after a release is published.
+- `CITATION.cff` lists the version-specific DOI of v0.2.0.
+
+### Security
+
+- Development dependencies are relocked: certifi 2026.10.23, virtualenv 21.15.1 and packaging
+  26.3 (required by virtualenv 21.15.1). The package's runtime dependencies do not change.
+
 ## [0.2.0] - 2026-10-23
 
 ### Added
