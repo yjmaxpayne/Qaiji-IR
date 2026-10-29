@@ -11,9 +11,11 @@ from typing import Any, cast
 
 from . import codec
 from .arrays import FrozenJSON, _JSONArray, _JSONObject
-from .diagnostics import CheckReport, Diagnostic, PContractError, _fail
+from .diagnostics import CheckBudget, CheckReport, Diagnostic, PContractError, _fail
 from .model import Capabilities, Problem, Request, Requirements
 from .validation import _diagnostic, check_request, require_valid
+
+_DEFAULT_BUDGET = CheckBudget()
 
 _PROFILE_FIELDS = {
     "approximations",
@@ -182,19 +184,22 @@ def _representation_missing(
     return missing
 
 
-def extract_requirements(request: Request) -> Requirements:
+def extract_requirements(
+    request: Request, *, budget: CheckBudget = _DEFAULT_BUDGET
+) -> Requirements:
     """从请求提取完整候选能力组合。
 
     Args:
         request: 结构合法的请求。
+        budget: 传输与检查的资源上限。它只限制资源，不改变需求。
 
     Returns:
         保留各观测表示选择的候选需求。
 
     Raises:
-        PContractError: 请求未通过结构检查。
+        PContractError: 请求未通过结构检查、超出资源上限，或 ``budget`` 不是 CheckBudget。
     """
-    require_valid(check_request(request, level="structure"))
+    require_valid(check_request(request, level="structure", budget=budget))
     problem = request.problem
     initial_kind = _initial_kind(problem)
     methods = (

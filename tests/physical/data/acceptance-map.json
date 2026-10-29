@@ -706,6 +706,7 @@
       "tests/physical/test_result_binding.py::test_transport_result_failure_uses_invalid_result",
       "tests/physical/test_result_binding.py::test_unknown_check_level_raises",
       "tests/physical/test_result_binding.py::test_result_identity_respects_explicit_wire_budget",
+      "tests/physical/test_result_binding.py::test_public_identity_and_requirements_take_the_caller_budget",
       "tests/physical/test_result_binding.py::test_identity_encoding_failure_returns_report"
     ]
   },
