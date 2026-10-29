@@ -33,8 +33,9 @@ git tags via `poetry-dynamic-versioning`.
 
 ### Security
 
-- Development dependencies are relocked: certifi 2026.10.23, virtualenv 21.15.1 and packaging
-  26.3 (required by virtualenv 21.15.1). The package's runtime dependencies do not change.
+- Development dependencies are relocked: certifi 2026.10.23, virtualenv 21.15.1, packaging
+  26.3 (required by virtualenv 21.15.1) and filelock 4.2.4. The package's runtime dependencies
+  do not change.
 
 ## [0.2.0] - 2026-10-23
 
