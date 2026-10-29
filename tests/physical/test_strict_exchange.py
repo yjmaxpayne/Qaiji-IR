@@ -135,5 +135,5 @@ def test_p_rejects_codec_semantics(variant):
         doc["drives"][0]["signal"]["value"] = "7ff0000000000000"
         rejection("problem", canonical(doc), "NONFINITE", "/drives/0/signal/value")
     else:
-        doc["schema"] = "qaiji.p.problem/1.1"
+        doc["schema"] = "qaiji.p.problem/1.2"
         rejection("problem", canonical(doc), "VERSION", "/schema")

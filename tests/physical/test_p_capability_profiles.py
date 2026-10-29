@@ -21,7 +21,6 @@ from qaiji.core.physical import (
     MethodChoice,
     Observation,
     OperatorSum,
-    PContractError,
     ProductFactor,
     Signal,
     Site,
@@ -38,8 +37,18 @@ def request():
     return load_request(json.dumps(data).encode())
 
 
+# 夹具站点 a、b 的旋转频率（rad/ns），按 tensor_order 排列。
+ROTATION_FREQS = (("a", 2 * 3.141592653589793 * 5.0), ("b", 2 * 3.141592653589793 * 5.5))
+
+
+def _rotating(problem):
+    initial = State(kind="ket", frame="rotating", data=problem.initial_state.data)
+    return replace(problem, frame="rotating", rotation_freqs=ROTATION_FREQS, initial_state=initial)
+
+
 def profile(**changes):
     result = dict(
+        approximations=[],
         environment="closed",
         frame="lab",
         interpolation="zoh",
@@ -187,13 +196,14 @@ def test_p_known_unsupported_semantics_are_not_invalid(change):
             problem=replace(
                 req.problem,
                 frame="rotating",
+                rotation_freqs=ROTATION_FREQS,
                 initial_state=State(
                     kind="ket", frame="rotating", data=req.problem.initial_state.data
                 ),
             ),
         )
     else:
-        req = replace(req, problem=replace(req.problem, approximations=["rwa"]))
+        req = replace(req, problem=replace(_rotating(req.problem), approximations=["rwa"]))
     assert check_request(req, level="structure").complete
     report = check_request(req, level="physical")
     assert report.diagnostics
@@ -355,33 +365,40 @@ def test_each_full_state_id_keeps_its_representation_choices():
     }
 
 
-def test_rotating_profile_cannot_override_p_v1_semantics():
+def test_rotating_profile_matches_only_a_consumer_that_declares_it():
+    # schema 1.1：旋转系 + RWA 请求只匹配同时声明旋转系与 rwa 的消费者。
     req = request()
     req = replace(
         req,
         problem=replace(
             req.problem,
             frame="rotating",
+            rotation_freqs=ROTATION_FREQS,
+            approximations=("rwa",),
             initial_state=State(kind="ket", frame="rotating", data=req.problem.initial_state.data),
         ),
     )
     assert check_request(req, level="structure").complete
-    report = match_capabilities(extract_requirements(req), capabilities(profile(frame="rotating")))
+    requirements = extract_requirements(req)
+    declared = capabilities(profile(frame="rotating", approximations=["rwa"]))
+    assert match_capabilities(requirements, declared).complete
+    report = match_capabilities(requirements, capabilities(profile(approximations=["rwa"])))
     assert not report.complete
     assert {d.category for d in report.diagnostics} == {"UNSUPPORTED_CAPABILITY"}
     assert "frame" in repr(report.diagnostics)
 
 
-def test_rwa_requirements_reject_lost_approximation_semantics():
+def test_rwa_requirements_keep_the_approximation():
+    # 近似不得在需求中丢失：schema 1.1 把它写进每个需求 profile，由能力匹配判定。
     req = request()
-    assert extract_requirements(req).profiles
-    req = replace(req, problem=replace(req.problem, approximations=["rwa"]))
+    # rwa 只能与旋转系同用（实验室系 + rwa 在结构检查中拒收）。
+    req = replace(req, problem=replace(_rotating(req.problem), approximations=["rwa"]))
     assert check_request(req, level="structure").complete
-    with pytest.raises(PContractError) as error:
-        extract_requirements(req)
-    assert {d.category for d in error.value.diagnostics} == {"UNSUPPORTED_CAPABILITY"}
-    assert error.value.diagnostics[0].path == "/problem/approximations"
-    assert "rwa" in repr(error.value.diagnostics[0].details)
+    profiles = [p.value for p in extract_requirements(req).profiles]
+    assert profiles
+    assert all(list(dict(p.items)["approximations"].items) == ["rwa"] for p in profiles)
+    report = match_capabilities(extract_requirements(req), capabilities(profile()))
+    assert "approximations" in repr(report.diagnostics)
 
 
 def test_mixed_product_requires_density_output():
@@ -533,6 +550,7 @@ def test_physical_gate_reports_frame_and_approximation_together():
     problem = replace(
         req.problem,
         frame="rotating",
+        rotation_freqs=ROTATION_FREQS,
         approximations=["rwa"],
         initial_state=State(kind="ket", frame="rotating", data=req.problem.initial_state.data),
     )

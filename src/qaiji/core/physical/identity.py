@@ -14,34 +14,36 @@ from .model import Problem, Request
 _DEFAULT_BUDGET = CheckBudget()
 
 
-def canonical_problem_bytes(problem: Problem) -> bytes:
+def canonical_problem_bytes(problem: Problem, *, budget: CheckBudget = _DEFAULT_BUDGET) -> bytes:
     """编码完整问题的规范字节。数组使用内联布局。
 
     Args:
         problem: 待编码的问题。
+        budget: 编码时的交换预算。它只限制资源，不改变字节。
 
     Returns:
         包含 schema 和扩展的 UTF-8 规范 JSON 字节。
 
     Raises:
-        PContractError: 问题不符合交换契约或超出默认交换预算。
+        PContractError: 问题不符合交换契约、超出交换预算，或 ``budget`` 不是 CheckBudget。
     """
-    return dump_problem(problem, layout="inline").document
+    return dump_problem(problem, layout="inline", budget=budget).document
 
 
-def canonical_request_bytes(request: Request) -> bytes:
+def canonical_request_bytes(request: Request, *, budget: CheckBudget = _DEFAULT_BUDGET) -> bytes:
     """编码请求的规范字节。身份排除来源。
 
     Args:
         request: 待编码的请求。
+        budget: 编码时的交换预算。它只限制资源，不改变字节。
 
     Returns:
         仅移除 provenance 的内联规范 JSON 字节。
 
     Raises:
-        PContractError: 请求不符合交换契约或超出默认交换预算。
+        PContractError: 请求不符合交换契约、超出交换预算，或 ``budget`` 不是 CheckBudget。
     """
-    return _canonical_request_bytes(request, budget=_DEFAULT_BUDGET)
+    return _canonical_request_bytes(request, budget=budget)
 
 
 def _canonical_request_bytes(request: Request, *, budget: CheckBudget) -> bytes:
@@ -53,35 +55,37 @@ def _canonical_request_bytes(request: Request, *, budget: CheckBudget) -> bytes:
     ).encode("utf-8")
 
 
-def problem_id(problem: Problem) -> str:
+def problem_id(problem: Problem, *, budget: CheckBudget = _DEFAULT_BUDGET) -> str:
     """计算问题的内容身份。摘要包含 schema 域和零分隔字节。
 
     Args:
         problem: 待计算身份的问题。
+        budget: 编码问题时的交换预算。它只限制资源，不改变身份。
 
     Returns:
         带 sha256: 前缀的小写摘要。
 
     Raises:
-        PContractError: 问题不符合规范编码契约。
+        PContractError: 问题不符合规范编码契约、超出交换预算，或 ``budget`` 不是 CheckBudget。
     """
-    content = canonical_problem_bytes(problem)
+    content = canonical_problem_bytes(problem, budget=budget)
     return "sha256:" + hashlib.sha256(problem.schema.encode("utf-8") + b"\0" + content).hexdigest()
 
 
-def request_id(request: Request) -> str:
+def request_id(request: Request, *, budget: CheckBudget = _DEFAULT_BUDGET) -> str:
     """计算请求的内容身份。摘要包含 schema 域和零分隔字节。
 
     Args:
         request: 待计算身份的请求。
+        budget: 编码请求时的交换预算。它只限制资源，不改变身份。
 
     Returns:
         带 sha256: 前缀的小写摘要。
 
     Raises:
-        PContractError: 请求不符合规范编码契约。
+        PContractError: 请求不符合规范编码契约、超出交换预算，或 ``budget`` 不是 CheckBudget。
     """
-    return _request_id(request, budget=_DEFAULT_BUDGET)
+    return _request_id(request, budget=budget)
 
 
 def _request_id(request: Request, *, budget: CheckBudget) -> str:

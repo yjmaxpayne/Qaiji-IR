@@ -70,12 +70,16 @@ def _pairs(value: Any, path: str) -> tuple[tuple[str, str], ...]:
     return _sequence(value, path, _pair)
 
 
-def _pair(value: Any, path: str) -> tuple[str, str]:
+def _pair(value: Any, path: str, second: Any = None) -> tuple[str, Any]:
     if isinstance(value, (str, bytes, bytearray, memoryview)) or not isinstance(value, Sequence):
         _fail("JSON_TYPE", path, "Expected a two-item sequence.")
     if len(value) != 2:
         _fail("KEYS", path, "Expected exactly two items.")
-    return (_text(value[0], f"{path}[0]"), _text(value[1], f"{path}[1]"))
+    return (_text(value[0], f"{path}[0]"), (second or _text)(value[1], f"{path}[1]"))
+
+
+def _site_frequencies(value: Any, path: str) -> tuple[tuple[str, float], ...]:
+    return _sequence(value, path, lambda item, at: _pair(item, at, _number))
 
 
 def _boolean_true(value: Any, path: str) -> bool:
@@ -744,9 +748,12 @@ class Problem:
     signal_edges: ArrayData
     time_unit: Literal["ns"]
     frame: _Frame
+    # 各站点的旋转频率（rad/ns）：旋转系按 tensor_order 列出全部站点，实验室系为空。
+    # h0 与 drives 仍按实验室系给出。
+    rotation_freqs: tuple[tuple[str, float], ...]
     approximations: tuple[str, ...]
     extensions: tuple[RequiredExtension, ...]
-    schema: Literal["qaiji.p.problem/1.0"] = "qaiji.p.problem/1.0"
+    schema: Literal["qaiji.p.problem/1.1"] = "qaiji.p.problem/1.1"
     __hash__: ClassVar[Any] = None
 
     def __post_init__(self) -> None:
@@ -765,13 +772,14 @@ class Problem:
         _set(self, "signal_edges", _vector_f64)
         _set(self, "time_unit", lambda value, path: _literal(value, ("ns",), path))
         _set(self, "frame", _frame)
+        _set(self, "rotation_freqs", _site_frequencies)
         _set(
             self,
             "approximations",
             lambda value, path: _texts(value, path, allow_empty=True, unique=True),
         )
         _set(self, "extensions", _objects(RequiredExtension))
-        _set(self, "schema", lambda value, path: _schema(value, "qaiji.p.problem/1.0", path))
+        _set(self, "schema", lambda value, path: _schema(value, "qaiji.p.problem/1.1", path))
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
@@ -781,7 +789,7 @@ class Request:
     observations: tuple[Observation, ...]
     policy: ExecutionPolicy
     provenance: Provenance
-    schema: Literal["qaiji.p.request/1.0"] = "qaiji.p.request/1.0"
+    schema: Literal["qaiji.p.request/1.1"] = "qaiji.p.request/1.1"
     __hash__: ClassVar[Any] = None
 
     def __post_init__(self) -> None:
@@ -790,7 +798,7 @@ class Request:
         _set(self, "observations", _objects(Observation))
         _set(self, "policy", lambda value, path: _object(value, ExecutionPolicy, path))
         _set(self, "provenance", lambda value, path: _object(value, Provenance, path))
-        _set(self, "schema", lambda value, path: _schema(value, "qaiji.p.request/1.0", path))
+        _set(self, "schema", lambda value, path: _schema(value, "qaiji.p.request/1.1", path))
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
@@ -801,7 +809,7 @@ class Result:
     frame: _Frame
     observations: tuple[ObservationValue, ...]
     report: ExecutionReport
-    schema: Literal["qaiji.p.result/1.0"] = "qaiji.p.result/1.0"
+    schema: Literal["qaiji.p.result/1.1"] = "qaiji.p.result/1.1"
     __hash__: ClassVar[Any] = None
 
     def __post_init__(self) -> None:
@@ -815,7 +823,7 @@ class Result:
         _set(self, "frame", _frame)
         _set(self, "observations", _objects(ObservationValue))
         _set(self, "report", lambda value, path: _object(value, ExecutionReport, path))
-        _set(self, "schema", lambda value, path: _schema(value, "qaiji.p.result/1.0", path))
+        _set(self, "schema", lambda value, path: _schema(value, "qaiji.p.result/1.1", path))
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
@@ -826,7 +834,7 @@ class Requirements:
     required_extensions: tuple[tuple[str, str], ...]
     output_kinds: tuple[str, ...]
     methods: tuple[str, ...]
-    schema: Literal["qaiji.p.requirements/1.0"] = "qaiji.p.requirements/1.0"
+    schema: Literal["qaiji.p.requirements/1.1"] = "qaiji.p.requirements/1.1"
     __hash__: ClassVar[Any] = None
 
     def __post_init__(self) -> None:
@@ -846,7 +854,7 @@ class Requirements:
         _set(
             self,
             "schema",
-            lambda value, path: _schema(value, "qaiji.p.requirements/1.0", path),
+            lambda value, path: _schema(value, "qaiji.p.requirements/1.1", path),
         )
 
 
@@ -860,7 +868,7 @@ class Capabilities:
     required_extensions: tuple[tuple[str, str], ...]
     output_kinds: tuple[str, ...]
     methods: tuple[str, ...]
-    schema: Literal["qaiji.p.capabilities/1.0"] = "qaiji.p.capabilities/1.0"
+    schema: Literal["qaiji.p.capabilities/1.1"] = "qaiji.p.capabilities/1.1"
     __hash__: ClassVar[Any] = None
 
     def __post_init__(self) -> None:
@@ -882,5 +890,5 @@ class Capabilities:
         _set(
             self,
             "schema",
-            lambda value, path: _schema(value, "qaiji.p.capabilities/1.0", path),
+            lambda value, path: _schema(value, "qaiji.p.capabilities/1.1", path),
         )

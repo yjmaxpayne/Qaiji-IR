@@ -11,11 +11,14 @@ from typing import Any, cast
 
 from . import codec
 from .arrays import FrozenJSON, _JSONArray, _JSONObject
-from .diagnostics import CheckReport, Diagnostic, PContractError, _fail
+from .diagnostics import CheckBudget, CheckReport, Diagnostic, PContractError, _fail
 from .model import Capabilities, Problem, Request, Requirements
 from .validation import _diagnostic, check_request, require_valid
 
+_DEFAULT_BUDGET = CheckBudget()
+
 _PROFILE_FIELDS = {
+    "approximations",
     "environment",
     "frame",
     "interpolation",
@@ -26,6 +29,7 @@ _PROFILE_FIELDS = {
     "state_representations",
 }
 _OUTPUTS = {"full_state", "expectation", "partial_trace", "projection"}
+_APPROXIMATIONS = {"rwa"}
 _HEX = re.compile(r"[0-9a-f]{16}\Z")
 
 
@@ -82,6 +86,7 @@ def _profiles(record: Requirements | Capabilities) -> list[dict[str, Any]]:
         if type(profile["method"]) is not str or not profile["method"]:
             _fail("KEYS", path + "/method", "Expected a nonempty method ID.")
         _strings(profile["output_kinds"], _OUTPUTS, path + "/output_kinds")
+        _strings(profile["approximations"], _APPROXIMATIONS, path + "/approximations")
         representations = profile["state_representations"]
         if capability:
             _strings(representations, {"ket", "density"}, path + "/state_representations")
@@ -179,32 +184,23 @@ def _representation_missing(
     return missing
 
 
-def extract_requirements(request: Request) -> Requirements:
+def extract_requirements(
+    request: Request, *, budget: CheckBudget = _DEFAULT_BUDGET
+) -> Requirements:
     """从请求提取完整候选能力组合。
 
     Args:
         request: 结构合法的请求。
+        budget: 传输与检查的资源上限。它只限制资源，不改变需求。
 
     Returns:
         保留各观测表示选择的候选需求。
 
     Raises:
-        PContractError: 请求未通过结构检查或包含不支持的近似。
+        PContractError: 请求未通过结构检查、超出资源上限，或 ``budget`` 不是 CheckBudget。
     """
-    require_valid(check_request(request, level="structure"))
+    require_valid(check_request(request, level="structure", budget=budget))
     problem = request.problem
-    if problem.approximations:
-        raise PContractError(
-            diagnostics=(
-                _diagnostic(
-                    "PROFILE",
-                    "/problem/approximations",
-                    "The requested approximation is unsupported.",
-                    category="UNSUPPORTED_CAPABILITY",
-                    missing=list(problem.approximations),
-                ),
-            )
-        )
     initial_kind = _initial_kind(problem)
     methods = (
         (request.policy.method.value,)
@@ -218,6 +214,7 @@ def extract_requirements(request: Request) -> Requirements:
             value=cast(
                 Any,
                 dict(
+                    approximations=tuple(sorted(problem.approximations)),
                     environment=problem.environment.kind,
                     frame=problem.frame,
                     interpolation="zoh",
@@ -255,8 +252,9 @@ def _profile_missing(required: dict[str, Any], supported: dict[str, Any]) -> lis
             missing.append(field)
     if not set(required["output_kinds"]) <= set(supported["output_kinds"]):
         missing.append("output_kinds")
-    if required["frame"] != "lab":
-        missing.append("frame/lab")
+    # 消费者声明的是允许的近似集合；请求要求的近似都在其中才匹配。
+    if not set(required["approximations"]) <= set(supported["approximations"]):
+        missing.append("approximations")
     missing.extend(
         _representation_missing(
             required["environment"],

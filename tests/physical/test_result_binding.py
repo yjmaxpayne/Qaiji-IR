@@ -331,6 +331,49 @@ def test_result_identity_respects_explicit_wire_budget(monkeypatch):
     assert "result" in rejected.unchecked
 
 
+def test_public_identity_and_requirements_take_the_caller_budget():
+    # 消费方为大请求放宽检查预算时，必须能用同一预算计算身份与提取需求；
+    # 否则请求侧仍被默认 16 MiB 卡住（I-T4b-03）。预算只限资源，不改变身份与需求。
+    from qaiji.core.physical import identity
+    from qaiji.core.physical.capabilities import extract_requirements
+    from qaiji.core.physical.diagnostics import CheckBudget, PContractError
+
+    req = result_request()
+    large = replace(
+        req,
+        provenance=replace(
+            req.provenance, prior_transforms=(FrozenJSON(value={"note": "x" * (16 * 1024 * 1024)}),)
+        ),
+    )
+    budget = CheckBudget(max_wire_bytes=32 * 1024 * 1024)
+    problem = req.problem
+    assert identity.request_id(large, budget=budget) == identity.request_id(req)
+    assert identity.canonical_request_bytes(large, budget=budget) == (
+        identity.canonical_request_bytes(req)
+    )
+    assert extract_requirements(large, budget=budget) == extract_requirements(req)
+    assert identity.problem_id(problem, budget=budget) == identity.problem_id(problem)
+    assert identity.canonical_problem_bytes(problem, budget=budget) == (
+        identity.canonical_problem_bytes(problem)
+    )
+    # 默认预算拒收大请求。调用方预算的字节与深度两个维度都生效，
+    # 所以只转发 max_wire_bytes 的实现会失败。
+    on_requests = (identity.request_id, identity.canonical_request_bytes, extract_requirements)
+    on_problems = (identity.problem_id, identity.canonical_problem_bytes)
+    rejections = [(f, large, CheckBudget(), "BYTES") for f in on_requests]
+    for smaller, code in (
+        # 256 字节小于测试问题（约 500 字节）与请求的编码长度。
+        (CheckBudget(max_wire_bytes=256), "BYTES"),
+        (CheckBudget(max_depth=1), "DEPTH"),
+    ):
+        rejections += [(f, req, smaller, code) for f in on_requests]
+        rejections += [(f, problem, smaller, code) for f in on_problems]
+    for function, value, limit, code in rejections:
+        with pytest.raises(PContractError) as caught:
+            function(value, budget=limit)
+        assert ("RESOURCE_LIMIT", code) in {(d.category, d.code) for d in caught.value.diagnostics}
+
+
 def test_identity_encoding_failure_returns_report(monkeypatch):
     from qaiji.core.physical import identity
     from qaiji.core.physical.diagnostics import Diagnostic, PContractError

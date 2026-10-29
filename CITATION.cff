@@ -21,6 +21,9 @@ identifiers:
   - type: doi
     value: 10.5281/zenodo.23118965
     description: Version-specific DOI for Qaiji-IR v0.1.0
+  - type: doi
+    value: 10.5281/zenodo.23588605
+    description: Version-specific DOI for Qaiji-IR v0.2.0
 repository-code: "https://github.com/yjmaxpayne/Qaiji-IR"
 url: "https://yjmaxpayne.github.io/Qaiji-IR/"
 abstract: >-
@@ -40,8 +43,8 @@ keywords:
   - OpenQASM
   - quantum compiler
 license: Apache-2.0
-version: 0.2.0
-date-released: "2026-10-23"
+version: 0.3.0
+date-released: "2026-10-29"
 references:
   - type: article
     title: "QaiJi IR: An Eight-Layer Intermediate Representation Family for Hybrid Quantum-Classical Compilation"

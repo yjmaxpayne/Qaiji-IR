@@ -120,6 +120,7 @@ def test_p_rejects_failure_classification(variant):
             problem=replace(
                 req.problem,
                 frame="rotating",
+                rotation_freqs=tuple((site, 1.0) for site in req.problem.tensor_order),
                 initial_state=State(
                     kind="ket", frame="rotating", data=req.problem.initial_state.data
                 ),

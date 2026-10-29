@@ -206,7 +206,7 @@ NEGATIVE = [
     ("root-bool", (), True, "JSON_TYPE"),
     ("root-int", (), 1, "JSON_TYPE"),
     ("version-major", ("schema",), "qaiji.p.problem/2.0", "VERSION"),
-    ("version-minor", ("schema",), "qaiji.p.problem/1.1", "VERSION"),
+    ("version-minor", ("schema",), "qaiji.p.problem/1.2", "VERSION"),
     ("boolean-dimension", ("sites", 0, "dim"), True, "INTEGER"),
     ("empty-id", ("sites", 0, "id"), "", "UNICODE"),
     ("surrogate", ("sites", 0, "id"), "\ud800", "UNICODE"),
@@ -380,7 +380,7 @@ def test_p_transport_parser_boundaries(kind):
     ]:
         error = rejection(kind, raw, code)
         assert error.__cause__ is not None
-    for version in ("2.0", "1.1"):
+    for version in ("2.0", "1.2"):
         variant = copy.deepcopy(doc)
         variant["schema"] = "qaiji.p." + kind + "/" + version
         rejection(kind, canonical(variant), "VERSION", "/schema")

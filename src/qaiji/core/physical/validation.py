@@ -20,7 +20,7 @@ from .diagnostics import (
     _Category,
     _Level,
 )
-from .model import OperatorSum, Problem, Request
+from .model import OperatorSum, Problem, Request, RequiredExtension
 
 _DEFAULT_BUDGET = CheckBudget()
 
@@ -94,6 +94,66 @@ class _Structure:
                 all(value >= 0 for value in values), "NUMBER", path, "Rates must be nonnegative."
             )
 
+    def bath(self, extension: RequiredExtension, path: str) -> None:
+        if extension.content_type != codec._BATH_CONTENT_TYPE:
+            self.expect(False, "BATH", path + "/content_type", "Unexpected bath content type.")
+            return
+        path += "/payload"
+        try:
+            bath = codec._bath_payload(extension.payload, self.prefix + path)
+        except PContractError as error:
+            self.diagnostics.extend(error.diagnostics)
+            return
+        self.operator(bath["coupling"], "1", path + "/coupling")
+        density, at = bath["spectral_density"], path + "/spectral_density"
+        if density["kind"] == "tabulated":
+            arrays = (density["omega"], density["J"])
+            shaped = all(a.dtype == "f64le" and len(a.shape) == 1 for a in arrays)
+            omega, values = (_values(a) if shaped else () for a in arrays)
+            sampled = shaped and len(omega) == len(values) >= 2
+            self.expect(
+                sampled,
+                "SHAPE",
+                at,
+                "Tabulated omega and J must be equal-length real vectors of at least two samples.",
+            )
+            # 形状不合格时不查值域：空数组或长度不等时没有可比较的样本。
+            if sampled:
+                self.expect(
+                    omega[0] >= 0 and all(a < b for a, b in pairwise(omega)),
+                    "BATH",
+                    at + "/omega",
+                    "Tabulated omega must start at zero or above and increase strictly.",
+                )
+                self.expect(
+                    all(v >= 0 for v in values) and not (omega[0] == 0 and values[0] != 0),
+                    "BATH",
+                    at + "/J",
+                    "Tabulated J must be nonnegative and zero at omega = 0.",
+                )
+        else:
+            for name, value in density.items():
+                if name != "kind":
+                    self.expect(value > 0, "BATH", f"{at}/{name}", "Expected a positive value.")
+            if density["kind"] == "one_over_f":
+                self.expect(
+                    density["w_lc"] < density["w_hc"],
+                    "BATH",
+                    at,
+                    "The low cutoff must be below the high cutoff.",
+                )
+        self.expect(
+            bath["temperature"] > 0, "BATH", path + "/temperature", "Expected a positive value."
+        )
+        psd = bath["psd"]
+        self.expect(
+            (psd["frequency_axis"], psd["sides"], psd["fourier_measure"])
+            == ("rad/ns", "one_sided", "1/pi"),
+            "BATH",
+            path + "/psd",
+            "Unsupported spectral density convention.",
+        )
+
     def problem_fields(self) -> None:
         p = self.problem
         ids = [site.id for site in p.sites]
@@ -116,6 +176,24 @@ class _Structure:
             "/approximations",
             "Unknown approximation.",
         )
+        self.expect(
+            p.frame == "rotating" or "rwa" not in p.approximations,
+            "APPROXIMATION",
+            "/approximations",
+            "The rwa approximation needs a rotating frame.",
+        )
+        # 一次比较覆盖四条规则：实验室系为空、旋转系覆盖全部站点、按 tensor_order 排列、无重复。
+        self.expect(
+            [site for site, _ in p.rotation_freqs]
+            == (list(p.tensor_order) if p.frame == "rotating" else []),
+            "ROTATION_FREQS",
+            "/rotation_freqs",
+            "Rotation frequencies must follow the tensor order in a rotating frame "
+            "and be empty in the lab frame.",
+        )
+        for i, extension in enumerate(p.extensions):
+            if (extension.namespace, extension.version) == codec._BATH:
+                self.bath(extension, f"/extensions/{i}")
         edges = _values(p.signal_edges)
         self.expect(
             bool(edges) and all(a < b for a, b in pairwise(edges)),

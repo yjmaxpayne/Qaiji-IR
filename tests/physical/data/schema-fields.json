@@ -235,6 +235,7 @@
         "signal_edges",
         "time_unit",
         "frame",
+        "rotation_freqs",
         "approximations",
         "extensions",
         "schema"
@@ -558,7 +559,7 @@
         "frame": "lab",
         "kind": "ket"
       },
-      "schema": "qaiji.p.problem/1.0",
+      "schema": "qaiji.p.problem/1.1",
       "signal_edges": {
         "data": "AAAAAAAAAAAAAAAAAADwPw==",
         "dtype": "f64le",
@@ -589,7 +590,8 @@
         "b",
         "a"
       ],
-      "time_unit": "ns"
+      "time_unit": "ns",
+      "rotation_freqs": []
     },
     "request": {
       "observations": [
@@ -950,7 +952,7 @@
           "frame": "lab",
           "kind": "ket"
         },
-        "schema": "qaiji.p.problem/1.0",
+        "schema": "qaiji.p.problem/1.1",
         "signal_edges": {
           "data": "AAAAAAAAAAAAAAAAAADwPw==",
           "dtype": "f64le",
@@ -981,9 +983,10 @@
           "b",
           "a"
         ],
-        "time_unit": "ns"
+        "time_unit": "ns",
+        "rotation_freqs": []
       },
-      "schema": "qaiji.p.request/1.0",
+      "schema": "qaiji.p.request/1.1",
       "provenance": {
         "kind": "device_bound",
         "program_ref": "program",
@@ -1015,8 +1018,8 @@
       }
     },
     "result": {
-      "schema": "qaiji.p.result/1.0",
-      "request_id": "sha256:ccb8a71547ff7d5cd63407f6dd45e22f29c3ef7cc79e9a65b545c535a551da34",
+      "schema": "qaiji.p.result/1.1",
+      "request_id": "sha256:a65fb828d739061bc7ecf858fefb8c1299c2b0e356beffdef9e3c452c4991438",
       "output_times": {
         "data": "AAAAAAAAAAAAAAAAAADgPwAAAAAAAPA/",
         "dtype": "f64le",
@@ -1177,7 +1180,8 @@
           "state_representations": [
             "ket",
             "density"
-          ]
+          ],
+          "approximations": []
         }
       ],
       "precision": {
@@ -1201,7 +1205,7 @@
         "reference-exact"
       ],
       "dimension": 6,
-      "schema": "qaiji.p.requirements/1.0"
+      "schema": "qaiji.p.requirements/1.1"
     },
     "capabilities": {
       "profiles": [
@@ -1221,7 +1225,8 @@
           "state_representations": [
             "ket",
             "density"
-          ]
+          ],
+          "approximations": []
         }
       ],
       "precision": {
@@ -1247,7 +1252,7 @@
       "consumer_id": "consumer",
       "consumer_version": "1",
       "max_dimension": 6,
-      "schema": "qaiji.p.capabilities/1.0"
+      "schema": "qaiji.p.capabilities/1.1"
     }
   }
 }
