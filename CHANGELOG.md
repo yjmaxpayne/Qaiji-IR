@@ -16,9 +16,10 @@ git tags via `poetry-dynamic-versioning`.
 - The `qaiji.p.bath` extension, version `1.0`, with a public schema: coupling operator,
   spectral density (`drude_lorentz`, `one_over_f`, `tabulated`), temperature and a required
   PSD convention. A consumer must declare `("qaiji.p.bath", "1.0")` in `required_extensions`.
-- `request_id` and `extract_requirements` accept a keyword-only `budget`. A consumer that
-  raises the check budget for a large request can identify it and extract its requirements.
-  The budget limits resources only; it does not change the identity or the requirements.
+- `request_id`, `problem_id`, `canonical_request_bytes`, `canonical_problem_bytes` and
+  `extract_requirements` accept a keyword-only `budget`. A consumer that raises the check
+  budget for a large request or problem can identify it and extract its requirements. The
+  budget limits resources only; it does not change the identity, the bytes or the requirements.
 - The physical guide states the rotating-frame state convention:
   `psi_r(t) = U_r(t) psi(t)` with `U_r(t) = exp(+i sum_k w_k n_k t)` on the absolute problem
   time axis. Rotating-frame and bath requests are certified to the `structure` level only.

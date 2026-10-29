@@ -346,21 +346,31 @@ def test_public_identity_and_requirements_take_the_caller_budget():
         ),
     )
     budget = CheckBudget(max_wire_bytes=32 * 1024 * 1024)
+    problem = req.problem
     assert identity.request_id(large, budget=budget) == identity.request_id(req)
+    assert identity.canonical_request_bytes(large, budget=budget) == (
+        identity.canonical_request_bytes(req)
+    )
     assert extract_requirements(large, budget=budget) == extract_requirements(req)
+    assert identity.problem_id(problem, budget=budget) == identity.problem_id(problem)
+    assert identity.canonical_problem_bytes(problem, budget=budget) == (
+        identity.canonical_problem_bytes(problem)
+    )
     # 默认预算拒收大请求。调用方预算的字节与深度两个维度都生效，
     # 所以只转发 max_wire_bytes 的实现会失败。
-    rejections = [
-        (f, large, CheckBudget(), "BYTES") for f in (identity.request_id, extract_requirements)
-    ]
+    on_requests = (identity.request_id, identity.canonical_request_bytes, extract_requirements)
+    on_problems = (identity.problem_id, identity.canonical_problem_bytes)
+    rejections = [(f, large, CheckBudget(), "BYTES") for f in on_requests]
     for smaller, code in (
-        (CheckBudget(max_wire_bytes=1024), "BYTES"),
+        # 256 字节小于测试问题（约 500 字节）与请求的编码长度。
+        (CheckBudget(max_wire_bytes=256), "BYTES"),
         (CheckBudget(max_depth=1), "DEPTH"),
     ):
-        rejections += [(f, req, smaller, code) for f in (identity.request_id, extract_requirements)]
-    for function, request, limit, code in rejections:
+        rejections += [(f, req, smaller, code) for f in on_requests]
+        rejections += [(f, problem, smaller, code) for f in on_problems]
+    for function, value, limit, code in rejections:
         with pytest.raises(PContractError) as caught:
-            function(request, budget=limit)
+            function(value, budget=limit)
         assert ("RESOURCE_LIMIT", code) in {(d.category, d.code) for d in caught.value.diagnostics}
 
 
