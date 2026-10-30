@@ -1,7 +1,7 @@
 安装指南
 ========
 
-本页覆盖 Qaiji-IR 的用户安装、开发安装与安装后的验证步骤。
+本页说明用户安装、开发安装，以及安装后的验证方法。
 
 系统要求
 --------
@@ -26,7 +26,7 @@
 
    pip install "git+https://github.com/yjmaxpayne/Qaiji-IR.git"
 
-安装后在任何 Python 3.12–3.14 环境中都可以直接 ``import qaiji``。
+在安装了本包的 Python 3.12–3.14 环境中，可以直接 ``import qaiji``。
 
 开发安装
 --------
@@ -38,13 +38,14 @@
    # 同步开发依赖（自动创建 .venv）
    uv sync --group tests --group analysis
 
-   # 需要构建本文档时再附加 docs 依赖组
-   uv sync --group docs
+   # 需要构建本文档时，在同一条命令中加入 docs 依赖组。
+   # uv sync 默认精确同步：只写 --group docs 会卸载 tests 与 analysis 组。
+   uv sync --group tests --group analysis --group docs
 
    source .venv/bin/activate
 
 依赖组的具体内容见 ``pyproject.toml``；``uv.lock`` 提供确定性的依赖解析。
-构建文档的完整流程另见 ``doc/README.md``。
+构建文档的完整流程见 ``doc/README.md``。开发流程见 :doc:`/development/contributing`。
 
 验证安装
 --------
@@ -55,6 +56,7 @@
 
    python -c "import qaiji; print(qaiji.__version__, qaiji.IR_SCHEMA_VERSION)"
 
-能打印版本号与中间表示格式版本号（如 ``qaiji.ir.v0``）即说明安装成功。
-随后可以用 :doc:`quickstart` 中的 OpenQASM 往返示例做端到端验证；
-如果这一步失败，请先查阅 :doc:`troubleshooting`。
+命令打印出版本号和 IR 格式版本号（例如 ``qaiji.ir.v0``）时，安装成功。
+安装或导入失败时，见 :doc:`troubleshooting`。
+
+下一步：:doc:`quickstart` 用 OpenQASM 往返示例做端到端验证。

@@ -1,12 +1,59 @@
 接口参考
 ========
 
-公共接口使用显式模块入口：包根 ``qaiji`` 提供稳定的常用入口；``qaiji.core`` 和
-``qaiji.codec`` 暴露对应子系统的完整导出；``qaiji.core.semantics`` 是独立的
-L4 语义授权层，``qaiji.core.program`` 提供 L5 程序描述与校验，二者均不向包根或
-``qaiji.core`` 顶层重新导出；约定常量与默认数值常量
-使用显式模块路径，避免把适配层细节提升为包根契约。包内附带 PEP 561 的 ``py.typed``
-标记，类型检查器可以直接使用 qaiji 的类型注解。
+本节列出公开接口的完整签名与字段。每页开头写明导入路径，并链接对应的概念页与入门页。
+页面顺序：先列各层共用的电路前端与约定，再按层自底向上排列，最后列侧层和通用类型。
+
+导入规则
+--------
+
+包根 ``qaiji`` 只导出常用入口。各层的接口从各自的子包显式导入，
+不向包根或 ``qaiji.core`` 顶层重新导出。约定常量与默认数值常量也使用显式模块路径，
+以免把适配层的细节变成包根契约。包内附带 PEP 561 的 ``py.typed`` 标记，
+类型检查器可以直接使用本包的类型注解。
+
+.. list-table:: 模块、层与页面
+   :header-rows: 1
+   :widths: 34 14 52
+
+   * - 模块
+     - 层
+     - 页面
+   * - ``qaiji.core``\ （核心类型也从包根导出）
+     - 前端
+     - :doc:`core`
+   * - ``qaiji.codec``\ （``from_qasm3``、``to_qasm3`` 也从包根导出）
+     - 前端
+     - :doc:`codec`
+   * - ``qaiji.core.conventions``
+     - 约定
+     - :doc:`conventions`
+   * - ``qaiji.core.native``
+     - L2
+     - :doc:`native`
+   * - ``qaiji.core.semantics``
+     - L4
+     - :doc:`semantics`
+   * - ``qaiji.core.program``
+     - L5
+     - :doc:`program`
+   * - ``qaiji.core.program_native``
+     - L5 / L2
+     - :doc:`program_native`
+   * - ``qaiji.core.physical``
+     - P
+     - :doc:`physical`
+   * - ``qaiji`` 与各子包
+     - 通用
+     - :doc:`exceptions`
+   * - ``qaiji``、``qaiji.constants``
+     - 通用
+     - :doc:`constants`
+
+L3 没有独立的模块，它的接口分布在三个页面中：条件节点 :class:`qaiji.Conditional` 见
+:doc:`core`；条件的依赖边 ``build_dataflow_summary`` 见 :doc:`semantics`；
+条件读前写入与结果就绪的检查 ``validate_native_schedule`` 见 :doc:`native`。
+L1、L0 与 T 层没有公开接口。各层的实现状态见 :doc:`/core-concepts/architecture`。
 
 包根冻结导出
 ------------
@@ -35,28 +82,16 @@ L4 语义授权层，``qaiji.core.program`` 提供 L5 程序描述与校验，�
    * - 编解码器
      - :func:`qaiji.from_qasm3`、:func:`qaiji.to_qasm3`
 
-``qaiji.core.semantics.__all__`` 另有 20 个名称，属于语义层自己的导出面，见
-:doc:`semantics`。
-
-``qaiji.core.program.__all__`` 有 8 个名称，属于程序层自己的导出面，见 :doc:`program`。
-
-``qaiji.core.native`` 提供 L2 时序与认证，``qaiji.core.program_native`` 提供
-L5 / L2 桥接，均不向包根或 ``qaiji.core`` 顶层重新导出。
-
-``qaiji.core.physical`` 提供 P 层的 53 个公开名称。
-P 层同样使用显式模块入口。
-单位与检查边界见 :doc:`physical`。
-
 .. toctree::
    :maxdepth: 1
 
    core
+   codec
+   conventions
+   native
    semantics
    program
-   native
    program_native
    physical
-   codec
    exceptions
    constants
-   conventions

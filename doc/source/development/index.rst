@@ -1,10 +1,11 @@
 开发指南
 ========
 
-本节面向 Qaiji-IR 的贡献者：如何准备开发环境、通过哪些检查，以及修改
-`src/qaiji` 各模块时需要遵守的仓库约定。
+本节面向 Qaiji-IR 的贡献者。先读 :doc:`code-map`，确定要改动的层在哪个源码目录与测试目录；
+再读 :doc:`contributing`，准备开发环境，并按仓库约定通过必跑检查。
 
 .. toctree::
    :maxdepth: 2
 
+   code-map
    contributing

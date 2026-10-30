@@ -2,7 +2,7 @@
   <img src="logo.png" alt="开济 IR 标识" width="240">
 </p>
 
-# 开济IR · Qaiji-IR
+# 开济 IR · Qaiji-IR
 
 [英文](README_EN.md) | **简体中文**
 
@@ -15,9 +15,9 @@
 [![OpenQASM 3](https://img.shields.io/badge/OpenQASM-3.0-6929C4)](https://openqasm.com/)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23118964.svg)](https://doi.org/10.5281/zenodo.23118964)
 
-> **开济IR · Qaiji-IR** —— 一个跨层的量子-经典**数字孪生**中间表示（IR）。
+> **开济 IR · Qaiji-IR** —— 一个跨层的量子—经典**数字孪生**中间表示（IR）。
 
-开济IR · Qaiji-IR 面向混合量子-经典计算，计划以一条跨层 IR 主干承载**语义保持、反馈运行时、
+开济 IR · Qaiji-IR 面向混合量子—经典计算，计划以一条跨层 IR 主干承载**语义保持、反馈运行时、
 脉冲波形、开放量子系统动力学和校准轨迹**。整体设计横跨八个层级
 （`L5 ProgramIR → L0 WaveformIR`，外加侧层 `P DynamicsIR` 与 `T TraceIR`），并以
 适配器、目标端或桥接层的身份与 OpenQASM 3、QIR、MLIR 互操作，同时保留自身的语义边界。
@@ -32,7 +32,7 @@
 - **电路模型与约定**：19 种 `GateType`、不可变的量子/经典节点和可变的 `Circuit` 容器；
   基矢与 RZ 相位约定可执行自检。
 - **L4 语义层**（`qaiji.core.semantics`）：把每个操作归入态射类别，提取测量与条件的数据流，
-  生成结构身份的 `sha256` 内容哈希，并用 R1–R4 判决引擎判定逐位置结构对应、CNOT/CX 别名折叠
+  生成用于标识结构身份的 `sha256` 内容哈希，并用 R1–R4 判决引擎判定逐位置结构对应、CNOT/CX 别名折叠
   或整圈旋转折叠是否保持算符语义（`EXACT` 或 `UP_TO_PHASE`）。该层不依赖 OpenQASM 解析器。
 - **L5 程序层**（`qaiji.core.program`）：有序的量子调用、实验元数据、结果输出与严格 JSON 往返；
   `compute_kernel_ref` 按固定的 L4 配方生成内核引用，`validate_program` 认证解析表中的电路并
@@ -52,9 +52,7 @@
 [L2 原生调度](doc/source/getting-started/native-schedule.rst)、
 [P 层连续演化契约](doc/source/getting-started/physical.rst)。
 
-**范围**：本包不执行采样或时间演化。
-本包不提供反馈运行时，不生成 ISA 或波形。
-本包不声明物理保真度。
+**范围**：本包不执行采样或时间演化，不提供反馈运行时，不生成 ISA 或波形，也不声明物理保真度。
 校准集与设备模型引用只做透传。
 脉冲（L1）、波形（L0）与轨迹（T）层尚无公开接口。
 P 层提供交换与检查契约。
@@ -91,7 +89,7 @@ print(canonical)
 
 在线文档：<https://yjmaxpayne.github.io/Qaiji-IR/>。
 
-本地构建专业中文文档：
+本地构建中文文档：
 
 ```bash
 uv sync --group docs && uv run poe docs
@@ -102,7 +100,7 @@ uv sync --group docs && uv run poe docs
 ## 论文与引用
 
 相关预印本：[arXiv:2609.29305](https://arxiv.org/abs/2609.29305)（Jun Ye，2026）。
-论文中的集成验证范围与本包接口范围分别说明，后者见上文“范围”。
+论文中的集成验证范围与本包的接口范围分别说明，后者见上文“范围”。
 使用本软件时，请引用 [CITATION.cff](CITATION.cff) 中对应代码版本的 DOI。
 讨论 IR 架构时，请同时引用该预印本。
 

@@ -1,10 +1,18 @@
-OpenQASM 3 编解码器
-===================
+OpenQASM 3 编解码器接口
+=======================
+
+``from_qasm3`` 与 ``to_qasm3`` 从包根 ``qaiji`` 导入；``parse_qasm3``、``ParsedQasm3``、
+``OperationOrigin`` 与 ``GateSpec`` 从 ``qaiji.codec`` 导入。
 
 编解码器把受支持的 OpenQASM 2/3 文本转换为电路级 IR，并把可序列化电路统一
-输出为 OpenQASM 3.0。它接受门名展开、寄存器广播和一位经典寄存器的条件；
-未支持的构件通过具有明确类型的异常拒绝。文本往返保持解析后的电路，
+输出为 OpenQASM 3.0。它接受门名展开、寄存器广播和整寄存器相等条件
+（宽度为 1 时也接受 ``c[0] == 0/1``）；
+不受支持的构件会抛出类型明确的异常。文本往返保持解析后的电路，
 不保留源码的寄存器划分、门名或排版。
+
+OpenQASM 3 只是前端适配器：一次变换是否保持语义，不以 OpenQASM 3 工具是否接受该程序为判据，
+见 :doc:`/core-concepts/architecture`。相关页面：示例见 :doc:`/getting-started/quickstart`；
+常见解析错误见 :doc:`/getting-started/troubleshooting`。
 
 .. autoclass:: qaiji.codec.GateSpec
    :members:
@@ -19,13 +27,13 @@ OpenQASM 3 编解码器
 需要把电路中的操作对应回源码时，使用 ``qaiji.codec.parse_qasm3``。它只解析一次，
 同时返回电路和逐操作的源码来历；接受与拒收的源码和 ``from_qasm3`` 完全相同。
 
-* ``origins`` 与 ``circuit.gates`` 逐位一一对应。广播或门名展开产生的多个操作共享
+* ``origins`` 与 ``circuit.gates`` 一一对应。广播或门名展开产生的多个操作共享
   所属语句的 span，用 ``broadcast_index`` 和 ``expansion_index`` 区分；条件操作的
   origin 用 ``body`` 按同样规则对应条件体内的门。``statement_index`` 是顶层语句序号，
   声明等不产生操作的语句也占号，条件体内的门沿用所属 ``if`` 的序号。
 * 行号和列号都从 1 起，``line:column`` 到 ``end_line:end_column`` 为闭区间；列按
   Unicode code point 计，与错误消息中的 ``at line:column`` 采用同一约定。
-* origin 只是旁表：电路的 ``==``、语义摘要哈希、``canonicalize()`` 和 ``to_qasm3``
+* origin 只是旁表：电路的 ``==``、规范摘要哈希、``canonicalize()`` 和 ``to_qasm3``
   都不读取它。``ParsedQasm3`` 本身不可哈希，它的 ``==`` 同时比较电路和 origins；
   只比较语义时请比较 ``.circuit``。
 * ``circuit`` 仍是可变容器。调用方增删或替换其中的操作后，``origins`` 不再对齐，
@@ -65,14 +73,14 @@ IR 中的 ``CNOT`` 在输出时规范化为 ``cx``。
 ``RX90``、``RX180``、``ISWAP`` 与 ``SQISWAP`` 属于电路模型，
 但没有本编解码器的门映射，``to_qasm3`` 会拒绝包含这些门的电路。需要这些门时可从
 Python 构造电路并使用 :doc:`native` 中的原生调度生成接口；它输出的是
-``NativeScheduleIR``，不是可交回 ``to_qasm3`` 的电路。
+``NativeScheduleIR``，不是可交给 ``to_qasm3`` 的电路。
 
 版本头、寄存器与错误收敛
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-* 缺少 ``OPENQASM`` 版本头的文本可以接受；显式版本的主号只接受 2 或 3，
-  畸形版本和其他主号拒收。
-* 多个量子寄存器按声明顺序连续映射到同一电路的比特编号。
+* 缺少 ``OPENQASM`` 版本头的文本可以接受；显式版本的主版本号只接受 2 或 3，
+  格式错误的版本和其他主版本号拒收。
+* 多个量子寄存器按声明顺序映射到同一电路中连续的比特编号。
 * 量子寄存器与经典寄存器同名时拒收，无论谁先声明；同类寄存器重名也拒收。
 * 宽度为 1 的经典寄存器上的 ``if (c[0] == 0)`` 或 ``if (c[0] == 1)`` 降为整个寄存器的
   ``Conditional``；下标必须为整数字面量且不越界。
@@ -85,16 +93,16 @@ Python 构造电路并使用 :doc:`native` 中的原生调度生成接口；它�
 * 超出解释器整数字符串转换上限（默认 4300 位，见 :func:`sys.set_int_max_str_digits`）
   的十进制整数字面量抛出 :class:`~qaiji.Qasm3ParseError`，消息为 ``source at 1:1:``
   加解释器原生消息，原异常保留为 ``__cause__``。
-* 门参数中未超出位数上限、但超出浮点范围的整数按无穷大求值，由既有的有限性检查
+* 门参数中未超出位数上限但超出浮点范围的整数按无穷大求值，由既有的有限性检查
   拒收：抛出 :class:`~qaiji.Qasm3UnsupportedConstructError`，detail 为
   ``Gate parameters must be finite``。``1/N``、``pi/N`` 下溢为 ``0.0`` 并被接受；``1/(1/N)``
-  抛出 :class:`~qaiji.Qasm3ParseError`，detail 为 ``division by zero``；``N**2`` 与
-  ``N%2`` 与小操作数时一样报 ``unsupported binary expression``。
+  抛出 :class:`~qaiji.Qasm3ParseError`，detail 为 ``division by zero``；
+  ``N**2``、``N%2`` 与小操作数时一样报 ``unsupported binary expression``。
 * 十六进制、二进制、八进制字面量（寄存器宽度、下标、条件值、参数）以及累计的
   qubit 总数同样受该上限约束；超限时抛出 :class:`~qaiji.Qasm3ParseError`，消息为
-  ``<构件> at 行:列:`` 加解释器原生消息。位置指向该字面量，宽度指向 ``[``；
+  ``<构件> at 行:列:`` 加解释器原生消息。位置指向该字面量，宽度越限时位置指向 ``[``；
   总数越限时指向使总数越限的那条声明。经典位总数不设上限。
-* 输出的量子寄存器名依次尝试 ``q``、``q0``、``q1``、……，选择首个未被
+* 输出量子寄存器名时，依次尝试 ``q``、``q0``、``q1``……，选择首个未被
   经典寄存器占用的名字。
 
 这些规则在各版本之间的变化记录在仓库根目录的 ``CHANGELOG.md``。
@@ -110,11 +118,11 @@ Python 构造电路并使用 :doc:`native` 中的原生调度生成接口；它�
 再生成第 1 组，依此类推。
 
 测量要求源和目标长度相等，不复用单个源比特或目标位。整寄存器与带下标操作数
-混用时，整寄存器一侧必须宽度为 1。例如宽度为 1 的 ``q`` 可以用于
+混用时，整寄存器一侧的宽度必须为 1。例如宽度为 1 的 ``q`` 可以用于
 ``c[0] = measure q;``，宽度为 1 的 ``c`` 可以用于 ``c = measure q[0];``。
 两侧都是整寄存器时，按对应下标测量；OpenQASM 2 的箭头形式遵循相同规则。
 
-多量子寄存器在输出时统一为一个量子寄存器。下面的无头输入同时展示广播、
+多个量子寄存器在输出时统一为一个量子寄存器。下面的无头输入同时展示广播、
 门名展开与命名避让：
 
 .. doctest::
@@ -133,7 +141,7 @@ Python 构造电路并使用 :doc:`native` 中的原生调度生成接口；它�
 
 支持整寄存器相等条件 ``if (c == k)``；多位寄存器的单个位条件
 ``if (c[0] == 1)`` 会被拒收。条件体只支持门语句，不支持 ``else``。
-没有 qubit 声明或 0 qubit 的程序会被拒收。参数表达式中的 ``**`` 和 ``%``
+没有 qubit 声明或 0 个 qubit 的程序会被拒收。参数表达式中的 ``**`` 和 ``%``
 会被拒收，不做求值；循环、``reset``、``barrier``、脉冲语句及自定义门定义不受支持。完整错误分类见 :doc:`exceptions`。
 
 广播没有设置数量上限：22 字节的 ``qubit[1000000] q; h q;``
@@ -143,18 +151,18 @@ Python 构造电路并使用 :doc:`native` 中的原生调度生成接口；它�
 19 个门名的展开等价级别
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-表中 R3 指 OpenQASM 3 ``stdgates.inc`` 参考，R2 指官方 OpenQASM 2
-``qelib1.inc`` 参考。``EXACT`` 表示算符严格相等；“相位”表示只差一个整体全局相位，
+表中 OQ3 指 OpenQASM 3 ``stdgates.inc`` 参考，OQ2 指官方 OpenQASM 2
+``qelib1.inc`` 参考。``EXACT`` 表示算符严格相等；“相位”表示只差一个全局相位，
 对多比特门是整个酉矩阵共同的相位，不是受控子空间之间的相对相位。
-“—”表示不对该参考作声明。``u`` 的 R2 参考取 OpenQASM 2 内置 ``U``；
+“—”表示不对该参考作声明。``u`` 的 OQ2 参考取 OpenQASM 2 内置 ``U``；
 ``u``、``cswap`` 都不在官方 OQ2 ``qelib1.inc`` 中。
 
 .. list-table:: 标准门名展开
    :header-rows: 1
 
    * - 名字
-     - 对 R3
-     - 对 R2
+     - 对 OQ3
+     - 对 OQ2
    * - ``p``
      - EXACT
      - —
@@ -215,6 +223,6 @@ Python 构造电路并使用 :doc:`native` 中的原生调度生成接口；它�
 
 ``cu3`` 采用官方 OQ2 原文的读法。与 Qiskit 版 ``qelib1`` 的读法相比，
 控制位为 1 的子空间多一个相对相位 :math:`e^{-i(\varphi+\lambda)/2}`；
-它不能作为整个两比特门的全局相位忽略。迁移 Qiskit 语料时须核对所用定义。
+不能把它当作整个两比特门的全局相位而忽略。迁移 Qiskit 语料时须核对所用定义。
 展开后的 IR 不保留原门名；单比特名字展开为 1 个门，多比特名字展开为 3–17 个门，
 例如 ``cy`` 为 3 个、``ccx`` 为 15 个、``cswap`` 为 17 个。
