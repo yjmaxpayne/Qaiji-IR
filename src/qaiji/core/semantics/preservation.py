@@ -147,7 +147,7 @@ def check_preservation(
 
     流水线是严格的优先级顺序：测量湮灭（第 1 步）压过判定域前置条件（第 2 步），
     后者又压过逐位置的 R1-R4 比对（第 3-4 步）。任何落在可判定集合之外的情况一律
-    判为 ``unsupported``，绝不给出一个静默错误的 ``passed``。
+    判为 ``unsupported``，绝不给出一个静默错误的 ``passed``，见 I-Q4.6。
 
     Args:
         original: 变换前的电路。
