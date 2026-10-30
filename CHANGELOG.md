@@ -4,6 +4,23 @@ All notable changes to this project are documented here. The format follows
 [Conventional Commits](https://www.conventionalcommits.org/) and versions are derived from
 git tags via `poetry-dynamic-versioning`.
 
+## [0.3.1] - 2026-10-30
+
+This release changes only the documentation. The code, the dependencies and the lock file are
+the same as in 0.3.0.
+
+### Documentation
+
+- Restructure the documentation. The conventions and native-schedule pages move under
+  `core-concepts/`. The core-concepts section now has a page for each layer (L0 to L5 and P),
+  an architecture page, a layer relations page and an IR family topology figure. A code map is
+  added for contributors.
+- Update the index, getting-started, API and development pages to the new structure. The start
+  page and the README feature lists give the circuit front end first, then the layers from L2
+  up to L5.
+- Revise the wording of `README.md`, `README_EN.md` and `doc/`: use one term for each concept
+  and remove ambiguous phrases.
+
 ## [0.3.0] - 2026-10-29
 
 ### Added
