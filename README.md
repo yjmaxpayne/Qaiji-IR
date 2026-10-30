@@ -24,32 +24,32 @@
 
 ## 功能
 
+- **电路模型与约定**：19 种 `GateType`、不可变的量子/经典节点和可变的 `Circuit` 容器；
+  基矢与 RZ 相位约定可执行自检。
 - **OpenQASM 编解码器**：读取 OpenQASM 2.0 与 3.0（版本头可省略），输出统一规范化为 3.0，
   文本往返保持电路相等。支持 14 个注册门名，另有 19 个标准门名在解析时展开为可序列化门，
   不增加 `GateType`；支持寄存器广播、多个量子寄存器的扁平化和一位经典寄存器的下标条件。
   范围外构件抛出明确的 `QaijiIRError` 子类，不会被静默忽略。展开的等价级别、`cu3` 相位差和
   广播边界见[编解码器文档](doc/source/api/codec.rst)。
-- **电路模型与约定**：19 种 `GateType`、不可变的量子/经典节点和可变的 `Circuit` 容器；
-  基矢与 RZ 相位约定可执行自检。
+- **L2 原生调度**（`qaiji.core.native`、`qaiji.core.program_native`）：显式时长与资源配置下的
+  CZ 基底展开和确定性调度、严格 JSON 往返，以及独立的来源、规则、矩阵与时序认证；
+  `qubic_mapping` 输出中性操作记录，程序桥接按 L5 调用关联测量历史与最终位。Python 构造的
+  RX90、RX180、ISWAP、SQISWAP 可参与原生调度，OpenQASM 编解码器不支持这四种门。
 - **L4 语义层**（`qaiji.core.semantics`）：把每个操作归入态射类别，提取测量与条件的数据流，
   生成用于标识结构身份的 `sha256` 内容哈希，并用 R1–R4 判决引擎判定逐位置结构对应、CNOT/CX 别名折叠
   或整圈旋转折叠是否保持算符语义（`EXACT` 或 `UP_TO_PHASE`）。该层不依赖 OpenQASM 解析器。
 - **L5 程序层**（`qaiji.core.program`）：有序的量子调用、实验元数据、结果输出与严格 JSON 往返；
   `compute_kernel_ref` 按固定的 L4 配方生成内核引用，`validate_program` 认证解析表中的电路并
   核对输出寄存器的测量写入，一次报告全部问题。
-- **L2 原生调度**（`qaiji.core.native`、`qaiji.core.program_native`）：显式时长与资源配置下的
-  CZ 基底展开和确定性调度、严格 JSON 往返，以及独立的来源、规则、矩阵与时序认证；
-  `qubic_mapping` 输出中性操作记录，程序桥接按 L5 调用关联测量历史与最终位。Python 构造的
-  RX90、RX180、ISWAP、SQISWAP 可参与原生调度，OpenQASM 编解码器不支持这四种门。
 - **P 层连续演化契约**（`qaiji.core.physical`）：提供不可变的问题、请求与结果。
   严格交换支持显式数组附件。
   内容身份覆盖物理字段与执行策略。
   分级检查覆盖结构、能力、数值条件与资源预算。
   P 层只使用标准库，不执行时间演化。
 
-可运行教程：[L4 语义摘要](doc/source/getting-started/semantics.rst)、
+可运行教程：[L2 原生调度](doc/source/getting-started/native-schedule.rst)、
+[L4 语义摘要](doc/source/getting-started/semantics.rst)、
 [L5 程序校验](doc/source/getting-started/program.rst)、
-[L2 原生调度](doc/source/getting-started/native-schedule.rst)、
 [P 层连续演化契约](doc/source/getting-started/physical.rst)。
 
 **范围**：本包不执行采样或时间演化，不提供反馈运行时，不生成 ISA 或波形，也不声明物理保真度。

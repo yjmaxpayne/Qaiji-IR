@@ -26,6 +26,8 @@ from them.
 
 ## Features
 
+- **Circuit model and conventions**: 19 `GateType` kinds, immutable quantum and classical nodes,
+  and a mutable `Circuit` container; executable checks for basis and RZ phase conventions.
 - **OpenQASM codec**: reads OpenQASM 2.0 and 3.0 (the version header is optional) and normalizes
   output to 3.0; text round trips preserve circuit equality. It supports 14 registered gate names,
   and expands 19 further standard gate names at parse time into serializable gates without adding
@@ -34,8 +36,12 @@ from them.
   specific `QaijiIRError` subclass instead of being silently discarded. See the
   [codec documentation](doc/source/api/codec.rst) for equivalence levels, the `cu3` phase
   difference, and broadcasting boundaries.
-- **Circuit model and conventions**: 19 `GateType` kinds, immutable quantum and classical nodes,
-  and a mutable `Circuit` container; executable checks for basis and RZ phase conventions.
+- **L2 native schedules** (`qaiji.core.native`, `qaiji.core.program_native`): CZ-basis expansion
+  and deterministic scheduling under explicit timing and resource configuration, strict JSON
+  round trips, and independent source, rule, matrix, and timing validation. `qubic_mapping`
+  produces neutral operation records, and the program bridge associates measurement histories and
+  final-bit references with L5 invocations. Python-built RX90, RX180, ISWAP, and SQISWAP gates take
+  part in native scheduling; the OpenQASM codec does not support these four gates.
 - **L4 semantics** (`qaiji.core.semantics`): classifies every operation into a morphism category,
   extracts measurement and conditional data flow, produces a structural-identity `sha256` content
   hash, and runs an R1–R4 verdict engine that decides whether position-wise correspondence, a
@@ -45,20 +51,14 @@ from them.
   outputs, and strict JSON round trips. `compute_kernel_ref` derives kernel references with a fixed
   L4 recipe; `validate_program` authenticates circuits in the supplied table, checks measurement
   writes for output registers, and reports all problems together.
-- **L2 native schedules** (`qaiji.core.native`, `qaiji.core.program_native`): CZ-basis expansion
-  and deterministic scheduling under explicit timing and resource configuration, strict JSON
-  round trips, and independent source, rule, matrix, and timing validation. `qubic_mapping`
-  produces neutral operation records, and the program bridge associates measurement histories and
-  final-bit references with L5 invocations. Python-built RX90, RX180, ISWAP, and SQISWAP gates take
-  part in native scheduling; the OpenQASM codec does not support these four gates.
 - **P continuous-evolution contract** (`qaiji.core.physical`): immutable problems, requests, and
   results; strict exchange with explicit array attachments; content identities for physical fields
   and execution policy; tiered checks for structure, capabilities, numerical conditions, and resource
   budgets. The P layer uses only the standard library and does not execute time evolution.
 
-Executable tutorials: [L4 semantic summaries](doc/source/getting-started/semantics.rst),
-[L5 program validation](doc/source/getting-started/program.rst),
-[L2 native scheduling](doc/source/getting-started/native-schedule.rst), and
+Executable tutorials: [L2 native scheduling](doc/source/getting-started/native-schedule.rst),
+[L4 semantic summaries](doc/source/getting-started/semantics.rst),
+[L5 program validation](doc/source/getting-started/program.rst), and
 [P continuous-evolution contracts](doc/source/getting-started/physical.rst).
 
 **Scope**: the package does not execute shots or time evolution, provide a feedback runtime,
