@@ -1,15 +1,17 @@
-L4 语义摘要与保持性
-===================
+L4 操作语义：摘要与保持性判决
+==============================
 
-L4 给电路操作分类，生成可重复计算的内容引用，并对受支持的逐位置变换给出
-保持性判决。这些是不同的问题：``RZ(2*pi)`` 在测量统计分类中是恒等，
-算符却比 ``I`` 多一个全局负号。下面的示例均在文档测试中执行。
+本页演示 L4 的两类接口：为电路生成标注、数据流摘要与内容哈希；对变换给出保持性判决。
+这两类接口回答不同的问题。例如，按测量统计分类，``RZ(2*pi)`` 是恒等，
+但它的算符比 ``I`` 多一个全局负号。两类问题的定义见 :doc:`/core-concepts/semantics`。
+前置页：:doc:`quickstart`。
 
-分类、数据流与内容引用
+分类、数据流与内容哈希
 ----------------------
 
-``annotate_circuit`` 为节点分配位置；``build_semantic_summary`` 输出包含
-操作结构、测量句柄和分类计数的 JSON 安全摘要。相同输入可得到相同哈希。
+``annotate_circuit`` 为每个节点和条件体内的每个门生成一条标注，标注记录位置与分类。
+``build_semantic_summary`` 输出只含 JSON 值的摘要，内容包括操作结构、测量句柄和
+分类计数。相同的输入得到相同的哈希。
 
 .. testcode:: semantics
 
@@ -41,19 +43,22 @@ L4 给电路操作分类，生成可重复计算的内容引用，并对受支�
    )
    assert canonical_summary_hash(handle.summary) == handle.content_hash
 
-``SemanticIRHandle`` 会深度冻结摘要；默认状态是 ``PLANNED``，因此示例显式设置
-``AVAILABLE``。内容哈希只标识摘要内容，不代表调度已获认证或物理结果已验证。
-``build_dataflow_summary`` 的条件边按寄存器名连接测量与条件，不检查门序；
-条件可以先于匹配的测量而仍产生一条边。读前写入与结果就绪由 L2 原生调度
-检查，见 :doc:`/native-schedule`。
+``SemanticIRHandle`` 会深度冻结摘要。句柄的默认状态是 ``PLANNED``，所以示例显式设置
+``AVAILABLE``。内容哈希只标识摘要的内容；它不表示调度已通过认证，也不表示物理结果
+已验证。
+
+``build_dataflow_summary`` 按寄存器名把条件连接到测量，不检查门的顺序。
+条件位于匹配的测量之前时，也会产生一条边。条件是否读取了已写入的结果、
+是否晚于结果就绪时刻，由 L2 原生调度检查，见 :doc:`/core-concepts/native-schedule`。
 
 保持性判决的范围
 ----------------
 
-``check_preservation`` 支持结构相等、CNOT/CX 别名和同位置整圈旋转等 R1–R4
-情形。``EXACT`` 与 ``UP_TO_PHASE`` 是可判定级别；无法证明的变换会返回
-``unsupported``，不能将其当成通过。一个门展开成多个门或一般重排序不属于
-这个逐位置判决域。:doc:`/api/semantics` 给出完整接口与错误类型。
+``check_preservation`` 逐位置比较变换前后的两个电路。规则 R1–R4 覆盖结构相等、
+CNOT 与 CX 别名、同位置的整圈旋转等情形。可判定的级别只有 ``EXACT`` 与
+``UP_TO_PHASE``。规则不能确立关系时，判决为 ``unsupported``；不要把 ``unsupported``
+当作通过。把一个门展开为多个门、一般的重新排序，都不在逐位置判决的范围内。
+判决的步骤与完整规则见 :doc:`/core-concepts/semantics`。
 
 .. testcode:: preservation
 
@@ -69,4 +74,8 @@ L4 给电路操作分类，生成可重复计算的内容引用，并对受支�
    assert verdict.status == "passed"
    assert verdict.equiv_level is EquivLevel.UP_TO_PHASE
 
-此判决比较的是 L4 输入与变换后电路，不代替 L2 的规则、算符矩阵、资源和时序认证。
+这个判决只比较 L4 层的两个电路。它不代替 L2 对展开规则、算符矩阵、资源和时序的认证。
+
+相关页面：完整接口与错误类型见 :doc:`/api/semantics`。
+
+下一步：:doc:`program` 用内核引用把电路接入 L5 程序。

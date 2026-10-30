@@ -1,13 +1,14 @@
 快速开始
 ========
 
-本页假设你已完成 :doc:`installation` 中的安装步骤。
+本页只用包根接口完成三件事：OpenQASM 3 往返、直接构造电路、得到一个保持性判决。
+前置页：:doc:`installation`。
 
 OpenQASM 往返
 -------------
 
-下面的示例从 OpenQASM 3 文本构造电路，再将电路序列化为规范化文本。示例使用包根
-冻结的公共接口，并由 Sphinx 文档测试在构建流程中执行。
+下面的示例把 OpenQASM 3 文本解析为电路，再把电路序列化为规范文本。
+重新解析规范文本，得到与原电路相等的电路。
 
 .. doctest::
 
@@ -50,16 +51,18 @@ OpenQASM 往返
 支持边界
 --------
 
-前端只接受已经登记的 OpenQASM 构件。遇到循环、脉冲语句或未支持的
-门时，编解码器会抛出 :class:`qaiji.QaijiIRError` 的具体子类，不会静默丢弃信息。
-序列化输出统一使用 OpenQASM 3.0；OpenQASM 2.0 输入只作为兼容入口读取。
+编解码器只接受已登记的 OpenQASM 构件。输入含循环、脉冲语句或未登记的门时，
+编解码器抛出 :class:`qaiji.QaijiIRError` 的具体子类，不静默丢弃信息。
+序列化输出总是 OpenQASM 3.0；OpenQASM 2.0 输入只作为兼容入口读取。
+完整的支持边界见 :doc:`/api/codec`。
 
-语义判决最小示例
-----------------
+保持性判决最小示例
+------------------
 
-``qaiji.core.semantics`` 在电路前端之上回答"这次变换是否保持语义"。下面的示例对一个
-整圈 ``RZ`` 旋转做 :meth:`~qaiji.Circuit.canonicalize`：门被折叠为恒等门，但判决引擎
-判定该变换只保持到全局相位（``UP_TO_PHASE``），而不是算符严格相等（``EXACT``）：
+``qaiji.core.semantics`` 对受支持的逐位置变换给出保持性判决。规则不能确立关系时，
+判决为 ``unsupported``。下面的示例对整圈 ``RZ`` 旋转调用
+:meth:`~qaiji.Circuit.canonicalize`。规范化把该门折叠为恒等门；判决结果是只保持到
+全局相位（``UP_TO_PHASE``），不是算符严格相等（``EXACT``）。
 
 .. doctest::
 
@@ -79,9 +82,7 @@ OpenQASM 往返
    >>> verdict.equiv_level
    <EquivLevel.UP_TO_PHASE: 'UP_TO_PHASE'>
 
-下一步
-------
+相关页面：各层的角色与实现状态见 :doc:`/core-concepts/architecture`；
+跨层共享的基矢与相位约定见 :doc:`/core-concepts/conventions`。
 
-阅读 :doc:`/conventions`，确认物理适配器必须遵守的基矢和相位约定；完整类型与函数说明见
-:doc:`/getting-started/semantics` 和 :doc:`/getting-started/program` 可继续学习
-L4 摘要与 L5 程序校验；完整类型与函数说明见 :doc:`/api/index`。
+下一步：:doc:`native-schedule` 从最接近设备的已实现层 L2 开始，按层自底向上说明各层的接口。

@@ -1,15 +1,15 @@
 # 文档构建
 
-本目录包含 Qaiji-IR 的简体中文 Sphinx 手册（单语源树 `source/`）。通过
-[Makefile](Makefile) 可以构建 HTML、运行文档测试和清理生成文件。本说明文件
-介绍构建流程，位于 Sphinx 源目录之外。
+本目录包含 Qaiji-IR 的简体中文 Sphinx 手册（仅含一种语言的源文件树
+`source/`）。通过 [Makefile](Makefile) 可以构建 HTML、运行文档测试和清理生成
+文件。本文件位于 Sphinx 源目录之外，介绍构建流程。
 
 ## 环境准备
 
 除非另有说明，以下命令均在 Linux 的 Bash 中执行，起始位置为**仓库根目录**。
 需要 GNU Make、uv 和 Python 3.12–3.14；Python 要求见
 [`.python-version`](../.python-version) 与 [`pyproject.toml`](../pyproject.toml)。
-安装依赖需要访问配置的软件包索引。首次构建时，Sphinx 还会下载外部 Python
+安装依赖需要访问已配置的软件包索引。首次构建时，Sphinx 还会下载外部 Python
 交叉引用索引（intersphinx）。
 
 首次检出仓库后，安装项目与文档依赖：
@@ -28,7 +28,7 @@ make --version
 make -C doc help
 ```
 
-依赖安装完成后，也可用以下方式调用项目环境，无需提前激活或同步依赖：
+依赖安装完成后，也可用以下方式使用项目环境，无需提前激活虚拟环境或同步依赖：
 
 ```bash
 uv run --no-sync make -C doc help
@@ -47,7 +47,7 @@ uv run --no-sync make -C doc help
 | 文档测试报告 | `build/doctest/output.txt` |
 | 共享徽章片段 | `_includes/badges.rst` |
 
-接口页面通过 Sphinx 的自动文档功能（`autodoc`）导入项目模块，因此构建需要
+Sphinx 的自动文档功能（`autodoc`）在生成接口页面时导入项目模块，因此构建需要
 可正常运行的项目环境。
 首页通过 `.. include:: ../_includes/badges.rst` 引入仅在 HTML 中显示的徽章；
 其顺序、图片地址、替代文本应与仓库根目录的 [README.md](../README.md) 同步。
@@ -59,11 +59,12 @@ uv run --no-sync make -C doc help
 make -C doc html
 ```
 
-该目标每次重写全部 HTML 页面，避免新增目录项后旧页面保留过期侧栏。例如新增
-`native-schedule` 后，重新执行此命令会同步更新 `conventions.html` 的左侧目录。
-它仍会复用已解析的 Sphinx 环境。
+该目标每次重写全部 HTML 页面，避免新增目录项后旧页面保留过期的左侧目录。例如新增
+`core-concepts/native-schedule` 后，重新执行此命令会同步更新
+`core-concepts/conventions.html` 的左侧目录。
+它仍会复用已保存的 Sphinx 环境。
 
-审查或自动化任务可将警告视为失败，同时继续收集诊断信息：
+在审查或自动化任务中，可将警告视为失败，同时继续收集诊断信息：
 
 ```bash
 make -C doc html SPHINXOPTS="-W --keep-going"
@@ -132,12 +133,12 @@ Make 变量可以在命令行上覆盖：
 |---|---|---|
 | `SPHINXBUILD` | `sphinx-build` | Sphinx 命令；也可用 `python -m sphinx` |
 | `SPHINXOPTS` | 空 | Sphinx 参数 |
-| `O` | 空 | 追加在 `SPHINXOPTS` 之后的附加参数 |
+| `O` | 空 | 追加在 `SPHINXOPTS` 之后的参数 |
 | `SOURCEDIR` | `source` | 源目录 |
 | `BUILDDIR` | `build` | 输出根目录 |
 | `BROWSER` | 未设置 | `view` 目标使用的命令 |
 
-相对的源与输出路径均从 `doc/` 解析，使用 `make -C doc` 时也是如此。从仓库
+相对源路径与相对输出路径均以 `doc/` 为基准解析，使用 `make -C doc` 时也是如此。从仓库
 根目录用当前 Python 解释器构建到独立的输出树：
 
 ```bash
@@ -145,15 +146,15 @@ make -C doc html BUILDDIR=build-check SPHINXBUILD="python -m sphinx" SPHINXOPTS=
 ```
 
 生成的入口是 `doc/build-check/html/index.html`。后续预览与清理命令使用相同的
-`BUILDDIR` 覆盖；HTTP 服务器的 `--directory` 也指向该输出根。
+`BUILDDIR` 覆盖；HTTP 服务器的 `--directory` 也指向该输出根目录。
 
 ## 故障排查
 
-| 现象 | 检查项 |
+| 现象 | 检查与处理 |
 |---|---|
 | `make: command not found` | GNU Make 需要在 Python 依赖之外单独安装。命令是 `make`。 |
-| `sphinx-build: command not found` | 激活已准备的环境，或设置 `SPHINXBUILD="python -m sphinx"` 并使用其解释器。 |
-| `No module named sphinx` 或自动文档导入错误 | 检查当前环境包含项目本体与 `docs` 依赖组。 |
-| 严格构建在下载交叉引用索引时失败 | 检查 Sphinx 报告的索引 URL 的网络访问，然后重试构建。 |
+| `sphinx-build: command not found` | 激活已准备的环境，或设置 `SPHINXBUILD="python -m sphinx"` 并使用该环境中的 Python 解释器。 |
+| `No module named sphinx` 或自动文档导入错误 | 检查当前环境是否包含项目本体与 `docs` 依赖组。 |
+| 严格构建在下载交叉引用索引时失败 | 检查能否访问 Sphinx 报告的索引 URL，然后重试构建。 |
 | 引用损坏或意外的过期页面 | 阅读 Sphinx 的完整诊断信息，修复源文件后用 `-E` 重建；已删除页面残留时清理输出树。 |
 | 预览目标无法打开浏览器 | 在桌面会话中设置 `BROWSER`，或使用本地 HTTP 服务器。 |

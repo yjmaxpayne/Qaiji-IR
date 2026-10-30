@@ -1,11 +1,13 @@
-P 层接口
-========
+P 动力学接口
+============
 
 公开入口为 ``qaiji.core.physical``。
 该入口包含 33 个类型与 20 个函数。
 这些名称不加入包根的 ``__all__``。
 P 层只依赖标准库、同层模块与基础异常。
-使用方式与语义边界见 :doc:`/getting-started/physical`。
+
+相关页面：契约规格与检查边界见 :doc:`/core-concepts/physical`；示例见
+:doc:`/getting-started/physical`。
 
 记录与异常
 ----------
@@ -28,7 +30,7 @@ P 层只依赖标准库、同层模块与基础异常。
 
 ``dump_problem``、``dump_request`` 和 ``dump_result`` 返回制品。
 ``EncodedArtifact.document`` 是 JSON 字节。
-``attachments`` 是有序的名称与字节对。
+``attachments`` 按顺序列出由名称和字节组成的对。
 恢复时须用 ``dict(artifact.attachments)`` 显式传入附件。
 能力摘要的 dump 函数直接返回 JSON 字节。
 load 函数拒绝非法交换内容。
