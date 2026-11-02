@@ -50,7 +50,7 @@ def straight(rows, shared=False):
         )
         groups.append(
             SourceGroup(
-                source=loc, rule_id=f"cz.v0.{kind}", op_start=i, op_stop=i + 1, phase_rad=0.0
+                source=loc, rule_id=f"cz.v1.{kind}", op_start=i, op_stop=i + 1, phase_rad=0.0
             )
         )
     config = ScheduleConfig(

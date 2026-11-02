@@ -78,7 +78,8 @@ def measurement_fixture(conditional=False):
     circuit.cregs = [register]
     circuit.gates = [Measure(0, ClassicalBit(register, 0))]
     if conditional:
-        circuit.gates.append(Conditional(register, 1, (Gate(GateType.Z, (0,)),)))
+        # 条件体用零时长的 I。规则集把条件体中的 Z 改写为 RX90 脉冲，会改变时间断言。
+        circuit.gates.append(Conditional(register, 1, (Gate(GateType.I, (0,)),)))
     snapshot = _capture_source(circuit)
     return circuit, _schedule_source(snapshot, config, _expand_source(snapshot)), config
 

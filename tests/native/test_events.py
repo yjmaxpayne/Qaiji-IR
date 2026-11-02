@@ -72,7 +72,7 @@ def test_event_loss_extra_order_target(fault):
             second = SourceLocation(gate_index=1, body_offset=None)
             zero = replace(measurement, kind="Z", duration_ns=0)
             operations = (zero, replace(measurement, source=second))
-            groups = (good.groups[0], replace(good.groups[1], rule_id="cz.v0.Z"))
+            groups = (good.groups[0], replace(good.groups[1], rule_id="cz.v1.Z"))
             event = replace(event, source=second, operation_index=1)
         source = _capture_source(circuit)
         bad = replace(
@@ -86,9 +86,9 @@ def test_event_loss_extra_order_target(fault):
         )
         path, gate, index = "$.events[0].operation_index", 0, 0
     elif fault == "loss":
-        # 源仍是 Measure，实际槽改为 Z 且删事件。规则失败不应阻断 V4。
+        # 源仍是 Measure，实际槽改为零时长的 I 且删事件。规则失败不应阻断 V4。
         ops = tuple(
-            replace(op, kind="Z", duration_ns=0) if i == 3 else op
+            replace(op, kind="I", duration_ns=0) if i == 3 else op
             for i, op in enumerate(good.operations)
         )
         events = tuple(

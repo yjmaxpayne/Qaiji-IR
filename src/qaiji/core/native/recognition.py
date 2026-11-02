@@ -30,17 +30,21 @@ def _recognize_group(
 ) -> _RuleCheck:
     """检查单组切片；调用方负责源组对应关系及完整产物分组。"""
     name = "MEASURE" if isinstance(node, Measure) else node.gate_type.value
-    if group.rule_id != "cz.v0." + name:
+    if group.rule_id != "cz.v1." + name:
         return _RuleCheck(code="rule_id")
     if group.source != source or group.op_stop - group.op_start != len(operations):
         return _RuleCheck(code="rule_instance")
+    conditional = source.body_offset is not None
     cursor = _Cursor(operations, source)
     if isinstance(node, Measure):
         cursor.slot("MEASURE", (node.qubit,))
         phase = 0.0
     else:
+        if conditional:
+            cursor.frames = {}
         cursor.gate(name, node.qubits, tuple(float(x) for x in node.params))
-        phase = _phase_expected(node)
+        cursor.close(node.qubits)
+        phase = _phase_expected(node, conditional)
     if cursor.failure is not None:
         return _RuleCheck(code="rule_instance", operation_index=group.op_start + cursor.failure)
     if cursor.index != len(operations):
@@ -51,15 +55,49 @@ def _recognize_group(
 
 
 class _Cursor:
-    """直接消费实际槽；只保存首个不符位置，不构造期望操作流。"""
+    """直接消费实际槽。只保存首个不符位置，不构造期望操作流。
+
+    `frames` 为 None 时按无条件产生式消费。条件体中它记录每个比特的帧：产生式的 RZ 与 Z
+    只累加帧，不消费槽。有帧比特上的 RX90 先按帧平移相位，再消费。
+    """
 
     def __init__(self, operations: tuple[NativeOperation, ...], source: SourceLocation) -> None:
         self.operations = operations
         self.source = source
         self.index = 0
         self.failure: int | None = None
+        self.frames: dict[int, float] | None = None
 
     def slot(self, kind: str, qubits: tuple[int, ...], *params: float) -> None:
+        """消费一个产生式槽。条件体中先按帧改写，再检查。"""
+        frames = self.frames
+        if frames is not None:
+            q = qubits[0]
+            if kind == "Z":
+                frames[q] = frames.get(q, 0.0) + math.pi
+                return
+            if kind == "RZ":
+                frames[q] = frames.get(q, 0.0) + params[0]
+                return
+            if kind == "RX90" and q in frames:
+                params = (math.remainder(params[0] - frames[q], math.tau),)
+        self._take(kind, qubits, params)
+
+    def close(self, qubits: tuple[int, ...]) -> None:
+        """条件体：消费净帧非零比特的尾部。没有消费任何槽时，消费 RZ(+0.0)。"""
+        if self.frames is None:
+            return
+        for q in qubits:
+            frame = self.frames.get(q)
+            if frame is None or frame == 0.0:
+                continue
+            half = math.remainder(0.5 * frame, math.tau)
+            for phase in (math.pi, math.pi, half, half):
+                self._take("RX90", (q,), (phase,))
+        if self.index == 0:
+            self._take("RZ", (qubits[0],), (0.0,))
+
+    def _take(self, kind: str, qubits: tuple[int, ...], params: tuple[float, ...]) -> None:
         """逐槽核对精确字段，包括浮点负零。"""
         i = self.index
         self.index += 1
@@ -109,14 +147,31 @@ class _Cursor:
             self.h(a)
         elif name in {"S", "T"}:
             self.slot("RZ", (a,), math.pi / (2 if name == "S" else 4))
-        elif name in {"RX", "RY", "U3"}:
-            if name == "U3":
-                self.slot("RZ", (a,), params[2])
-            self.slot("RX90", (a,), -math.pi / 2 if name == "RX" else 0.0)
-            self.slot("RZ", (a,), params[0])
-            self.slot("RX90", (a,), math.pi / 2 if name == "RX" else math.pi)
-            if name == "U3":
-                self.slot("RZ", (a,), params[1])
+        elif name in {"RX", "RY"}:
+            theta = params[0]
+            if theta == 0.0:
+                self.slot("RZ", (a,), theta)
+            elif abs(theta) == math.pi / 2:
+                # RX(±π/2) 的轴为 0 或 π。RY(±π/2) 的轴就是 ±π/2。
+                self.slot("RX90", (a,), theta if name == "RY" else 0.0 if theta > 0 else math.pi)
+            else:
+                self.slot("RX90", (a,), -math.pi / 2 if name == "RX" else 0.0)
+                self.slot("RZ", (a,), theta)
+                self.slot("RX90", (a,), math.pi / 2 if name == "RX" else math.pi)
+        elif name == "U3":
+            theta, phi, lam = params
+            if lam != 0.0:
+                self.slot("RZ", (a,), lam)
+            if abs(theta) == math.pi / 2:
+                self.slot("RX90", (a,), theta)
+            elif theta != 0.0:
+                self.slot("RX90", (a,), 0.0)
+                self.slot("RZ", (a,), theta)
+                self.slot("RX90", (a,), math.pi)
+            if phi != 0.0:
+                self.slot("RZ", (a,), phi)
+            if theta == 0.0 and lam == 0.0 and phi == 0.0:
+                self.slot("RZ", (a,), lam)
         elif name in {"CX", "CNOT"}:
             self.cx(a, qubits[1])
         elif name == "SWAP":
@@ -140,9 +195,11 @@ class _Cursor:
             raise ValueError("Unknown source gate kind.")
 
 
-def _phase_expected(node: Gate) -> float:
-    """单独固定相位表达式，不沿产生式累计或取模。"""
+def _phase_expected(node: Gate, conditional: bool) -> float:
+    """单独固定相位表达式，不沿产生式累计或取模。条件体中 Z 的相位为 −π/2。"""
     name = node.gate_type.value
+    if conditional and name == "Z":
+        return -math.pi / 2
     if name == "U3":
         _, phi, lam = (float(x) for x in node.params)
         return -(phi / 2 + lam / 2)

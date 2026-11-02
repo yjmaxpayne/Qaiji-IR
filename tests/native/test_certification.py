@@ -71,6 +71,17 @@ def manual(name, qubits=(7, 2), angles=(0.7, 0.2, -0.4), source=None):
     t, phi, lam = angles
     exchange_angle = -p / 2 if name == "ISWAP" else -p / 4
     zz = [*cx, rz(b, exchange_angle), *cx]
+    # 转角为 ±0.0 或 ±π/2 时用短模板。U3 省略零角 RZ，全部省略时保留 RZ(λ)。
+    one_axis = {
+        "RX": [pulse(a, -p / 2), rz(a, t), pulse(a, p / 2)],
+        "RY": [pulse(a, 0.0), rz(a, t), pulse(a, p)],
+    }
+    if t == 0.0:
+        one_axis = {"RX": [rz(a, t)], "RY": [rz(a, t)]}
+    elif abs(t) == p / 2:
+        one_axis = {"RX": [pulse(a, 0.0 if t > 0 else p)], "RY": [pulse(a, t)]}
+    u3_core = [] if t == 0.0 else one_axis["RY"]
+    u3 = [rz(a, lam)] * (lam != 0.0) + u3_core + [rz(a, phi)] * (phi != 0.0) or [rz(a, lam)]
     table = {
         "I": [("I", (a,), ())],
         "Z": [("Z", (a,), ())],
@@ -79,12 +90,12 @@ def manual(name, qubits=(7, 2), angles=(0.7, 0.2, -0.4), source=None):
         "H": h_a,
         "S": [rz(a, p / 2)],
         "T": [rz(a, p / 4)],
-        "RX": [pulse(a, -p / 2), rz(a, t), pulse(a, p / 2)],
-        "RY": [pulse(a, 0.0), rz(a, t), pulse(a, p)],
+        "RX": one_axis["RX"],
+        "RY": one_axis["RY"],
         "RZ": [rz(a, t)],
         "RX90": [pulse(a, t)],
         "RX180": [pulse(a, t), pulse(a, t)],
-        "U3": [rz(a, lam), pulse(a, 0.0), rz(a, t), pulse(a, p), rz(a, phi)],
+        "U3": u3,
         "CNOT": cx,
         "CX": cx,
         "CZ": [("CZ", (a, b), ())],
@@ -142,7 +153,7 @@ def manual(name, qubits=(7, 2), angles=(0.7, 0.2, -0.4), source=None):
     )
     group = SourceGroup(
         source=source,
-        rule_id="cz.v0." + name,
+        rule_id="cz.v1." + name,
         op_start=11,
         op_stop=11 + len(ops),
         phase_rad=phases.get(name, 0.0),
@@ -188,7 +199,7 @@ def test_independent_recipe_rejects_mutants(name, mutation):
     expected = "rule_instance"
     bad = ops
     if mutation == "correct":
-        assert _check_local_matrix(node, ops).status == (
+        assert _check_local_matrix(node, ops, False).status == (
             "not_applicable" if name == "MEASURE" else "pass"
         )
         return
@@ -217,7 +228,7 @@ def test_independent_recipe_rejects_mutants(name, mutation):
                 replace(op, qubits=op.qubits[::-1]) if i == index else op
                 for i, op in enumerate(ops)
             )
-            assert _check_local_matrix(node, bad).status == "pass"
+            assert _check_local_matrix(node, bad, False).status == "pass"
         else:
             bad = (replace(ops[0], qubits=(2,)), *ops[1:])
     elif mutation == "later_slot":
@@ -228,7 +239,7 @@ def test_independent_recipe_rejects_mutants(name, mutation):
         bad = (replace(ops[0], ordinal=999), *ops[1:])
         group = replace(group, rule_id="fake", phase_rad=123.0)
         assert rule(data, bad, group).code == "rule_id"
-        assert rule(data, bad, replace(group, rule_id="cz.v0." + name)).code == "rule_instance"
+        assert rule(data, bad, replace(group, rule_id="cz.v1." + name)).code == "rule_instance"
         expected = "rule_id"
     elif mutation == "phase_zero":
         zero_data = manual(name, angles=(0.0, 0.0, 0.0))
@@ -236,7 +247,7 @@ def test_independent_recipe_rejects_mutants(name, mutation):
         if zgroup.phase_rad == 0.0:
             changed = math.copysign(0.0, -math.copysign(1.0, zgroup.phase_rad))
             assert rule(zero_data, group=replace(zgroup, phase_rad=changed)).code == "rule_phase"
-            assert _check_local_matrix(znode, zops).status == (
+            assert _check_local_matrix(znode, zops, False).status == (
                 "not_applicable" if name == "MEASURE" else "pass"
             )
         return
@@ -263,7 +274,7 @@ def test_independent_recipe_rejects_mutants(name, mutation):
         )
         group = replace(group, op_stop=11 + len(bad))
     elif mutation == "rule":
-        group = replace(group, rule_id="cz.v0.forged")
+        group = replace(group, rule_id="cz.v1.forged")
         expected = "rule_id"
     elif mutation == "phase":
         group = replace(group, phase_rad=group.phase_rad + math.tau)
@@ -293,7 +304,7 @@ def test_signed_zero_and_nextafter_are_exact(name, original, changed):
     assert rule(data).code is None
     altered = (replace(ops[0], params=(changed,)),)
     assert rule(data, altered).code == "rule_instance"
-    assert _check_local_matrix(node, altered).status == "pass"
+    assert _check_local_matrix(node, altered, False).status == "pass"
     assert rule(data).code is None
 
 
@@ -308,17 +319,17 @@ def test_hp_rejects_common_generator_recognizer_error(name, angles, monkeypatch)
     data = manual(name, angles=angles)
     node, _, _, ops = data
     assert rule(data).code is None
-    assert _check_local_matrix(node, ops).status == "pass"
+    assert _check_local_matrix(node, ops, False).status == "pass"
     # 假设两份规则共同误加 Z；直接算符仍须拒收，不能消费共同声称的认证状态。
     wrong = (
         *ops,
         replace(ops[0], kind="Z", qubits=(7,), params=(), duration_ns=0, ordinal=len(ops)),
     )
-    result = _check_local_matrix(node, wrong)
+    result = _check_local_matrix(node, wrong, False)
     assert result.status == "fail"
     assert result.code == "operator_mismatch"
     assert result.max_abs_residual > 0.1
-    assert _check_local_matrix(node, ops).status == "pass"
+    assert _check_local_matrix(node, ops, False).status == "pass"
 
 
 @pytest.mark.parametrize(
@@ -342,7 +353,7 @@ def test_local_operand_order_and_product_direction(case):
     name = "U3" if case == "u3" else "CX"
     data = manual(name, qubits=(1, 0) if case == "cx_reverse" else (0, 1))
     node, _, _, ops = data
-    assert _check_local_matrix(node, ops).status == "pass"
+    assert _check_local_matrix(node, ops, False).status == "pass"
     if case == "u3":
         wrong = tuple(replace(op, ordinal=i) for i, op in enumerate(reversed(ops)))
     elif case == "outside":
@@ -351,12 +362,12 @@ def test_local_operand_order_and_product_direction(case):
         wrong = (replace(ops[0], kind="MEASURE", params=(), duration_ns=1), *ops[1:])
     else:
         wrong = tuple(replace(op, qubits=tuple(1 - q for q in op.qubits)) for op in ops)
-    result = _check_local_matrix(node, wrong)
+    result = _check_local_matrix(node, wrong, False)
     assert result.code == (
         "operand_domain" if case in {"outside", "measure_in_gate"} else "operator_mismatch"
     )
     assert result.status == "fail"
-    assert _check_local_matrix(node, ops).status == "pass"
+    assert _check_local_matrix(node, ops, False).status == "pass"
 
 
 @pytest.mark.parametrize("name", NAMES)
@@ -366,7 +377,7 @@ def test_independent_expected_phase(name, angles, qubits):
     data = manual(name, angles=angles, qubits=qubits)
     node, _, group, ops = data
     assert rule(data).expected_phase_rad.hex() == group.phase_rad.hex()
-    hp = _check_local_matrix(node, ops)
+    hp = _check_local_matrix(node, ops, False)
     assert hp.status == "pass"
     assert hp.expected_phase_rad.hex() == group.phase_rad.hex()
     for phase in (
@@ -375,7 +386,7 @@ def test_independent_expected_phase(name, angles, qubits):
         math.nextafter(group.phase_rad, math.inf),
     ):
         assert rule(data, group=replace(group, phase_rad=phase)).code == "rule_phase"
-        assert _check_local_matrix(node, ops) == hp
+        assert _check_local_matrix(node, ops, False) == hp
     assert rule(data).code is None
 
 
@@ -393,15 +404,16 @@ def test_no_exponential_matrix_width(case, monkeypatch):
     circuit = Circuit(10**6)
     if case == "empty":
         snapshot = _capture_source(circuit)
-        assert tuple(_check_local_matrix(node, ()) for node in snapshot.gates) == ()
+        assert tuple(_check_local_matrix(node, (), False) for node in snapshot.gates) == ()
         return
+    # 条件体用 CZ：它的条件模板与无条件相同，矩阵定义域仍为 4×4。
     data = manual(
-        "MEASURE" if case == "measure" else "CX",
+        {"measure": "MEASURE", "conditional": "CZ"}.get(case, "CX"),
         qubits=(999999, 1),
         source=SourceLocation(gate_index=3, body_offset=2 if case == "conditional" else None),
     )
     node, _, _, ops = data
-    result = _check_local_matrix(node, ops)
+    result = _check_local_matrix(node, ops, case == "conditional")
     assert rule(data).code is None
     if case == "measure":
         assert result.status == "not_applicable"
@@ -420,27 +432,29 @@ def test_recipe_failure_does_not_mask_hp(case):
         wrong = tuple(replace(ops[0], ordinal=i) for i in range(6))
         group = replace(group, op_stop=17, phase_rad=math.pi / 2)
         assert rule(data, wrong, group).code == "rule_instance"
-        assert _check_local_matrix(node, wrong).code == "operator_mismatch"
-        assert _check_local_matrix(node, ops).status == "pass"
+        assert _check_local_matrix(node, wrong, False).code == "operator_mismatch"
+        assert _check_local_matrix(node, ops, False).status == "pass"
         return
     data = manual("H")
     node, _, group, ops = data
     wrong = ops
     if case == "id":
-        group = replace(group, rule_id="cz.v0.X")
+        group = replace(group, rule_id="cz.v1.X")
     elif case == "phase":
         group = replace(group, phase_rad=0.0)
     else:
         wrong = (*ops, replace(ops[0], kind="I" if case == "extra" else "Z", params=(), ordinal=3))
     assert rule(data, wrong, group).code is not None
-    assert _check_local_matrix(node, wrong).status == ("fail" if case == "wrong" else "pass")
+    assert _check_local_matrix(node, wrong, False).status == ("fail" if case == "wrong" else "pass")
     assert rule(data).code is None
 
 
 def tolerance_case(case):
-    data = manual("RZ" if case == "rtol_pass" else "RX", angles=(0.0, 0.0, 0.0))
+    # RX 取最小次正规转角：它不按位为零，所以仍用三槽模板，中间的 RZ 槽近似恒等。
+    name, theta = ("RZ", 0.0) if case == "rtol_pass" else ("RX", 5e-324)
+    data = manual(name, angles=(theta, 0.0, 0.0))
     node, _, group, ops = data
-    assert _check_local_matrix(node, ops).status == "pass"
+    assert _check_local_matrix(node, ops, False).status == "pass"
     if case == "zero_slot":
         wrong = tuple(replace(op, ordinal=i) for i, op in enumerate((ops[0], ops[2])))
         group = replace(group, op_stop=13)
@@ -448,8 +462,10 @@ def tolerance_case(case):
         angle = {"rtol_pass": 2e-8, "atol_pass": 1e-10, "atol_fail": 4e-10}[case]
         wrong = tuple(replace(op, params=(angle,)) if op.kind == "RZ" else op for op in ops)
     assert rule(data, wrong, group).code == "rule_instance"
-    assert _check_local_matrix(node, wrong).status == ("fail" if case == "atol_fail" else "pass")
-    assert _check_local_matrix(node, ops).status == "pass"
+    assert _check_local_matrix(node, wrong, False).status == (
+        "fail" if case == "atol_fail" else "pass"
+    )
+    assert _check_local_matrix(node, ops, False).status == "pass"
 
 
 def common_error_case(case, monkeypatch):
@@ -484,7 +500,7 @@ def common_error_case(case, monkeypatch):
     )
     node, source, group, ops = data
     assert rule(data).code is None
-    assert _check_local_matrix(node, ops).status == "pass"
+    assert _check_local_matrix(node, ops, False).status == "pass"
     if case == "sqrt_branch":
         # Z⊗Z 仅把中间块改为另一平方根；平方仍是同一个 +i iSWAP。
         wrong = (
@@ -498,17 +514,17 @@ def common_error_case(case, monkeypatch):
         )
         claimed = replace(group, op_stop=11 + len(wrong))
         assert rule(data, wrong, claimed).code == "rule_instance"
-        assert _check_local_matrix(node, wrong).code == "operator_mismatch"
+        assert _check_local_matrix(node, wrong, False).code == "operator_mismatch"
         squared = tuple(replace(op, ordinal=i) for i, op in enumerate((*wrong, *wrong)))
         iswap, _, _, _ = manual("ISWAP")
-        assert _check_local_matrix(iswap, squared).status == "pass"
+        assert _check_local_matrix(iswap, squared, False).status == "pass"
     elif case in {"iswap_sign", "sqrt_inverse"}:
         # 只改实际候选的两个 ZZ 角；参考仍是固定 +i / 正平方根源算符。
         wrong = tuple(
             replace(op, params=(-op.params[0],)) if op.kind == "RZ" and op.params[0] < 0 else op
             for op in ops
         )
-        assert _check_local_matrix(node, wrong).code == "operator_mismatch"
+        assert _check_local_matrix(node, wrong, False).code == "operator_mismatch"
     else:
         original_slots, original_gate = rules._gate_slots, recognition._Cursor.gate
 
@@ -536,7 +552,7 @@ def common_error_case(case, monkeypatch):
             )
             claimed = replace(group, op_stop=11 + len(wrong))
             assert rule(data, wrong, claimed).code is None
-            assert _check_local_matrix(node, wrong).code == "operator_mismatch"
+            assert _check_local_matrix(node, wrong, False).code == "operator_mismatch"
         assert rule(data, wrong, claimed).code == "rule_instance"
     assert rule(data).code is None
-    assert _check_local_matrix(node, ops).status == "pass"
+    assert _check_local_matrix(node, ops, False).status == "pass"

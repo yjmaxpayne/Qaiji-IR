@@ -14,6 +14,20 @@ from .model import SourceLocation
 from .source import _SourceSnapshot
 
 _SlotSpec = tuple[str, tuple[int, ...], tuple[float, ...]]
+_ZERO_HEX = frozenset({(0.0).hex(), (-0.0).hex()})
+_HALF_PI = math.pi / 2
+# 按位为 ±π/2 的转角使用单个 RX90。字典值为该 RX90 的轴相位。
+_SHORT_AXIS = {
+    (GateType.RX, _HALF_PI.hex()): 0.0,
+    (GateType.RX, (-_HALF_PI).hex()): math.pi,
+    (GateType.RY, _HALF_PI.hex()): _HALF_PI,
+    (GateType.RY, (-_HALF_PI).hex()): -_HALF_PI,
+}
+
+
+def _is_zero(value: float) -> bool:
+    """按位判定 ±0.0。非零次正规数不算零。"""
+    return value.hex() in _ZERO_HEX
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
@@ -59,10 +73,13 @@ def _group(node: Gate | Measure, source: SourceLocation) -> _UnscheduledGroup:
         name = node.gate_type.value
         params = tuple(float(value) for value in node.params)
         specs = _gate_slots(node.gate_type, node.qubits, params)
-        phase = _phase(node.gate_type, params)
+        conditional = source.body_offset is not None
+        if conditional:
+            specs = _frame_free(specs, node.qubits)
+        phase = _phase(node.gate_type, params, conditional)
     return _UnscheduledGroup(
         source=source,
-        rule_id="cz.v0." + name,
+        rule_id="cz.v1." + name,
         phase_rad=phase,
         operations=tuple(
             _NativeSlot(kind=kind, qubits=qubits, params=params, ordinal=ordinal)
@@ -74,7 +91,11 @@ def _group(node: Gate | Measure, source: SourceLocation) -> _UnscheduledGroup:
 def _gate_slots(
     kind: GateType, qubits: tuple[int, ...], params: tuple[float, ...] = ()
 ) -> tuple[_SlotSpec, ...]:
-    """递归展开批准模板，不消除零槽，也不合并相邻原生槽。"""
+    """递归展开批准模板。
+
+    RX、RY、U3 的转角按位为 ±0.0 或 ±π/2 时使用短模板。U3 省略角度按位为 ±0.0 的 RZ 槽。
+    其余门族不省略零槽。所有门族都不合并相邻 RZ，因为合并后的角度可能超出 2π 界。
+    """
     a = qubits[0]
     match kind:
         case GateType.I | GateType.Z | GateType.RZ | GateType.RX90 | GateType.CZ:
@@ -94,6 +115,12 @@ def _gate_slots(
             angle = math.pi / 4 if kind == GateType.T else math.pi / 2
             return (("RZ", (a,), (angle,)),)
         case GateType.RX | GateType.RY:
+            theta = params[0]
+            if _is_zero(theta):
+                return (("RZ", (a,), (theta,)),)
+            short = _SHORT_AXIS.get((kind, theta.hex()))
+            if short is not None:
+                return (("RX90", (a,), (short,)),)
             first, last = (-math.pi / 2, math.pi / 2) if kind == GateType.RX else (0.0, math.pi)
             return (
                 ("RX90", (a,), (first,)),
@@ -102,11 +129,14 @@ def _gate_slots(
             )
         case GateType.U3:
             theta, phi, lam = params
-            return (
-                ("RZ", (a,), (lam,)),
-                *_gate_slots(GateType.RY, (a,), (theta,)),
-                ("RZ", (a,), (phi,)),
+            core = () if _is_zero(theta) else _gate_slots(GateType.RY, (a,), (theta,))
+            kept = tuple(
+                slot
+                for slot in (("RZ", (a,), (lam,)), *core, ("RZ", (a,), (phi,)))
+                if slot[0] != "RZ" or not _is_zero(slot[2][0])
             )
+            # 组不能为空。三个槽都省略时保留 RZ(λ)，λ 的零符号不变。
+            return kept or (("RZ", (a,), (lam,)),)
         case GateType.CNOT | GateType.CX:
             target_h = _gate_slots(GateType.H, (qubits[1],))
             return (*target_h, ("CZ", qubits, ()), *target_h)
@@ -132,8 +162,42 @@ def _gate_slots(
     raise ValueError("Unknown source gate kind.")
 
 
-def _phase(kind: GateType, params: tuple[float, ...]) -> float:
-    """直接使用固定求值式，避免递归相位累加改变末位或负零。"""
+def _frame_free(specs: tuple[_SlotSpec, ...], qubits: tuple[int, ...]) -> tuple[_SlotSpec, ...]:
+    """把条件体模板改写为不含 Z 与非零 RZ 的槽序列。
+
+    每个比特的帧 F 在首个 RZ 或 Z 槽处从 0.0 起，按时间序累加。之后的 RX90(p) 改为
+    RX90(remainder(p − F, 2π))。F 不按位为 ±0.0 的比特，按源门比特顺序追加
+    RX90(π)、RX90(π)、RX90(w)、RX90(w)，w = remainder(F/2, 2π)。在 n(+φ) 约定下，
+    尾部乘积为 RZ(F)，所以改写不改变组的乘积。结果为空时输出 RZ(+0.0)。
+    浮点运算顺序固定，识别器按同一顺序独立重算。
+    """
+    frames: dict[int, float] = {}
+    out: list[_SlotSpec] = []
+    for kind, slot_qubits, slot_params in specs:
+        q = slot_qubits[0]
+        if kind in ("RZ", "Z"):
+            frames[q] = frames.get(q, 0.0) + (slot_params[0] if kind == "RZ" else math.pi)
+        elif kind == "RX90" and q in frames:
+            out.append(
+                ("RX90", slot_qubits, (math.remainder(slot_params[0] - frames[q], math.tau),))
+            )
+        else:
+            out.append((kind, slot_qubits, slot_params))
+    for q in qubits:
+        if q in frames and not _is_zero(frames[q]):
+            w = math.remainder(0.5 * frames[q], math.tau)
+            out += [("RX90", (q,), (math.pi,))] * 2 + [("RX90", (q,), (w,))] * 2
+    # 不取无条件模板的槽：净帧按位为 0 时，被吸收的 RZ 角可以非零。
+    return tuple(out) or (("RZ", (qubits[0],), (0.0,)),)
+
+
+def _phase(kind: GateType, params: tuple[float, ...], conditional: bool) -> float:
+    """直接使用固定求值式，避免递归相位累加改变末位或负零。
+
+    条件体中 Z 改写为 RZ(π) = e^{−iπ/2}·Z，所以它的相位为 −π/2。其余门族与无条件相同。
+    """
+    if conditional and kind == GateType.Z:
+        return -math.pi / 2
     if kind == GateType.U3:
         _, phi, lam = params
         return -(phi / 2 + lam / 2)

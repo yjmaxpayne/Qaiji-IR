@@ -13,7 +13,7 @@ from typing import Any, ClassVar, NoReturn, cast
 from .errors import NativeInputError
 
 NATIVE_SCHEDULE_SCHEMA_VERSION = "qaiji.native_schedule.v0"
-NATIVE_RULESET_VERSION = "qaiji.cz_basis.v0"
+NATIVE_RULESET_VERSION = "qaiji.cz_basis.v1"
 
 
 _LIMIT = 10**4096

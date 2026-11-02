@@ -99,7 +99,7 @@ def values():
             condition_id=None,
         ),
         SourceGroup: dict(
-            source=source, rule_id="cz.v0.RX90", op_start=0, op_stop=1, phase_rad=0.0
+            source=source, rule_id="cz.v1.RX90", op_start=0, op_stop=1, phase_rad=0.0
         ),
         MeasurementEvent: dict(
             event_id="m0",
@@ -129,7 +129,7 @@ def values():
             source_kernel_ref=REF,
             num_qubits=1,
             registers=(),
-            ruleset_version="qaiji.cz_basis.v0",
+            ruleset_version="qaiji.cz_basis.v1",
             operations=(),
             groups=(),
             events=(),
@@ -151,7 +151,7 @@ def values():
         CheckResult: dict(status="pass", issues=()),
         GroupEvidence: dict(
             source=source,
-            rule_id="cz.v0.RX90",
+            rule_id="cz.v1.RX90",
             rule=passed,
             hp=passed,
             expected_phase_rad=0.0,
@@ -180,7 +180,7 @@ def schedule_values():
         registers=(make(RegisterDecl),),
         operations=(measurement, body),
         groups=(
-            make(SourceGroup, rule_id="cz.v0.MEASURE"),
+            make(SourceGroup, rule_id="cz.v1.MEASURE"),
             make(SourceGroup, source=body_source, op_start=1, op_stop=2),
         ),
         events=(make(MeasurementEvent),),
