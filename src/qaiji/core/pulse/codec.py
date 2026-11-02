@@ -8,12 +8,18 @@ signed64 整数，键集精确，拒收重复键。编码叶原语来自 ``qaiji
 
 from __future__ import annotations
 
-import json
 import math
-from dataclasses import dataclass
 from typing import Any, cast
 
-from qaiji.core._codec import canonical_json, f64_from_hex, f64_to_hex, sha256_ref
+from qaiji.core._codec import (
+    CodecFault,
+    canonical_json,
+    f64_from_hex,
+    f64_to_hex,
+    parse_json,
+    sha256_ref,
+)
+from qaiji.core._codec import json_pointer as _at
 from qaiji.core.native import NativeScheduleIR
 
 from .errors import PulseContractError, _fail
@@ -29,8 +35,6 @@ _ROOT = (
     "end_ns",
 )
 _CONDITION = ("condition_id", "start_ns", "end_ns")
-# L1 文档的合法嵌套深度为 4。上限留余量，并使深嵌套输入在递归之前被拒收。
-_MAX_DEPTH = 32
 # 字段表。值为 "f64" 的字段编码为十六进制。"envelope" 为包络对象。其余字段原样编码。
 _FIELDS: dict[type, dict[str, str]] = {
     Port: dict(id="raw", role="raw", targets="raw"),
@@ -177,91 +181,11 @@ def _encode(record: Any) -> dict[str, Any]:
     return result
 
 
-def _at(path: str, key: str | int) -> str:
-    return path + "/" + str(key).replace("~", "~0").replace("/", "~1")
-
-
-@dataclass
-class _Pairs:
-    items: list[tuple[str, Any]]
-
-
-@dataclass
-class _Number:
-    text: str
-    code: str = "INTEGER"
-
-
 def _parse(data: Any) -> Any:
-    if type(data) is not bytes:
-        _fail("JSON_TYPE", "", "Expected bytes.")
     try:
-        text = data.decode("utf-8")
-    except UnicodeDecodeError:
-        _fail("UNICODE", "", "Expected UTF-8 bytes.")
-    _depth(text)
-    try:
-        tree = json.loads(
-            text,
-            object_pairs_hook=_Pairs,
-            parse_int=_Number,
-            parse_float=lambda s: _Number(s, "NUMBER_ENCODING"),
-            parse_constant=lambda s: _Number(s, "NONFINITE"),
-        )
-    except (ValueError, RecursionError):
-        _fail("JSON", "", "Invalid JSON document.")
-    return _materialize(tree, "")
-
-
-def _depth(text: str) -> None:
-    depth = 0
-    quoted = escaped = False
-    for char in text:
-        if quoted:
-            if escaped:
-                escaped = False
-            elif char == "\\":
-                escaped = True
-            elif char == '"':
-                quoted = False
-        elif char == '"':
-            quoted = True
-        elif char in "[{":
-            depth += 1
-            if depth > _MAX_DEPTH:
-                _fail("DEPTH", "", "JSON nesting exceeds the depth limit.")
-        elif char in "]}":
-            depth -= 1
-
-
-def _materialize(value: Any, path: str) -> Any:
-    if isinstance(value, _Pairs):
-        result: dict[str, Any] = {}
-        for key, child in value.items:
-            _unicode(key, _at(path, key))
-            if key in result:
-                _fail("DUPLICATE", _at(path, key), "Object keys must be unique.")
-            result[key] = _materialize(child, _at(path, key))
-        return result
-    if isinstance(value, list):
-        return [_materialize(child, _at(path, i)) for i, child in enumerate(value)]
-    if isinstance(value, _Number):
-        if value.code != "INTEGER":
-            _fail(value.code, path, "JSON numbers must be signed64 integers.")
-        if len(value.text.lstrip("-")) > 19 or not -(1 << 63) <= int(value.text) < (1 << 63):
-            _fail("INTEGER", path, "Expected a signed64 integer.")
-        return int(value.text)
-    if isinstance(value, str):
-        return _unicode(value, path)
-    return value
-
-
-def _unicode(text: str, path: str) -> str:
-    try:
-        text.encode("utf-8")
-    except UnicodeEncodeError:
-        _fail("UNICODE", path, "Expected Unicode scalar values.")
-    return text
+        return parse_json(data)
+    except CodecFault as fault:
+        _fail(fault.code, fault.path, fault.message)
 
 
 def _object(value: Any, path: str) -> dict[str, Any]:

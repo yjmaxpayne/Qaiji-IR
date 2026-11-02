@@ -15,7 +15,17 @@ from pathlib import Path
 import pytest
 
 import qaiji
-from qaiji.core._codec import canonical_json, f64_from_hex, f64_to_hex, inline_array, sha256_ref
+from qaiji.core._codec import (
+    CodecFault,
+    canonical_json,
+    f64_from_hex,
+    f64_to_hex,
+    inline_array,
+    json_pointer,
+    parse_json,
+    sha256_ref,
+)
+from qaiji.exceptions import QaijiIRError
 
 
 def _finite_samples() -> list[float]:
@@ -106,3 +116,51 @@ def test_codec_primitives_import_only_standard_library() -> None:
     assert not any(n.startswith(("qaiji.core.physical", "qaiji.core.native")) for n in loaded)
     extra = set(delta) - {"qaiji.core._codec"}
     assert all(name.split(".")[0] in sys.stdlib_module_names for name in extra), extra
+
+
+def test_json_pointer_escapes_tilde_and_slash() -> None:
+    """按 RFC 6901 先转义 ``~`` 再转义 ``/``，整数键写为十进制。"""
+    assert json_pointer("/x", "a/b~c") == "/x/a~1b~0c"
+    assert json_pointer("", 3) == "/3"
+
+
+def test_parse_json_accepts_integers_and_depth_limit() -> None:
+    """接受 signed64 边界与 32 层嵌套。字符串里的括号不计入深度。"""
+    text = "[" * 32 + "]" * 32
+    assert parse_json(text.encode()) == json.loads(text)
+    assert parse_json(('{"a":"' + "[" * 40 + '"}').encode()) == {"a": "[" * 40}
+    assert parse_json(b'{"a":"[[[[","b":[-9223372036854775808,9223372036854775807]}') == {
+        "a": "[[[[",
+        "b": [-(1 << 63), (1 << 63) - 1],
+    }
+
+
+@pytest.mark.parametrize(
+    ("data", "code", "path"),
+    [
+        ("{}", "JSON_TYPE", ""),
+        (bytearray(b"{}"), "JSON_TYPE", ""),
+        (b"\xff", "UNICODE", ""),
+        (b'{"a":"\\ud800"}', "UNICODE", "/a"),
+        (("[" * 33 + "]" * 33).encode(), "DEPTH", ""),
+        (('["\\"", ' + "[" * 33 + "]" * 33 + "]").encode(), "DEPTH", ""),
+        (b"[Infinity]", "NONFINITE", "/0"),
+        (b"[-Infinity]", "NONFINITE", "/0"),
+        (b'[{"a":1,"a":2}]', "DUPLICATE", "/0/a"),
+        (b"{", "JSON", ""),
+        (b'{"a":1,"a":2}', "DUPLICATE", "/a"),
+        (b'{"x":{"a/b":1,"a/b":2}}', "DUPLICATE", "/x/a~1b"),
+        (b"[1.0]", "NUMBER_ENCODING", "/0"),
+        (b"[1e2]", "NUMBER_ENCODING", "/0"),
+        (b'{"a":[NaN]}', "NONFINITE", "/a/0"),
+        (b"[9223372036854775808]", "INTEGER", "/0"),
+        (b"[-9223372036854775809]", "INTEGER", "/0"),
+    ],
+)
+def test_parse_json_rejects_with_code_and_path(data: object, code: str, path: str) -> None:
+    """每个拒收只抛中性 CodecFault，码与路径与 L1 解码器原有的诊断相同。"""
+    with pytest.raises(CodecFault) as caught:
+        parse_json(data)
+    assert (caught.value.code, caught.value.path) == (code, path)
+    assert isinstance(caught.value.message, str) and caught.value.message
+    assert not isinstance(caught.value, QaijiIRError)
