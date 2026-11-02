@@ -6,15 +6,15 @@ from __future__ import annotations
 
 import base64
 import binascii
-import hashlib
 import json
 import math
 import re
-import struct
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, fields
 from types import MappingProxyType
 from typing import Any, Literal, NoReturn, cast
+
+from qaiji.core._codec import canonical_json, f64_from_hex, f64_to_hex, inline_array, sha256_ref
 
 from . import model as m
 from .arrays import ArrayData, FrozenJSON, _JSONArray, _JSONObject
@@ -22,7 +22,6 @@ from .diagnostics import CheckBudget, Diagnostic, EncodedArtifact, PContractErro
 
 _DEFAULT_BUDGET = CheckBudget()
 _EMPTY_ATTACHMENTS: Mapping[str, bytes] = MappingProxyType({})
-_HEX = re.compile(r"[0-9a-f]{16}\Z")
 _DIGEST = re.compile(r"sha256:[0-9a-f]{64}\Z")
 
 # 字段描述表规定交换数据的类型。构造器检查模型内部约束。
@@ -369,7 +368,7 @@ def _attachments(ctx: _Context) -> None:
 
 
 def _digest(data: bytes) -> str:
-    return "sha256:" + hashlib.sha256(data).hexdigest()
+    return sha256_ref(data)
 
 
 def _keys(value: dict[str, Any], expected: Sequence[str], path: str, ctx: _Context) -> None:
@@ -409,9 +408,10 @@ def _finite(value: float, path: str, ctx: _Context) -> float:
 
 
 def _f64(value: Any, path: str, ctx: _Context) -> float:
-    if type(value) is not str or not _HEX.fullmatch(value):
+    number = f64_from_hex(value)
+    if number is None:
         ctx.fail("BINARY64", path, "Expected 16 lowercase hexadecimal digits.")
-    return _finite(struct.unpack(">d", bytes.fromhex(value))[0], path, ctx)
+    return _finite(number, path, ctx)
 
 
 def _array(value: Any, path: str, ctx: _Context) -> ArrayData:
@@ -448,11 +448,7 @@ def _array(value: Any, path: str, ctx: _Context) -> ArrayData:
 
 
 def _inline(array: ArrayData) -> dict[str, Any]:
-    return dict(
-        dtype=array.dtype,
-        shape=list(array.shape),
-        data=base64.b64encode(array.data).decode("ascii"),
-    )
+    return inline_array(array.dtype, array.shape, array.data)
 
 
 def _opaque(value: Any, path: str, ctx: _Context) -> Any:
@@ -634,7 +630,7 @@ def _encode(value: Any, spec: Any, path: str, ctx: _Context) -> Any:
         if type(value) not in (int, float):
             ctx.fail("BINARY64", path, "Expected a real number.")
         try:
-            return struct.pack(">d", _finite(float(value), path, ctx)).hex()
+            return f64_to_hex(_finite(float(value), path, ctx))
         except OverflowError as error:
             ctx.fail("NONFINITE", path, "Number exceeds binary64 range.", cause=error)
     if spec == "c128":
@@ -677,9 +673,7 @@ def _encode_record(value: Any, cls: type[Any], path: str, ctx: _Context) -> dict
 
 
 def _json(value: Any) -> bytes:
-    return json.dumps(
-        value, sort_keys=True, ensure_ascii=False, separators=(",", ":"), allow_nan=False
-    ).encode("utf-8")
+    return canonical_json(value)
 
 
 def _load[T](data: bytes, cls: type[T], attachments: Mapping[str, bytes], budget: CheckBudget) -> T:
