@@ -53,6 +53,10 @@ def _real(value: Any, path: str) -> float:
 def _text(value: Any, path: str) -> str:
     if type(value) is not str or not value:
         _fail("TEXT", path, "Expected nonempty text.")
+    try:
+        value.encode("utf-8")
+    except UnicodeEncodeError:
+        _fail("UNICODE", path, "Expected Unicode scalar values.")
     return cast(str, value)
 
 

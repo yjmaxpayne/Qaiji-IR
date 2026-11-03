@@ -39,6 +39,11 @@ FIELD_CASES: list[tuple[str, Any, dict[str, Any], str, str]] = [
     ("origin", shift, dict(origin="user"), "ORIGIN", "/origin"),
     ("event-empty", acquire, dict(event_id=""), "TEXT", "/event_id"),
     ("condition-empty", play, dict(condition_id=""), "TEXT", "/condition_id"),
+    ("surrogate-play-frame", play, dict(frame="\ud800"), "UNICODE", "/frame"),
+    ("surrogate-shift-frame", shift, dict(frame="\ud800"), "UNICODE", "/frame"),
+    ("surrogate-acquire-port", acquire, dict(port="\ud800"), "UNICODE", "/port"),
+    ("surrogate-event", acquire, dict(event_id="\ud800"), "UNICODE", "/event_id"),
+    ("surrogate-condition", shift, dict(condition_id="\ud800"), "UNICODE", "/condition_id"),
 ]
 
 
@@ -48,7 +53,7 @@ FIELD_CASES: list[tuple[str, Any, dict[str, Any], str, str]] = [
     ids=[case[0] for case in FIELD_CASES],
 )
 def test_record_field_guards(factory: Any, changes: dict[str, Any], code: str, path: str) -> None:
-    """字段守卫：整数、时长、幅度、有限值、枚举与文本。"""
+    """字段守卫：整数、时长、幅度、有限值、枚举与文本（含 Unicode 标量值）。"""
     rejects(code, path, lambda: factory(**changes))
 
 
@@ -58,6 +63,21 @@ DECLARATION_CASES: list[tuple[str, Any, dict[str, Any], str, str]] = [
     ("targets-repeat", Port, dict(id="p", role="drive", targets=(0, 0)), "TARGETS", "/targets"),
     ("targets-negative", Port, dict(id="p", role="drive", targets=(-1,)), "TARGETS", "/targets"),
     ("port-id", Port, dict(id="", role="drive", targets=(0,)), "TEXT", "/id"),
+    ("surrogate-port-id", Port, dict(id="\ud800", role="drive", targets=(0,)), "UNICODE", "/id"),
+    (
+        "surrogate-frame-id",
+        Frame,
+        dict(id="\ud800", port="p", frequency_hz=0, phase_rad=0.0),
+        "UNICODE",
+        "/id",
+    ),
+    (
+        "surrogate-frame-port",
+        Frame,
+        dict(id="f", port="\ud800", frequency_hz=0, phase_rad=0.0),
+        "UNICODE",
+        "/port",
+    ),
     (
         "frequency-float",
         Frame,
@@ -172,6 +192,12 @@ PROGRAM_CASES: list[tuple[str, Any, str, str]] = [
     ),
     ("window-inverted", lambda: program(conditions=[("c1", 20, 10)]), "CONDITION", "/conditions/0"),
     ("window-end", lambda: program(conditions=[("c1", 0, 2001)]), "CONDITION", "/conditions/0"),
+    (
+        "surrogate-condition-window",
+        lambda: program(conditions=[("\ud800", 0, 10)]),
+        "UNICODE",
+        "/conditions/0/condition_id",
+    ),
     (
         "condition-repeat",
         lambda: program(conditions=[("c1", 0, 10), ("c1", 20, 30)]),
