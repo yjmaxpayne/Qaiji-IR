@@ -2,56 +2,38 @@ L1 脉冲
 =======
 
 L1 PulseIR 描述原生操作降级后的控制脉冲：脉冲、frame、port 与读出。
+接口见 :doc:`/api/pulse`。
 
-.. note::
+记录
+----
 
-   本包尚未实现 L1，也不提供 L1 的公开接口。
-   本页“设计方向”一节参照 EmuPlat 中现有的脉冲层实现，只说明移植的起点。
-   其中的类名、字段和单位不是本包的契约，移植时可能改变。
+- 端口 ``Port`` 声明角色（驱动、读出、采集、磁通或耦合器磁通）与所属比特。
+- 帧 ``Frame`` 绑定一个端口，带整数 Hz 频率与程序时间 0 的初相。磁通类端口的帧频率为 0。
+- 指令有 3 种，都使用绝对时间（整数 ns）：
 
-当前边界
---------
+  - ``Play`` 在一个帧上播放一个带包络的脉冲。
+  - ``ShiftPhase`` 在某一时刻改变一个帧的相位。
+  - ``Acquire`` 在一个端口上采集一个测量事件。
 
-L2 投影函数 ``qubic_mapping`` 提供本包当前最底层的输出。它只输出中性操作标签
-（``PULSE``、``PULSE_READOUT`` 等），不生成脉冲参数、指令集操作码或波形。
-选择脉冲形状、时长与频率，目前由后端完成。
+- 带 ``condition_id`` 的指令属于程序的一个条件区间。
+- ``PulseProgramIR`` 用 ``source_schedule_ref`` 引用生成它的 L2 调度。
 
-设计方向（尚未实现）
---------------------
+规则
+----
 
-EmuPlat 的脉冲层以 ``emuplat.ir`` 中的下列结构为核心：
+1. 帧相位：``Play`` 的帧相位等于帧初相、同一帧上不晚于它的全部 ``ShiftPhase`` 增量与它自身相位之和。
+   同一时刻的 ``ShiftPhase`` 先于 ``Play`` 生效。
+2. 载波相位：绝对时刻 t 的载波相位为 ``2π·f·t·1e-9`` 加帧相位。
+3. 两个相位按 2π 取模比较，容差为 1e-10 rad。
+4. 与 L2 一致：``check_pulse_program`` 检查程序的引用、时间、来源、目标帧、覆盖与测量是否与 L2 调度一致。
+5. 身份：程序身份为 schema 与规范字节的 SHA-256。
 
-.. list-table:: EmuPlat 脉冲层的现有结构
-   :header-rows: 1
-   :widths: 28 72
+边界
+----
 
-   * - 结构
-     - 内容
-   * - ``Pulse``
-     - 一个绝对定时的脉冲：``start`` 与 ``duration``\ （整数 ns）、``amplitude``
-       （无量纲，范围 [-1, 1]）、``frequency``\ （整数 Hz）、``relative_phase``\ （rad）、
-       ``shape``、``channel``、``type`` 与 ``qubit``。
-   * - 脉冲子类
-     - ``DrivePulse``、``ReadoutPulse``、``FluxPulse``、``CouplerFluxPulse``。
-   * - ``PulseType``
-     - 驱动、读出、磁通、耦合器磁通、等待与虚拟 Z。
-   * - ``PulseShape``
-     - 包络形状，例如 ``Rectangular``、``Gaussian``、``Drag``；按采样率计算 I/Q 包络。
-   * - ``PulseSequence``
-     - 绝对定时脉冲的平铺列表；按比特累计虚拟 Z 相位，并检查脉冲重叠。
-   * - ``SymbolicPulse``
-     - 与 ``Pulse`` 平行的符号形式：幅度与相位可以是符号表达式，解析后得到具体脉冲。
-   * - ``NativePulse``
-     - 从校准数据（runcard）构造原生门对应的脉冲；这是 L2 到 L1 的降级入口。
-
-EmuPlat 的现有实现与本层的角色描述有下列差异，移植前须先决定如何处理这些差异：
-
-- **frame 与 port**：EmuPlat 没有独立的 frame 或 port 对象。相位在脉冲上计算，
-  通道只是字符串，由 runcard 映射到仪器。
-- **操作**：EmuPlat 没有 play、delay、shift-phase、acquire 这类操作记录。
-  延时由 ``start`` 隐含，相位变化由 ``relative_phase`` 或虚拟 Z 表示。
-- **读出**：只有读出脉冲，没有采集窗口对象；读出窗口只出现在反馈程序中。
-- **单位**：EmuPlat 用整数 Hz 表示频率，幅度范围为 [-1, 1]。
-  P 层用 rad/ns 表示角频率（见 :doc:`physical`）。本包 L1 的单位尚未确定。
+- 本包定义 L1 记录并检查它们，不实现 L2 到 L1 的降级。后端（例如 EmuPlat）按设备校准构造 L1 程序，
+  再调用 ``check_pulse_program``。
+- 本包不选择脉冲形状、时长、幅度或频率。
+- 包络只有 ``constant``、``gaussian`` 与 ``drag`` 三种。
 
 相关层：L0（:doc:`waveform`）、L2（:doc:`native-schedule`）。层间连接见 :doc:`layer-relations`。
