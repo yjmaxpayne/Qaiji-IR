@@ -4,6 +4,31 @@ All notable changes to this project are documented here. The format follows
 [Conventional Commits](https://www.conventionalcommits.org/) and versions are derived from
 git tags via `poetry-dynamic-versioning`.
 
+## [0.4.1] - 2026-11-03
+
+This release changes only the documentation, one docstring and the citation metadata. The
+behavior, the dependencies and the lock file are the same as in 0.4.0.
+
+### Documentation
+
+- Remove the statements that L1 and L0 have no public interface or no source. The start page,
+  the code map and the contributing page now list the L1 pulse and L0 waveform layers. The start
+  page states that the package does not lower L2 to L1 and does not materialize a whole L1
+  program as L0 waveforms.
+- The exception page lists `PulseContractError` and `WaveformContractError`.
+- The layer relations page lists every check that `check_pulse_program` runs. It states that
+  `WaveformIR` checks only the sha256 format of `source_pulse_ref` and does not compare it with
+  a `pulse_program_id`.
+- The L1 and L0 API pages give the full dependencies of each package and the `sha256:` prefix of
+  the identities.
+- Fix the sample time in the waveform page and in the `sample_play` docstring:
+  `t_k = start_ns + k·1e9 / f_s` in ns.
+- The scope statements say "measurement sampling (shots)", because L0 samples waveforms.
+
+### Changed
+
+- `CITATION.cff` lists the version-specific DOIs of v0.3.1 and v0.4.0.
+
 ## [0.4.0] - 2026-11-03
 
 ### Added
