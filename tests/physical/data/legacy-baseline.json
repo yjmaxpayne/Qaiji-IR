@@ -206,7 +206,7 @@
       "tests/test_public_api.py": "b5afc284b5d4747d6b72fb23a2f0b9fba11f9ee4eb624ed3be2bf677ffbd29f8",
       "tests/semantics/test_import_purity.py": "4a69d86717442683c8e6b4c61595d34e044d51b2136a76bff683080a2f827f73",
       "tests/native/test_model.py": "e61f3d3a23c05a39c1171dd97915f278b7122b6d2f51c3f26da07e4d98f9ec34",
-      "tests/native/test_json.py": "3fc980759cd13f1d1ffbc2d3d185ee68b7f8607feeb364efc0d5cd7577732a45",
+      "tests/native/test_json.py": "1852df577aeaeeed3385e687357f9a2064ff9cec53c07c555c1e44f232c56014",
       "tests/native/test_compatibility.py": "b14502152d61fe1933188af8159739c58f7f55c1690a68cc58eeb726b6b21490",
       "tests/program/test_program_json.py": "e2705ee7bc48b9475e3a8b20550efa45bc3e0f6e0b9a29d2a60832d6a8b5258d"
     },

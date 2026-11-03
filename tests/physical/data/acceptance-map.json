@@ -971,7 +971,8 @@
       "tests/physical/test_p_public_api.py::test_p_each_module_import_is_isolated[qaiji.core.physical.identity]",
       "tests/physical/test_p_public_api.py::test_p_each_module_import_is_isolated[qaiji.core.physical.model]",
       "tests/physical/test_p_public_api.py::test_p_each_module_import_is_isolated[qaiji.core.physical.results]",
-      "tests/physical/test_p_public_api.py::test_p_each_module_import_is_isolated[qaiji.core.physical.validation]"
+      "tests/physical/test_p_public_api.py::test_p_each_module_import_is_isolated[qaiji.core.physical.validation]",
+      "tests/physical/test_legacy_and_minimal_install.py::test_contract_modules_cover_pulse_waveform_and_codec"
     ]
   },
   {

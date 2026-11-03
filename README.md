@@ -31,6 +31,10 @@
   不增加 `GateType`；支持寄存器广播、多个量子寄存器的扁平化和一位经典寄存器的下标条件。
   范围外构件抛出明确的 `QaijiIRError` 子类，不会被静默忽略。展开的等价级别、`cu3` 相位差和
   广播边界见[编解码器文档](doc/source/api/codec.rst)。
+- **L1 脉冲与 L0 采样波形**（`qaiji.core.pulse`、`qaiji.core.waveform`）：L1 记录端口、帧与绝对时间指令
+  （`Play`、`ShiftPhase`、`Acquire`），`check_pulse_program` 检查 L1 程序与生成它的 L2 调度一致。
+  L0 记录实值 DAC 通道、分段样本与变换，`sample_play` 给出单条 `Play` 的参考采样。
+  两层都有严格的编解码与内容身份，只使用标准库。
 - **L2 原生调度**（`qaiji.core.native`、`qaiji.core.program_native`）：显式时长与资源配置下的
   CZ 基底展开和确定性调度、严格 JSON 往返，以及独立的来源、规则、矩阵与时序认证；
   `qubic_mapping` 输出中性操作记录，程序桥接按 L5 调用关联测量历史与最终位。Python 构造的
@@ -52,9 +56,9 @@
 [L5 程序校验](doc/source/getting-started/program.rst)、
 [P 层连续演化契约](doc/source/getting-started/physical.rst)。
 
-**范围**：本包不执行采样或时间演化，不提供反馈运行时，不生成 ISA 或波形，也不声明物理保真度。
+**范围**：本包不执行采样或时间演化，不提供反馈运行时，不生成 ISA，不把整个 L1 程序物化为波形，也不声明物理保真度。
 校准集与设备模型引用只做透传。
-脉冲（L1）、波形（L0）与轨迹（T）层尚无公开接口。
+轨迹（T）层尚无公开接口。
 P 层提供交换与检查契约。
 消费者须自行实现求解与硬件适配。
 

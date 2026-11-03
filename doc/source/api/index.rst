@@ -28,6 +28,12 @@
    * - ``qaiji.core.conventions``
      - 约定
      - :doc:`conventions`
+   * - ``qaiji.core.waveform``
+     - L0
+     - :doc:`waveform`
+   * - ``qaiji.core.pulse``
+     - L1
+     - :doc:`pulse`
    * - ``qaiji.core.native``
      - L2
      - :doc:`native`
@@ -53,7 +59,7 @@
 L3 没有独立的模块，它的接口分布在三个页面中：条件节点 :class:`qaiji.Conditional` 见
 :doc:`core`；条件的依赖边 ``build_dataflow_summary`` 见 :doc:`semantics`；
 条件读前写入与结果就绪的检查 ``validate_native_schedule`` 见 :doc:`native`。
-L1、L0 与 T 层没有公开接口。各层的实现状态见 :doc:`/core-concepts/architecture`。
+T 层没有公开接口。各层的实现状态见 :doc:`/core-concepts/architecture`。
 
 包根冻结导出
 ------------
@@ -88,6 +94,8 @@ L1、L0 与 T 层没有公开接口。各层的实现状态见 :doc:`/core-conce
    core
    codec
    conventions
+   waveform
+   pulse
    native
    semantics
    program

@@ -64,7 +64,7 @@ def repeated():
         for i, loc in enumerate(locations)
     )
     groups = tuple(
-        SourceGroup(source=loc, rule_id="cz.v0.MEASURE", op_start=i, op_stop=i + 1, phase_rad=0.0)
+        SourceGroup(source=loc, rule_id="cz.v1.MEASURE", op_start=i, op_stop=i + 1, phase_rad=0.0)
         for i, loc in enumerate(locations)
     )
     events = tuple(
@@ -133,7 +133,8 @@ def multibit(value=2):
         Measure(0, ClassicalBit(r, 0)),
         Measure(1, ClassicalBit(r, 1)),
         Measure(0, ClassicalBit(s, 0)),
-        Conditional(r, value, (Gate(GateType.Z, (0,)), Gate(GateType.RX90, (0,), (0.0,)))),
+        # 条件体的零时长门用 I。规则集把条件体中的 Z 改写为 RX90 脉冲，会改变手算时间表。
+        Conditional(r, value, (Gate(GateType.I, (0,)), Gate(GateType.RX90, (0,), (0.0,)))),
         Measure(0, ClassicalBit(r, 0)),
         Conditional(r, value, ()),
         Gate(GateType.RX90, (1,), (0.0,)),
@@ -145,7 +146,7 @@ def multibit(value=2):
         ("MEASURE", 0, 1, None, 4, 3, None),
         ("MEASURE", 1, 2, None, 7, 4, None),
         ("MEASURE", 0, 3, None, 11, 3, None),
-        ("Z", 0, 4, 0, 14, 0, "c4"),
+        ("I", 0, 4, 0, 14, 0, "c4"),
         ("RX90", 0, 4, 1, 14, 2, "c4"),
         ("MEASURE", 0, 5, None, 16, 3, None),
         ("RX90", 1, 7, None, 24, 5, None),
@@ -166,7 +167,7 @@ def multibit(value=2):
     )
     groups = tuple(
         SourceGroup(
-            source=op.source, rule_id=f"cz.v0.{op.kind}", op_start=i, op_stop=i + 1, phase_rad=0.0
+            source=op.source, rule_id=f"cz.v1.{op.kind}", op_start=i, op_stop=i + 1, phase_rad=0.0
         )
         for i, op in enumerate(operations)
     )
@@ -220,7 +221,7 @@ def multibit(value=2):
         for kind, q, duration, latency in [
             ("MEASURE", 0, 3, 5),
             ("MEASURE", 1, 4, 2),
-            ("Z", 0, 0, 0),
+            ("I", 0, 0, 0),
             ("RX90", 0, 2, 0),
             ("RX90", 1, 5, 0),
         ]

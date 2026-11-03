@@ -85,7 +85,7 @@ def _group_evidence(
             path += ".phase_rad"
         elif rule.operation_index is not None:
             path = f"$.operations[{rule.operation_index}]"
-        hp = _check_local_matrix(node, operations)
+        hp = _check_local_matrix(node, operations, group.source.body_offset is not None)
         hp_result = (
             _result(hp.code, f"$.groups[{index}]", group.source)
             if hp.code is not None

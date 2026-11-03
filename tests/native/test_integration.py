@@ -179,10 +179,10 @@ def test_python_four_gates_json_validate_project_bridge():
     circuit.gates.append(Measure(0, ClassicalBit(register, 0)))
     schedule, projection, mapping, _, _ = journey(circuit, (ResultOutput(0, "c"),))
     assert tuple((g.rule_id, g.op_start, g.op_stop) for g in schedule.groups[:4]) == (
-        ("cz.v0.RX90", 0, 1),
-        ("cz.v0.RX180", 1, 3),
-        ("cz.v0.ISWAP", 3, 49),
-        ("cz.v0.SQISWAP", 49, 95),
+        ("cz.v1.RX90", 0, 1),
+        ("cz.v1.RX180", 1, 3),
+        ("cz.v1.ISWAP", 3, 49),
+        ("cz.v1.SQISWAP", 49, 95),
     )
     assert tuple((op.kind, op.qubits, op.params) for op in schedule.operations[:3]) == (
         ("RX90", (0,), (0.25,)),

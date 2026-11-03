@@ -11,8 +11,8 @@
 2. :doc:`conventions`：跨适配层共享的基矢与相位约定。
 3. 各主层，自底向上：
 
-   - :doc:`waveform`：L0 采样波形（尚未实现，含设计方向）。
-   - :doc:`pulse`：L1 脉冲（尚未实现，含设计方向）。
+   - :doc:`waveform`：L0 采样波形的记录、规则与边界。
+   - :doc:`pulse`：L1 脉冲的记录、规则与边界。
    - :doc:`native-schedule`：L2 原生调度的输入、时序、认证与消费边界。
    - :doc:`hybrid-control`：L3 条件与经典依赖。
    - :doc:`semantics`：L4 操作分类、等价级别与保持性判决。

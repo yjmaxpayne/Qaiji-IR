@@ -4,6 +4,52 @@ All notable changes to this project are documented here. The format follows
 [Conventional Commits](https://www.conventionalcommits.org/) and versions are derived from
 git tags via `poetry-dynamic-versioning`.
 
+## [0.4.0] - 2026-11-03
+
+### Added
+
+- The L1 pulse layer `qaiji.core.pulse`. It has immutable `Port`, `Frame`, `Envelope`, `Play`,
+  `ShiftPhase` and `Acquire` records and a `PulseProgramIR` record that checks its invariants at
+  construction. `frame_phase` and `carrier_phase` give the phases of a `Play`. `phases_equal`
+  compares two phases modulo 2π. A strict codec gives canonical bytes and the `pulse_program_id`
+  identity. `check_pulse_program` checks that a program agrees with the L2 schedule it comes from.
+- The L0 sampled-waveform layer `qaiji.core.waveform`. It has immutable `Channel`, `Segment`,
+  `TransformRecord` and `WaveformIR` records and checks the L0 rules at construction.
+  `sample_envelope` samples an L1 envelope at the interval midpoints. `sample_play` mixes one
+  `Play` with its frame carrier into real-valued lab-frame samples. A strict codec gives canonical
+  bytes, the `waveform_id` identity and a SHA-256 digest of the samples of each channel.
+- Both packages use only the standard library. The package root and `qaiji.core` do not export
+  them. The required-only wheel gate now imports each of their modules and `qaiji.core._codec`
+  in a fresh process that blocks numpy.
+- API pages for the two layers. The core-concepts pages for L1 and L0 give their records, rules
+  and boundaries.
+
+### Changed
+
+- **Breaking:** the native rule set is now v1. `NATIVE_RULESET_VERSION` is `qaiji.cz_basis.v1`
+  and every `rule_id` starts with `cz.v1.`. `NativeScheduleIR` rejects schedules with the v0 rule
+  set version, so 0.4.0 cannot read an L2 JSON document from 0.3.x. Lower the circuit again with
+  `lower_to_native`.
+- **Breaking:** the L2 identity changes for every program. Each L2 JSON document contains the rule
+  set version, so a digest of `NativeScheduleIR.to_json()` changes even when the operations do not
+  change. The operations change only for programs that use one of the templates below.
+- RX, RY and U3 use short templates when the angle is bitwise ±0.0 or ±π/2. U3 omits the RZ slots
+  that have a bitwise zero angle. `sx` and `sxdg` lower to one RX90. `sdg`, `tdg`, `p` and `u1`
+  lower to RZ only.
+- Conditional bodies have no frame changes. RZ and Z slots move into the phases of later RX90
+  slots. Each qubit with a nonzero net frame F gets RX90(π), RX90(π), RX90(w), RX90(w), with
+  w = remainder(F/2, 2π). The group phase of a conditional Z is −π/2.
+- The encoding primitives and the strict JSON parser are in the private module
+  `qaiji.core._codec`. It adds `parse_json`, `json_pointer` and `CodecFault`. The module is
+  private: it is not in the `__all__` of `qaiji` or `qaiji.core`. The P-layer codec calls the
+  primitives, and its canonical bytes do not change.
+
+### Fixed
+
+- L1 text fields reject strings with lone surrogates. The error is a `PulseContractError` with
+  code `UNICODE`, as in L0. Before, such a record could be built, and canonical serialization
+  then raised a raw `UnicodeEncodeError`.
+
 ## [0.3.1] - 2026-10-30
 
 This release changes only the documentation. The code, the dependencies and the lock file are

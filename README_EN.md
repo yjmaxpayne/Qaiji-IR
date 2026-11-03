@@ -36,6 +36,12 @@ from them.
   specific `QaijiIRError` subclass instead of being silently discarded. See the
   [codec documentation](doc/source/api/codec.rst) for equivalence levels, the `cu3` phase
   difference, and broadcasting boundaries.
+- **L1 pulses and L0 sampled waveforms** (`qaiji.core.pulse`, `qaiji.core.waveform`): L1 records
+  ports, frames, and absolute-time instructions (`Play`, `ShiftPhase`, `Acquire`).
+  `check_pulse_program` checks that an L1 program agrees with the L2 schedule it comes from. L0
+  records real-valued DAC channels, segment samples, and transforms. `sample_play` gives reference
+  samples for one `Play`. Both layers have strict codecs and content identities and use only the
+  standard library.
 - **L2 native schedules** (`qaiji.core.native`, `qaiji.core.program_native`): CZ-basis expansion
   and deterministic scheduling under explicit timing and resource configuration, strict JSON
   round trips, and independent source, rule, matrix, and timing validation. `qubic_mapping`
@@ -62,8 +68,8 @@ Executable tutorials: [L2 native scheduling](doc/source/getting-started/native-s
 [P continuous-evolution contracts](doc/source/getting-started/physical.rst).
 
 **Scope**: the package does not execute shots or time evolution, provide a feedback runtime,
-emit ISA or waveforms, or claim physical fidelity. Calibration and device-model references are
-passed through. The pulse (L1), waveform (L0), and trace (T) layers have no public interfaces yet.
+emit ISA, materialize a whole L1 program as waveforms, or claim physical fidelity. Calibration and device-model references are
+passed through. The trace (T) layer has no public interface yet.
 The P layer provides exchange and checking contracts. Consumers implement solvers and hardware
 adapters themselves.
 

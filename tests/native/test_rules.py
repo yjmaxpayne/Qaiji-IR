@@ -68,6 +68,18 @@ def literal_slots(name, qubits, params):
     theta, phi, lam = ((*params, 0.0, 0.0, 0.0))[:3]
     h = math.pi / 2
     angle = -math.pi / 2 if name == "ISWAP" else -math.pi / 4
+    # 转角为 ±0.0 或 ±π/2 时用短模板。U3 省略零角 RZ，全部省略时保留 RZ(λ)。
+    rx = (("RX90", (a,), (-h,)), ("RZ", (a,), (theta,)), ("RX90", (a,), (h,)))
+    ry = (("RX90", (a,), (0.0,)), ("RZ", (a,), (theta,)), ("RX90", (a,), (math.pi,)))
+    if theta == 0.0:
+        rx = ry = (("RZ", (a,), (theta,)),)
+    elif abs(theta) == h:
+        rx, ry = (("RX90", (a,), (0.0 if theta > 0 else math.pi,)),), (("RX90", (a,), (theta,)),)
+    u3 = (
+        ((("RZ", (a,), (lam,)),) if lam != 0.0 else ())
+        + (() if theta == 0.0 else ry)
+        + ((("RZ", (a,), (phi,)),) if phi != 0.0 else ())
+    ) or (("RZ", (a,), (lam,)),)
     table = {
         "I": (("I", (a,), ()),),
         "X": (("RX90", (a,), (0.0,)), ("RX90", (a,), (0.0,))),
@@ -76,16 +88,10 @@ def literal_slots(name, qubits, params):
         "H": (("RZ", (a,), (h,)), ("RX90", (a,), (0.0,)), ("RZ", (a,), (h,))),
         "S": (("RZ", (a,), (h,)),),
         "T": (("RZ", (a,), (math.pi / 4,)),),
-        "RX": (("RX90", (a,), (-h,)), ("RZ", (a,), (theta,)), ("RX90", (a,), (h,))),
-        "RY": (("RX90", (a,), (0.0,)), ("RZ", (a,), (theta,)), ("RX90", (a,), (math.pi,))),
+        "RX": rx,
+        "RY": ry,
         "RZ": (("RZ", (a,), (theta,)),),
-        "U3": (
-            ("RZ", (a,), (lam,)),
-            ("RX90", (a,), (0.0,)),
-            ("RZ", (a,), (theta,)),
-            ("RX90", (a,), (math.pi,)),
-            ("RZ", (a,), (phi,)),
-        ),
+        "U3": u3,
         "RX90": (("RX90", (a,), (theta,)),),
         "RX180": (("RX90", (a,), (theta,)), ("RX90", (a,), (theta,))),
         "CZ": (("CZ", (a, b), ()),),
@@ -182,6 +188,28 @@ def literal_slots(name, qubits, params):
     return table["exchange" if name in ("ISWAP", "SQISWAP") else name]
 
 
+def branch_slots(name, qubits, params):
+    """按条件体规则改写字面槽表，不调用生成器。
+
+    RZ 与 Z 并入比特帧，后续 RX90 的相位减去帧并取 IEEE 余数。帧非零的比特按源序追加
+    RX90(π)、RX90(π)、RX90(w)、RX90(w)。结果为空时只有 RZ(+0.0)。
+    """
+    frames, out = {}, []
+    for kind, slot_qubits, slot_params in literal_slots(name, qubits, params):
+        q = slot_qubits[0]
+        if kind in ("RZ", "Z"):
+            frames[q] = frames.get(q, 0.0) + (slot_params[0] if kind == "RZ" else math.pi)
+        elif kind == "RX90" and q in frames:
+            out.append((kind, slot_qubits, (math.remainder(slot_params[0] - frames[q], math.tau),)))
+        else:
+            out.append((kind, slot_qubits, slot_params))
+    for q in qubits:
+        if frames.get(q, 0.0) != 0.0:
+            w = math.remainder(0.5 * frames[q], math.tau)
+            out += [("RX90", (q,), (math.pi,))] * 2 + [("RX90", (q,), (w,))] * 2
+    return tuple(out) or (("RZ", (qubits[0],), (0.0,)),)
+
+
 def assert_slots(group, expected, location, rule_id):
     assert group.source == location
     assert group.rule_id == rule_id
@@ -202,7 +230,7 @@ def test_gate_type_rule_bijection():
     assert {member.value for member in GateType} == set(GATE_NAMES)
     groups = _expand_source(snapshot([gate(name) for name in GATE_NAMES]))
     assert isinstance(groups, tuple)
-    assert tuple(group.rule_id for group in groups) == tuple("cz.v0." + name for name in GATE_NAMES)
+    assert tuple(group.rule_id for group in groups) == tuple("cz.v1." + name for name in GATE_NAMES)
     assert len(groups) == 19
     measure = Measure(2, ClassicalBit(ClassicalRegister("readout", 2), 1))
     measured = _expand_source(snapshot([measure]))
@@ -211,7 +239,7 @@ def test_gate_type_rule_bijection():
         measured[0],
         (("MEASURE", (2,), ()),),
         SourceLocation(gate_index=0, body_offset=None),
-        "cz.v0.MEASURE",
+        "cz.v1.MEASURE",
     )
 
 
@@ -226,7 +254,7 @@ def test_approved_native_slots(name, direction, angles):
         groups[0],
         literal_slots(name, node.qubits, node.params),
         SourceLocation(gate_index=0, body_offset=None),
-        "cz.v0." + name,
+        "cz.v1." + name,
     )
 
 
@@ -276,7 +304,9 @@ def test_phase_expression_hex(name, angles, expected):
     )
     groups = _expand_source(snapshot(nodes))
     assert len(groups) == len(nodes)
-    assert tuple(group.phase_rad.hex() for group in groups) == (expected,) * len(nodes)
+    # 条件体中 Z 的乘积为 RZ(π) = e^{−iπ/2}·Z。其余门族的相位与位置无关。
+    branch = "-0x1.921fb54442d18p+0" if name == "Z" else expected
+    assert tuple(group.phase_rad.hex() for group in groups) == (expected, branch)[: len(nodes)]
 
 
 @pytest.mark.parametrize("name", GATE_NAMES)
@@ -301,12 +331,15 @@ def test_conditional_body_rule_table(name, direction, angles):
     )
     assert_slots(
         groups[2],
-        literal_slots(name, node.qubits, node.params),
+        branch_slots(name, node.qubits, node.params),
         SourceLocation(gate_index=2, body_offset=1),
-        "cz.v0." + name,
+        "cz.v1." + name,
     )
     assert_slots(
-        groups[1], (("Z", (2,), ()),), SourceLocation(gate_index=2, body_offset=0), "cz.v0.Z"
+        groups[1],
+        branch_slots("Z", (2,), ()),
+        SourceLocation(gate_index=2, body_offset=0),
+        "cz.v1.Z",
     )
 
 
@@ -322,7 +355,7 @@ def test_four_gate_sign_and_branch(name, direction, angles):
         group,
         literal_slots(name, node.qubits, node.params),
         SourceLocation(gate_index=0, body_offset=None),
-        "cz.v0." + name,
+        "cz.v1." + name,
     )
     if name in ("ISWAP", "SQISWAP"):
         assert len(group.operations) == 46
@@ -350,13 +383,14 @@ def test_no_optimization_of_equivalent_slots():
     ]
     groups = _expand_source(snapshot(nodes))
     assert len(groups) == 9
-    assert tuple(len(group.operations) for group in groups) == (1, 1, 1, 3, 3, 5, 7, 7, 1)
+    # 零角 RX、RY、U3 用单槽短模板。其余门族保留零槽，任何门族都不跨组合并。
+    assert tuple(len(group.operations) for group in groups) == (1, 1, 1, 1, 1, 1, 7, 7, 1)
     for i, (name, node, group) in enumerate(zip(names, nodes, groups, strict=True)):
         assert_slots(
             group,
             literal_slots(name, node.qubits, node.params),
             SourceLocation(gate_index=i, body_offset=None),
-            "cz.v0." + name,
+            "cz.v1." + name,
         )
     assert groups[6].rule_id != groups[7].rule_id
     assert _expand_source(snapshot([])) == ()
@@ -384,7 +418,7 @@ def test_generation_uses_captured_source(in_body):
         groups[0],
         (("RX90", (2,), (0.7,)),),
         SourceLocation(gate_index=0, body_offset=0 if in_body else None),
-        "cz.v0.RX90",
+        "cz.v1.RX90",
     )
     assert groups == initial_groups
     assert captured.source_kernel_ref == original_ref

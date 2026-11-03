@@ -102,11 +102,13 @@ L2 原生调度、L1 脉冲、L0 采样波形。动力学 P 与轨迹 T 是两�
    * - L1
      - PulseIR
      - 脉冲、frame、port 与读出。
-     - 未实现；本包不提供公开接口。设计方向见 :doc:`pulse`。
+     - 已实现记录、与 L2 的一致性检查、帧相位与编解码（:mod:`qaiji.core.pulse`）；
+       不实现 L2 到 L1 的降级。
    * - L0
      - WaveformIR
      - 采样波形、时序网格与通道复用。
-     - 未实现；本包不提供公开接口。设计方向见 :doc:`waveform`。
+     - 已实现记录、参考采样与编解码（:mod:`qaiji.core.waveform`）；
+       不把整个 L1 程序物化为样本。
    * - P
      - DynamicsIR（侧层）
      - Hamiltonian、耗散项与求解器策略。

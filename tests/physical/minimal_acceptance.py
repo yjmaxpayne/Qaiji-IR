@@ -17,6 +17,7 @@ from pathlib import Path
 
 DATA = Path(__file__).resolve().with_name("data")
 BLOCKED = frozenset({"numpy", "scipy", "qutip", "emuplat", "emulator_platform", "quantempo"})
+CONTRACT_PACKAGES = ("qaiji/core/physical/", "qaiji/core/pulse/", "qaiji/core/waveform/")
 
 
 class ContractViolation(AssertionError):
@@ -152,19 +153,30 @@ def check_physical_contract() -> None:
     )
 
 
+def contract_modules(files: list[str]) -> list[str]:
+    """返回须逐模块导入的模块：P 层、L1（pulse）、L0（waveform）与 `_codec`。"""
+    modules = sorted(
+        {
+            name.removesuffix(".py").replace("/", ".").removesuffix(".__init__")
+            for name in files
+            if name.endswith(".py")
+            and (name.startswith(CONTRACT_PACKAGES) or name == "qaiji/core/_codec.py")
+        }
+    )
+    physical = [name for name in modules if name.startswith("qaiji.core.physical")]
+    require("qaiji.core.physical" in physical and len(physical) >= 10, "physical-modules")
+    require(
+        {"qaiji.core.pulse", "qaiji.core.waveform", "qaiji.core._codec"} <= set(modules),
+        "pulse-waveform-modules",
+    )
+    return modules
+
+
 def main() -> None:
     """验收实际安装位置，再执行独立进程与契约检查。"""
     distribution = importlib.metadata.distribution("qaiji-ir")
     check_dependencies(distribution.requires or [])
-    files = distribution.files or []
-    modules = sorted(
-        {
-            str(path).removesuffix(".py").replace("/", ".").removesuffix(".__init__")
-            for path in files
-            if str(path).startswith("qaiji/core/physical/") and str(path).endswith(".py")
-        }
-    )
-    require("qaiji.core.physical" in modules and len(modules) >= 10, "physical-modules")
+    modules = contract_modules([str(path) for path in distribution.files or []])
     env = {key: value for key, value in os.environ.items() if key != "PYTHONPATH"}
     for module in ["qaiji", *modules]:
         subprocess.run(

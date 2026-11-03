@@ -29,7 +29,7 @@ from qaiji.core.native.model import (
 def document():
     return {
         "schema_version": "qaiji.native_schedule.v0",
-        "ruleset_version": "qaiji.cz_basis.v0",
+        "ruleset_version": "qaiji.cz_basis.v1",
         "source_kernel_ref": "sha256:" + "a" * 64,
         "num_qubits": 2,
         "registers": [{"name": "r", "size": 1}],
@@ -60,14 +60,14 @@ def document():
         "groups": [
             {
                 "source": {"gate_index": 0, "body_offset": None},
-                "rule_id": "cz.v0.MEASURE",
+                "rule_id": "cz.v1.MEASURE",
                 "op_start": 0,
                 "op_stop": 1,
                 "phase_rad": -0.0,
             },
             {
                 "source": {"gate_index": 1, "body_offset": 0},
-                "rule_id": "cz.v0.RX90",
+                "rule_id": "cz.v1.RX90",
                 "op_start": 1,
                 "op_stop": 2,
                 "phase_rad": 0.25,
