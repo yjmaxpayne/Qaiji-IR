@@ -111,3 +111,23 @@ def test_p_rejects_dependency_or_eager_import(child: str, tmp_path: Path) -> Non
     entry.write_text(original, encoding="utf-8")
     restored = _process(command, tmp_path)
     assert restored.returncode == 0, restored.stderr
+
+
+def test_contract_modules_cover_pulse_waveform_and_codec() -> None:
+    """逐模块导入覆盖 P 层、L1、L0 与 `_codec`。wheel 缺任一项时报错，其他层不进入集合。"""
+    src = Path(__file__).parents[2] / "src"
+    files = [path.relative_to(src).as_posix() for path in sorted((src / "qaiji").rglob("*.py"))]
+    modules = set(acceptance.contract_modules(files))
+    assert {
+        "qaiji.core.physical.codec",
+        "qaiji.core.pulse",
+        "qaiji.core.pulse.model",
+        "qaiji.core.waveform",
+        "qaiji.core.waveform.sampling",
+        "qaiji.core._codec",
+    } <= modules
+    assert not any(name.startswith("qaiji.core.native") for name in modules)
+    for missing in ("qaiji/core/pulse/", "qaiji/core/waveform/", "qaiji/core/_codec.py"):
+        kept = [name for name in files if not name.startswith(missing)]
+        with pytest.raises(acceptance.ContractViolation, match=r"^pulse-waveform-modules$"):
+            acceptance.contract_modules(kept)
