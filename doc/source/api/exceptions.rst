@@ -11,6 +11,8 @@
 - :class:`~qaiji.core.native.NativeValidationError`，见 :doc:`native`。
 - :class:`~qaiji.core.program_native.ProgramNativeValidationError`，见 :doc:`program_native`。
 - :class:`~qaiji.core.physical.PContractError`，见 :doc:`physical`。
+- :class:`~qaiji.core.pulse.PulseContractError`，见 :doc:`pulse`。
+- :class:`~qaiji.core.waveform.WaveformContractError`，见 :doc:`waveform`。
 
 :class:`~qaiji.core.native.NativeInputError` 继承 ``ValueError``，不继承
 :class:`qaiji.QaijiIRError`。``except QaijiIRError`` 不会捕获它。

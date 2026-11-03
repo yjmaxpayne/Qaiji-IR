@@ -34,6 +34,16 @@
      - ``src/qaiji/core/conventions.py``
      - ``tests/core/test_conventions*.py``
      - ``conventions.py``：权威常量与 ``self_check``
+   * - L0
+     - ``src/qaiji/core/waveform/``
+     - ``tests/waveform/``
+     - ``model.py``：``WaveformIR``。``sampling.py``：``sample_play``。
+       ``codec.py``：``load_waveform``、``waveform_id``
+   * - L1
+     - ``src/qaiji/core/pulse/``
+     - ``tests/pulse/``
+     - ``model.py``：``PulseProgramIR``。``check.py``：``check_pulse_program``。
+       ``codec.py``：``load_pulse_program``、``pulse_program_id``
    * - L2
      - ``src/qaiji/core/native/``
      - ``tests/native/``
@@ -59,7 +69,10 @@
        ``results.py``：``check_result``；``capabilities.py``：``match_capabilities``
 
 L3 没有独立的子包：条件节点在 ``core/classical.py`` 中定义，依赖边由 L4 的 ``dataflow.py``
-生成，读前写入与结果就绪由 L2 的 ``validation.py`` 检查。L1、L0 与 T 层没有源码。
+生成，读前写入与结果就绪由 L2 的 ``validation.py`` 检查。T 层没有源码。
+
+``src/qaiji/core/_codec.py`` 是 L1、L0 与 P 层共用的私有模块，提供编码原语与严格 JSON 解析。
+它不在 ``qaiji`` 或 ``qaiji.core`` 的 ``__all__`` 中。各层的编解码测试覆盖它。
 
 测试共用的电路工厂在 ``tests/factories.py`` 中。``tests/conftest.py`` 在运行任何测试之前
 执行约定自检 ``self_check``\ ；自检失败时，每个测试都在准备阶段报错。

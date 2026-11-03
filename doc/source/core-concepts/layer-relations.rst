@@ -17,6 +17,8 @@
 4. L5 程序通过 ``kernel_ref`` 引用电路；``kernel_ref`` 就是电路 L4 规范摘要的哈希。
 5. ``bridge_program_native`` 先校验 L5 程序，再认证每次调用绑定的 L2 调度，
    最后把 L2 测量事件关联到 L5 调用与输出。
+6. 后端按设备校准构造 L1 程序。``check_pulse_program`` 检查该程序与 L2 调度一致。
+   ``sample_play`` 给出单条 ``Play`` 的 L0 参考样本。
 
 P 层不在这条链上：它单独描述连续演化问题，不读取电路或调度。
 
@@ -57,16 +59,16 @@ P 层不在这条链上：它单独描述连续演化问题，不读取电路或
      - 测量比特值、概率与采样结果。
    * - L2 与 L1
      - ``check_pulse_program``、``native_schedule_ref``
-     - L1 程序引用该调度；每条指令的时间、来源、目标帧与条件与 L2 操作一致；每个 RX90、CZ、MEASURE 至少有 1 条 ``Play``，每个测量事件有 1 条 ``Acquire``。
+     - L1 程序引用该调度。结束时刻与条件区间与调度一致。每条指令的时间、来源、目标帧与条件与 L2 操作一致。每个 Z、RZ 在本比特的每个驱动帧上各有 1 条 gate ``ShiftPhase``，增量为 −θ。correction ``ShiftPhase`` 只来自 CZ。每个 RX90、CZ、MEASURE 至少有 1 条 ``Play``。每个 MEASURE 恰有 1 条读出 ``Play``。每个测量事件有 1 条 ``Acquire``。
      - 脉冲参数是否符合设备校准；L2 到 L1 的降级由后端完成。
    * - L1 与 L0
      - ``sample_play``、``pulse_program_id``
-     - ``WaveformIR.source_pulse_ref`` 记录 L1 程序身份；``sample_play`` 给出单条 ``Play`` 的参考样本。
-     - ``WaveformIR`` 的样本是否等于参考采样；整段物化由后端完成。
+     - ``WaveformIR.source_pulse_ref`` 符合 sha256 引用格式。``sample_play`` 给出单条 ``Play`` 的参考样本。
+     - ``source_pulse_ref`` 是否等于某个 ``pulse_program_id``。``WaveformIR`` 的样本是否等于参考采样。整段物化由后端完成。
    * - L2 与下层
      - ``qubic_mapping``
      - 重新认证调度后输出中性操作标签。
-     - 指令集操作码、DAC 样本与波形；这些属于 L1 与 L0。
+     - 指令集操作码由后端选择。DAC 样本与波形属于 L0。
 
 约定与 P 层的连接
 -----------------

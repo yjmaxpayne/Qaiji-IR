@@ -1,7 +1,8 @@
 快速开始
 ========
 
-本页只用包根接口完成三件事：OpenQASM 3 往返、直接构造电路、得到一个保持性判决。
+本页完成三件事：用包根接口完成 OpenQASM 3 往返与直接构造电路，
+再用 ``qaiji.core.semantics`` 得到一个保持性判决。
 前置页：:doc:`installation`。
 
 OpenQASM 往返
@@ -85,4 +86,5 @@ OpenQASM 往返
 相关页面：各层的角色与实现状态见 :doc:`/core-concepts/architecture`；
 跨层共享的基矢与相位约定见 :doc:`/core-concepts/conventions`。
 
-下一步：:doc:`native-schedule` 从最接近设备的已实现层 L2 开始，按层自底向上说明各层的接口。
+下一步：:doc:`native-schedule` 从 L2 开始，按层自底向上说明各层的接口。
+L2 是有入门页的最低层。L1 与 L0 的接口见 :doc:`/api/pulse` 与 :doc:`/api/waveform`。

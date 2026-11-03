@@ -85,7 +85,7 @@ def sample_envelope(
 def sample_play(program: PulseProgramIR, play: Play, sample_rate_hz: int) -> tuple[float, ...]:
     """把一条 ``Play`` 混频为实值实验室系样本。
 
-    第 k 个样本的载波相位为 ``2π·f·t_k·1e-9 + frame_phase``，``t_k = start_ns + k / f_s``。
+    第 k 个样本的载波相位为 ``2π·f·t_k·1e-9 + frame_phase``，``t_k = start_ns + k·1e9 / f_s``（单位 ns）。
     ``f·t_k·1e-9`` 先用整数按整周约简，再乘 2π。
 
     Args:

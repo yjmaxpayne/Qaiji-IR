@@ -2,7 +2,7 @@ L1 脉冲接口
 ===========
 
 从 ``qaiji.core.pulse`` 显式导入。包根与 ``qaiji.core`` 不导出这些名称。
-本包只依赖标准库与本包的其他模块。
+本包只依赖标准库、``qaiji.exceptions``、``qaiji.core._codec`` 与 L2 原生调度层 ``qaiji.core.native``。
 
 相关页面：层的角色、规则与边界见 :doc:`/core-concepts/pulse`。L2 输入见 :doc:`native`。
 L0 采样见 :doc:`waveform`。
@@ -18,6 +18,7 @@ L0 采样见 :doc:`waveform`。
 再经构造入口检查全部不变量。``pulse_program_id(program)`` 返回内容身份
 ``sha256(schema + b"\0" + 规范字节)``。``native_schedule_ref(schedule)`` 返回 L2 调度的引用
 ``sha256(schema_version + b"\0" + to_json() 字节)``，用于填写 ``source_schedule_ref``。
+两者都返回带 ``sha256:`` 前缀的小写十六进制摘要。
 
 ``frame_phase(program, play)`` 返回 ``play`` 的帧相位：帧初相、同一帧上
 ``at_ns <= play.start_ns`` 的全部 ``ShiftPhase`` 增量与 ``play.phase_rad`` 之和，单位 rad，不取模。

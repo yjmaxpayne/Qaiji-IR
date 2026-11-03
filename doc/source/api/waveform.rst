@@ -2,7 +2,8 @@ L0 采样波形接口
 ===============
 
 从 ``qaiji.core.waveform`` 显式导入。包根与 ``qaiji.core`` 不导出这些名称。
-本包只依赖标准库、本包的 ``qaiji.core._codec`` 与 L1 脉冲层。
+本包只依赖标准库、``qaiji.exceptions``、``qaiji.core._codec`` 与 L1 脉冲层。
+L1 脉冲层依赖 L2 原生调度层，所以本包间接依赖 ``qaiji.core.native``。
 
 相关页面：层的角色、规则与边界见 :doc:`/core-concepts/waveform`。L1 输入见 :doc:`pulse`。
 
@@ -12,7 +13,7 @@ L0 采样波形接口
 ``WaveformIR`` 的构造入口检查全部 L0 规则与通道引用，不合法的记录无法构造。
 ``dump_waveform(waveform)`` 返回规范字节。``load_waveform(data)`` 严格解码字节，
 再经构造入口检查全部 L0 规则。``waveform_id(waveform)`` 返回内容身份
-``sha256(schema + b"\0" + 规范字节)``。
+``sha256(schema + b"\0" + 规范字节)``，带 ``sha256:`` 前缀。
 
 ``sample_digests(waveform)`` 返回每个段、每个通道的样本摘要。键为
 ``(segment_id, channel_id)``，值为 f64le 样本字节的 SHA-256，小写十六进制，无前缀。
@@ -24,7 +25,7 @@ L0 采样波形接口
 - ``sample_envelope(envelope, duration_ns, sample_rate_hz)`` 按中点规则对单位幅度包络采样，
   返回 I 与 Q 两个序列。
 - ``sample_play(program, play, sample_rate_hz)`` 把一条 L1 ``Play`` 混频为实值实验室系样本。
-  第 k 个样本的载波相位为 ``2π·f·t_k·1e-9 + 帧相位``，``t_k = start_ns + k / f_s``。
+  第 k 个样本的载波相位为 ``2π·f·t_k·1e-9 + 帧相位``，``t_k = start_ns + k·1e9 / f_s``\ （单位 ns）。
 
 ``WaveformContractError`` 继承 ``QaijiIRError``，携带不可变的 ``WaveformDiagnostic`` 序列。
 每条诊断含 ``category``、``code``、``path`` 与 ``message``，``category`` 为 ``INVALID_WAVEFORM``。
