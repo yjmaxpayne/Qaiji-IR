@@ -517,6 +517,22 @@ CONDITION_KILLERS = [
         "R0",
         {"asm"},
     ),
+    (
+        "sem-original-sign",
+        "XR-SEMPARAM",
+        "original = value if",
+        "original = -value if",
+        "R0",
+        {"sem"},
+    ),
+    (
+        "sem-input-rebound",
+        "XR-SEMPARAM",
+        "        tensor = self._as_tensor(value)",
+        "        value = -value\n        tensor = self._as_tensor(value)",
+        "R0",
+        {"sem"},
+    ),
     ("sem-other-argument", "XR-SEMPARAM", "_as_tensor(value)", "_as_tensor(name)", "R0", {"sem"}),
     ("sem-no-return", "XR-SEMPARAM", "return tensor", "pass", "R0", {"sem"}),
     (

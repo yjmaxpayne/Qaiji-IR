@@ -6,6 +6,16 @@ git tags via `poetry-dynamic-versioning`.
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-11-08
+
+### Migration
+
+- L1 remains `qaiji.pulse/0.1`: its existing fields, canonical bytes, and identities are unchanged.
+- L0 uses `qaiji.waveform/0.2` with an authoritative conditional tree. Version 0.1 bytes are rejected.
+  Re-export old waveforms with the new producer. Changing only the schema string is insufficient.
+- Program v0 remains supported. Conditional programs use `qaiji.program.v1`.
+
+
 ### Added
 
 - Add physical invariant inputs, unified cross-layer reports, and frozen conformance fixtures.

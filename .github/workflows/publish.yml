@@ -120,13 +120,22 @@ jobs:
           [[ -z ${ASSET_SUMS:-} ]] || bash tools/.github/scripts/check-dist.sh dist "$TAG" "$ASSET_SUMS"
           [[ -z ${SUMS:-} ]] || bash tools/.github/scripts/check-dist.sh dist "$TAG" "$SUMS"
 
-      # 文件名与哈希之外再看包内容：装进干净环境，确认版本号确实替换成了标签版本。
-      - name: Smoke-test the wheel
+      # Install each artifact without source imports, then run the same conformance suite.
+      - name: Test installed distributions
         run: |
-          uv venv "$RUNNER_TEMP/smoke"
-          uv pip install --python "$RUNNER_TEMP/smoke/bin/python" dist/*.whl
-          cd "$RUNNER_TEMP"
-          smoke/bin/python -c 'import os, qaiji; v = os.environ["TAG"][1:]; assert qaiji.__version__ == v, (qaiji.__version__, v); print("qaiji", qaiji.__version__)'
+          uv export --project src --locked --only-group tests --no-emit-project --no-hashes --output-file "$RUNNER_TEMP/test-requirements.txt"
+          cp -R src/tests "$RUNNER_TEMP/tests"
+          for artifact in dist/*.whl dist/*.tar.gz; do
+            smoke="$RUNNER_TEMP/smoke-$(basename "$artifact")"
+            uv venv "$smoke"
+            uv pip install --python "$smoke/bin/python" "$artifact"
+            uv pip install --python "$smoke/bin/python" --requirement "$RUNNER_TEMP/test-requirements.txt"
+            (
+              cd "$RUNNER_TEMP"
+              env -u PYTHONPATH "$smoke/bin/python" -I -c 'import os, pathlib, sys, qaiji; from qaiji.core.invariants import check_invariants, check_cross_layer; from qaiji.core.program import ProgramIRV1; from qaiji.core.waveform import WaveformIR; v = os.environ["TAG"][1:]; assert qaiji.__version__ == v, (qaiji.__version__, v); assert pathlib.Path(qaiji.__file__).is_relative_to(pathlib.Path(sys.prefix)), qaiji.__file__; print("qaiji", qaiji.__version__, qaiji.__file__)'
+              env -u PYTHONPATH OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 "$smoke/bin/python" -I -m pytest -c /dev/null -o addopts= -q tests/conformance --junitxml="$smoke/conformance.xml"
+            )
+          done
 
       # SHA256SUMS 放在 dist 之外：发布动作会上传 dist 下的全部文件。
       - name: Write checksums

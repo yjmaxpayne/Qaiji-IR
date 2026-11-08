@@ -52,8 +52,8 @@ keywords:
   - OpenQASM
   - quantum compiler
 license: Apache-2.0
-version: 0.4.1
-date-released: "2026-11-03"
+version: 0.5.0
+date-released: "2026-11-08"
 references:
   - type: article
     title: "QaiJi IR: An Eight-Layer Intermediate Representation Family for Hybrid Quantum-Classical Compilation"
