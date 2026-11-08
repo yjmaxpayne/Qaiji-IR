@@ -4,6 +4,37 @@ All notable changes to this project are documented here. The format follows
 [Conventional Commits](https://www.conventionalcommits.org/) and versions are derived from
 git tags via `poetry-dynamic-versioning`.
 
+## [Unreleased]
+
+## v0.5.0 (2026-11-08)
+
+### BREAKING CHANGE
+
+- waveform 0.2 replaces segment condition with branch histories.
+
+### Feat
+
+- **core**: complete invariant conformance and physical budgets
+- **pulse**: add two-body ports and independent resource maps
+- **core**: add contextual invariants and waveform branch trees
+
+### Migration and version policy
+
+This release contains a breaking change. Under the SemVer 0.x policy, it uses a minor version increment.
+The L0 `Segment` constructor replaces `condition` with ordered `branch` histories.
+`qaiji.waveform/0.2` replaces waveform 0.1 exchange. The waveform checker rejects old bytes with `SCHEMA`.
+Re-export old waveforms with the new producer. Changing only the schema string is insufficient.
+L1 stays at `qaiji.pulse/0.1`. L1 retains its existing fields, canonical bytes, and identities.
+Program v0 remains supported. Conditional programs use `qaiji.program.v1`.
+The native bridge rejects conditional v1 programs.
+Default physical budgets increase to dimension 128, rational operations 8388608, and wire bytes 67108864.
+
+### Citation metadata
+
+`CITATION.cff` records version 0.5.0 and the release date.
+It also records the existing version-specific DOI for v0.4.1: `10.5281/zenodo.23920162`.
+Zenodo record 23920162 identifies this DOI.
+
 ## [0.4.1] - 2026-11-03
 
 This release changes only the documentation, one docstring and the citation metadata. The

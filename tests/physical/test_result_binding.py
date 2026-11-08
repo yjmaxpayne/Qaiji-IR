@@ -299,7 +299,8 @@ def test_result_identity_respects_explicit_wire_budget(monkeypatch):
     large = replace(
         req,
         provenance=replace(
-            req.provenance, prior_transforms=(FrozenJSON(value={"note": "x" * (16 * 1024 * 1024)}),)
+            req.provenance,
+            prior_transforms=(FrozenJSON(value={"note": "x" * CheckBudget().max_wire_bytes}),),
         ),
     )
     for public_identity in (identity.request_id, identity.canonical_request_bytes):
@@ -308,7 +309,7 @@ def test_result_identity_respects_explicit_wire_budget(monkeypatch):
         assert any(
             (d.category, d.code) == ("RESOURCE_LIMIT", "BYTES") for d in caught.value.diagnostics
         )
-    budget = CheckBudget(max_wire_bytes=32 * 1024 * 1024)
+    budget = CheckBudget(max_wire_bytes=2 * CheckBudget().max_wire_bytes)
     assert check_request(large, level="structure", budget=budget).complete
     calls = []
     encode = identity.dump_request
@@ -333,7 +334,7 @@ def test_result_identity_respects_explicit_wire_budget(monkeypatch):
 
 def test_public_identity_and_requirements_take_the_caller_budget():
     # 消费方为大请求放宽检查预算时，必须能用同一预算计算身份与提取需求；
-    # 否则请求侧仍被默认 16 MiB 卡住（I-T4b-03）。预算只限资源，不改变身份与需求。
+    # 否则请求侧仍被默认 64 MiB 卡住（I-T4b-03）。预算只限资源，不改变身份与需求。
     from qaiji.core.physical import identity
     from qaiji.core.physical.capabilities import extract_requirements
     from qaiji.core.physical.diagnostics import CheckBudget, PContractError
@@ -342,10 +343,11 @@ def test_public_identity_and_requirements_take_the_caller_budget():
     large = replace(
         req,
         provenance=replace(
-            req.provenance, prior_transforms=(FrozenJSON(value={"note": "x" * (16 * 1024 * 1024)}),)
+            req.provenance,
+            prior_transforms=(FrozenJSON(value={"note": "x" * CheckBudget().max_wire_bytes}),),
         ),
     )
-    budget = CheckBudget(max_wire_bytes=32 * 1024 * 1024)
+    budget = CheckBudget(max_wire_bytes=2 * CheckBudget().max_wire_bytes)
     problem = req.problem
     assert identity.request_id(large, budget=budget) == identity.request_id(req)
     assert identity.canonical_request_bytes(large, budget=budget) == (

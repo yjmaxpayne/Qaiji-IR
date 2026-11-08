@@ -13,6 +13,8 @@ from pathlib import Path
 
 import pytest
 
+from factories import PROGRAM_V1_PUBLIC_NAMES
+
 DATA = Path(__file__).with_name("data")
 PHYSICAL = Path(__file__).parents[2] / "src/qaiji/core/physical"
 MODULES = tuple(
@@ -31,7 +33,9 @@ def test_p_final_public_exports_are_exact() -> None:
     baseline = json.loads((DATA / "legacy-baseline.json").read_bytes())
     for name, exports in baseline["public_exports"].items():
         module = importlib.import_module(name)
-        assert sorted(module.__all__) == sorted(exports)
+        additions = PROGRAM_V1_PUBLIC_NAMES if name == "qaiji.core.program" else frozenset()
+        assert len(module.__all__) == len(set(module.__all__))
+        assert set(module.__all__) == set(exports) | additions
 
 
 def _fresh_import(module: str) -> None:

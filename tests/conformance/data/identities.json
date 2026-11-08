@@ -1,0 +1,25 @@
+{
+  "native": {
+    "id": "sha256:9c12aedd869e92007d6a8f3e38cb819c2d1417e98ce84e96c3e062bf9a4be05e",
+    "wire_sha256": "a45099faad7889965adb9dfba64b229dff8c0f87e73322463b9ede8ffbb055a6"
+  },
+  "pulse": {
+    "id": "sha256:a705e49dcf21db2668418fccf07c4b4ac3cefb8b070d67205cf32e2251167324",
+    "wire_sha256": "a2fadd3b902c4b2b5d8faeb71a8bf7f271f1f3bc5d274a1967ba908b495908b9"
+  },
+  "request": {
+    "id": "sha256:eb8be81786fc61a562f4b658833b87491d862353a639d7f1a391e5bbc242fc56",
+    "wire_sha256": "a3b4e740f932c78e789cb1bd86d277f057839a3d8ebc3a626c4742c34b0bca30"
+  },
+  "resources": {
+    "id": "sha256:6f16d7e1df1ef3d5a133b527a297961756a30f7aa9ebb47e5e3b9a00090b03d9",
+    "wire_sha256": "223da5b767cb33791addf9a69431a83769542c453b0c3bb7187b7b360482eae5"
+  },
+  "result": {
+    "wire_sha256": "2203868f5e30e71eb7b9631974b9984993774d0692ee7718185c37cd5c939ecf"
+  },
+  "waveform": {
+    "id": "sha256:1a25fc0b0315fe4fe7b5689509e1ada79f8957235886c54d14d7ee2474aca180",
+    "wire_sha256": "088f32bfe4df73726c0cdeef1657cf7f8f19b3d6a1a5d0fe8db9dee175e6e18e"
+  }
+}

@@ -6,6 +6,7 @@ import ast
 import hashlib
 import importlib
 import importlib.util
+import inspect
 import json
 import subprocess
 import sys
@@ -13,7 +14,7 @@ from pathlib import Path
 
 import pytest
 
-from factories import bell_circuit, feedforward_circuit
+from factories import PROGRAM_V1_PUBLIC_NAMES, bell_circuit, feedforward_circuit
 from qaiji import Circuit, ClassicalBit, ClassicalRegister, Gate, GateType, Measure
 from qaiji.codec import to_qasm3
 from qaiji.core.program import compute_kernel_ref
@@ -124,7 +125,9 @@ def test_old_and_new_public_sets():
     assert len(frozen) == 7
     for name, expected in frozen.items():
         module = importlib.import_module(name)
-        assert sorted(module.__all__) == sorted(expected), name
+        additions = PROGRAM_V1_PUBLIC_NAMES if name == "qaiji.core.program" else frozenset()
+        assert len(module.__all__) == len(set(module.__all__))
+        assert set(module.__all__) == set(expected) | additions, name
         assert all(hasattr(module, member) for member in expected)
 
 
@@ -141,9 +144,16 @@ def test_old_schema_kernel_goldens_and_preservation():
     assert [compute_kernel_ref(c) for c in (bell_circuit(), feedforward_circuit(), rz)] == baseline[
         "kernel_goldens"
     ]
-    # 字节指纹共同保护旧 R1–R4、stage/status 与 EquivLevel。
+    # v1 扩展了程序导出与检查入口。其他历史源码继续使用原字节指纹。
+    evolved = {"src/qaiji/core/program/__init__.py", "src/qaiji/core/program/validation.py"}
+    assert evolved <= set(baseline["frozen_sources"])
     for path, expected in baseline["frozen_sources"].items():
-        assert hashlib.sha256((ROOT / path).read_bytes()).hexdigest() == expected, path
+        if path not in evolved:
+            assert hashlib.sha256((ROOT / path).read_bytes()).hexdigest() == expected, path
+    # 固定摘要函数的原始源码，防止新增控制结构改变旧内核引用。
+    assert hashlib.sha256(inspect.getsource(compute_kernel_ref).encode()).hexdigest() == (
+        "77ae4b779c46dbf063d907513c1f0228a431624ff07c840c386521a1b64eb802"
+    )
 
 
 @pytest.mark.parametrize("kind", ["RX90", "RX180", "ISWAP", "SQISWAP"])

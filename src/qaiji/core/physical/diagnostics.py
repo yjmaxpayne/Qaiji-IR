@@ -389,12 +389,12 @@ class Diagnostic:
 class CheckBudget:
     """一次检查请求的资源上限。"""
 
-    max_wire_bytes: int = 16777216
+    max_wire_bytes: int = 67108864
     max_depth: int = 32
     max_attachment_bytes: int = 16777216
-    max_dense_dimension: int = 64
+    max_dense_dimension: int = 128
     max_numeric_elements: int = 1048576
-    max_rational_ops: int = 1000000
+    max_rational_ops: int = 8388608
     max_rational_bits: int = 16384
     __hash__: ClassVar[Any] = None
 

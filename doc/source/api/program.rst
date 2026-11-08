@@ -63,3 +63,86 @@ JSON 往返只承载程序描述，L4 解析表由调用方另行提供。
 .. autoclass:: qaiji.core.program.ProgramValidationError
    :show-inheritance:
    :members:
+
+权威控制树
+----------
+
+``ProgramIR`` 保持 ``qaiji.program.v0`` 的构造与字节契约。
+``ProgramIRV1`` 使用独立的 ``qaiji.program.v1``。
+v1 保存 ``control_flow``，节点为 ``ProgramCall`` 或 ``ProgramIf``。
+调用节点引用 ``quantum_invocations`` 的下标。
+条件节点读取先前调用的测量寄存器。
+条件值使用低位在前的整数约定。
+每个调用须在树中出现一次。深度优先顺序须与调用表一致。
+条件读取的结果须在所有到达路径上可用。
+最终输出也须在全部路径上可用。
+分支内部的结果可以供该分支读取。
+
+``validate_program`` 检查两种程序版本。
+它报告控制结构问题，诊断码为 ``CONTROL_FLOW``。
+不变量检查器单独检查 v1 的条件深度。
+根深度为 0。每层 ``ProgramIf`` 增加 1。
+深度 4 通过。深度 5 报 ``DEPTH``。
+v0 缺少权威控制树，不能认证该深度不变量。
+原生桥接接受 v1 的无条件调用序列。
+原生桥接以 ``CONTROL_FLOW_UNSUPPORTED`` 拒绝条件 v1。
+
+.. autoclass:: qaiji.core.program.ProgramCall
+   :members:
+
+.. autoclass:: qaiji.core.program.ProgramIf
+   :members:
+
+.. autoclass:: qaiji.core.program.ProgramIRV1
+   :members:
+
+.. autofunction:: qaiji.core.program.dump_program
+
+.. autofunction:: qaiji.core.program.load_program
+
+不变量输入绑定
+--------------
+
+``qaiji.core.invariants`` 提供稳定 ID、诊断绑定与 JSON Pointer。
+当前检查入口支持 L5、L4、L2、L1、L0 与 P。
+层对象缺少上下文时，检查器返回失败报告。
+对象类型与层不符时，检查器抛出 ``TypeError``。
+未登记的诊断产生 ``UNREGISTERED`` 失败。
+现有检查器在首错后停止时，后续项不得报告通过。
+
+L5 使用 ``ProgramInvariantInput(program, kernels)``。
+L4 使用 ``L4InvariantInput(circuit, recorded_summary_hash)``。
+L4 摘要须来自冻结输入或先前记录。
+L4 检查不得从当前电路生成比较右值。
+L2 使用 ``L2InvariantInput(circuit, schedule, config)``。
+L1 使用 ``L1InvariantInput(pulse, schedule)``。
+L0 接受 ``WaveformIR`` 或 waveform JSON 字节。
+P 使用 ``PInvariantInput(request, result=None, budget=CheckBudget())``。
+P 字段接受记录对象或自包含的内联 JSON 字节。
+P 始终运行 ``physical`` 检查。有结果时，请求与结果共用预算。
+结果诊断增加 ``/result`` 前缀。解码诊断增加对应字段前缀。
+未完成的物理检查不得报告通过。
+
+``check_cross_layer(schedule=..., pulse=..., port_resources=..., waveform=...)``
+检查端口资源覆盖与叶路径事件。四个输入均接受记录对象或既有 JSON 字节。
+``check_waveform_events`` 逐叶比较 L0 与 L1 的事件顺序。
+该入口只认证 I-X.2，不认证资源覆盖。
+
+登记表包含 12 条 ``checked`` 与 1 条 ``convention``。
+I-L2.8 只登记硬件对齐约定，不生成数值检查结果。
+
+上述载体只接受关键字参数。
+载体不改变既有 L1 字节或内容身份。
+载体不从外部文件或注册表解析缺失输入。
+
+.. autofunction:: qaiji.core.invariants.invariant_registry
+
+.. autofunction:: qaiji.core.invariants.check_invariants
+
+.. autofunction:: qaiji.core.invariants.check_waveform_events
+
+
+.. autoclass:: qaiji.core.invariants.PInvariantInput
+   :members:
+
+.. autofunction:: qaiji.core.invariants.check_cross_layer

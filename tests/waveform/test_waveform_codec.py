@@ -46,13 +46,13 @@ def full_waveform(last: float = 0.5) -> WaveformIR:
             segment(
                 id="s1",
                 time_origin_ns=40,
-                condition=("c1", True),
+                branch=(("c1", 1),),
                 samples=(("ch0", f64le([0.25])),),
             ),
             segment(
                 id="s2",
                 time_origin_ns=40,
-                condition=("c1", False),
+                branch=(("c1", 0),),
                 samples=(("ch1", f64le([-0.25])),),
             ),
         ),
@@ -79,12 +79,12 @@ def test_round_trip() -> None:
 
 GOLDEN = (
     '{"channels":[{"id":"ch0","kind":"dac_real","ports":["d0","z0"]}],'
-    '"sample_rate_hz":2000000000,"schema":"qaiji.waveform/0.1","segments":['
-    '{"condition":null,"id":"s0","samples":[{"array":{"data":"AAAAAAAA8D8AAAAAAAAAgA==",'
+    '"sample_rate_hz":2000000000,"schema":"qaiji.waveform/0.2","segments":['
+    '{"branch":[],"id":"s0","samples":[{"array":{"data":"AAAAAAAA8D8AAAAAAAAAgA==",'
     '"dtype":"f64le","shape":[2]},"channel":"ch0"}],"time_origin_ns":0},'
-    '{"condition":{"id":"c1","taken":true},"id":"s1","samples":[{"array":'
+    '{"branch":[{"bit":1,"event_id":"c1"}],"id":"s1","samples":[{"array":'
     '{"data":"AAAAAAAA4D8=","dtype":"f64le","shape":[1]},"channel":"ch0"}],"time_origin_ns":40},'
-    '{"condition":{"id":"c1","taken":false},"id":"s2","samples":[{"array":'
+    '{"branch":[{"bit":0,"event_id":"c1"}],"id":"s2","samples":[{"array":'
     '{"data":"AAAAAAAA0D8=","dtype":"f64le","shape":[1]},"channel":"ch0"}],"time_origin_ns":40}],'
     '"source_pulse_ref":"sha256:0000000000000000000000000000000000000000000000000000000000000000",'
     '"transforms":[{"kind":"upconvert","params":{"lo_hz":5000000000,"on":true,'
@@ -103,13 +103,13 @@ def test_golden_bytes() -> None:
             segment(
                 id="s1",
                 time_origin_ns=40,
-                condition=("c1", True),
+                branch=(("c1", 1),),
                 samples=(("ch0", f64le([0.5])),),
             ),
             segment(
                 id="s2",
                 time_origin_ns=40,
-                condition=("c1", False),
+                branch=(("c1", 0),),
                 samples=(("ch0", f64le([0.25])),),
             ),
         ),
@@ -131,7 +131,7 @@ def test_golden_bytes() -> None:
 def test_waveform_id() -> None:
     """身份 = sha256(schema + 0 字节 + 规范字节)，带 ``sha256:`` 前缀。改 1 个样本，身份改变。"""
     built = full_waveform()
-    content = b"qaiji.waveform/0.1\x00" + dump_waveform(built)
+    content = b"qaiji.waveform/0.2\x00" + dump_waveform(built)
     assert waveform_id(built) == "sha256:" + hashlib.sha256(content).hexdigest()
     assert waveform_id(full_waveform(math.nextafter(0.5, 1.0))) != waveform_id(built)
 
@@ -330,9 +330,9 @@ NEGATIVE = [
     ("segment-extra-key", _set(("segments", 0, "extra"), 1), "KEYS", "/segments/0"),
     (
         "condition-extra-key",
-        _set(("segments", 1, "condition", "extra"), 1),
+        _set(("segments", 1, "branch", 0, "extra"), 1),
         "KEYS",
-        "/segments/1/condition",
+        "/segments/1/branch/0",
     ),
     (
         "sample-extra-key",

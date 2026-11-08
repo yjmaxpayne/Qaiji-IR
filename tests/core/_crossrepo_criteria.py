@@ -276,6 +276,21 @@ def _semantic_parameter_passes_through(facts: Facts, _thetas: tuple[float, ...])
     function = _function(facts["XR-SEMPARAM"])
     value = function.args.args[-1].arg
     code = _code(function)
+    # Accept only the frozen bookkeeping prefix. Any change requires a new review.
+    bookkeeping = ast.parse(
+        "original = value if isinstance(value, torch.Tensor) else torch.as_tensor(value)\n"
+        'if not hasattr(self, "_original_parameters"):\n'
+        "    self._original_parameters = {}\n"
+        "    self._parameter_kinds = {}\n"
+        "    self._parameter_versions = {}\n"
+        "self._original_parameters[name] = original\n"
+        'self._parameter_kinds[name] = "complex" if original.is_complex() else "real"\n'
+        "self._parameter_versions[name] = None if original.is_inference() else original._version"
+    ).body
+    if [ast.dump(node) for node in code[: len(bookkeeping)]] == [
+        ast.dump(node) for node in bookkeeping
+    ]:
+        code = code[len(bookkeeping) :]
     match code:
         case [
             ast.Assign(

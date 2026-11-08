@@ -20,7 +20,7 @@ from qaiji.core._codec import canonical_json, f64_to_hex, json_pointer
 
 from .errors import _fail
 
-WAVEFORM_SCHEMA = "qaiji.waveform/0.1"
+WAVEFORM_SCHEMA = "qaiji.waveform/0.2"
 NS_PER_SECOND = 10**9
 
 _REFERENCE = re.compile(r"sha256:[0-9a-f]{64}\Z")
@@ -143,27 +143,35 @@ class Channel:
 class Segment:
     """一段采样。第 k 个样本对应时刻 ``time_origin_ns + k · 1e9 / sample_rate_hz``。
 
-    ``condition`` 为 ``(condition_id, taken)``，``taken`` 表示条件寄存器等于 L2 的 ``value``。
+    ``branch`` 按事件顺序保存全部先前测量的 ``(event_id, bit)``。根段使用空元组。
     ``samples`` 按通道 id 升序，每个通道的值为 f64le 字节。
     """
 
     id: str
     time_origin_ns: int
-    condition: tuple[str, bool] | None
+    branch: tuple[tuple[str, int], ...]
     samples: tuple[tuple[str, bytes], ...]
     __hash__: ClassVar[Any] = None
 
     def __post_init__(self) -> None:
         _text(self.id, "/id")
         _int(self.time_origin_ns, "/time_origin_ns", 0, "TIME")
-        condition = self.condition
-        if condition is not None:
-            if not _pair(condition) or type(condition[1]) is not bool:
-                _fail("CONDITION", "/condition", "Expected (condition_id, taken).")
-            if type(condition[0]) is not str or not condition[0]:
-                _fail("CONDITION", "/condition", "Expected (condition_id, taken).")
-            _unicode(condition[0], "/condition")
-            _set(self, "condition", tuple(condition))
+        if type(self.branch) not in (list, tuple):
+            _fail("BRANCH", "/branch", "Branch history must be a sequence.")
+        events: set[str] = set()
+        history: list[tuple[str, int]] = []
+        for pair in self.branch:
+            if not _pair(pair) or type(pair[0]) is not str or not pair[0]:
+                _fail("BRANCH", "/branch", "Each branch entry must contain an event id and a bit.")
+            event, bit = pair
+            _unicode(event, "/branch")
+            if type(bit) is not int or bit not in (0, 1):
+                _fail("BRANCH", "/branch", "A measurement bit must be integer 0 or 1.")
+            if event in events:
+                _fail("BRANCH_EVENTS", "/branch", "A branch history must not repeat an event.")
+            events.add(event)
+            history.append((event, bit))
+        _set(self, "branch", tuple(history))
         if type(self.samples) not in (list, tuple):
             _fail("TYPE", "/samples", "Expected a list or tuple.")
         previous: str | None = None
@@ -213,7 +221,8 @@ class TransformRecord:
 class WaveformIR:
     """L0 程序：全部通道共用一个整数采样率。
 
-    每个条件区间有两个段，``taken`` 分别为 True 与 False。``channels`` 按 id 升序。
+    ``segments`` 保留完整分支树。每层测量分出整数位 0 与 1。
+    ``channels`` 按 id 升序。
     """
 
     source_pulse_ref: str
@@ -246,7 +255,8 @@ class WaveformIR:
 
 def _check_segments(segments: tuple[Segment, ...], declared: set[str], rate: int) -> None:
     ids: set[str] = set()
-    branches: dict[str, dict[bool, int]] = {}
+    branches: dict[tuple[tuple[str, int], ...], int] = {}
+    events_by_depth: dict[int, tuple[str, ...]] = {}
     for index, segment in enumerate(segments):
         path = f"/segments/{index}"
         if segment.id in ids:
@@ -257,13 +267,34 @@ def _check_segments(segments: tuple[Segment, ...], declared: set[str], rate: int
         for position, (channel, _) in enumerate(segment.samples):
             if channel not in declared:
                 _fail("CHANNEL_REF", f"{path}/samples/{position}", "Undeclared channel.")
-        if segment.condition is not None:
-            condition_id, taken = segment.condition
-            branch = branches.setdefault(condition_id, {})
-            if taken in branch:
-                _fail("BRANCH", path + "/condition", "A branch of the condition repeats.")
-            branch[taken] = index
-    for branch in branches.values():
-        if len(branch) != 2:
-            index = next(iter(branch.values()))
-            _fail("BRANCH", f"/segments/{index}/condition", "A condition needs both branches.")
+        events = tuple(event for event, _ in segment.branch)
+        depth = len(events)
+        if events_by_depth.setdefault(depth, events) != events:
+            _fail(
+                "BRANCH_EVENTS",
+                path + "/branch",
+                "Branches at the same depth must use the same event sequence.",
+            )
+        if segment.branch in branches:
+            _fail("BRANCH", path + "/branch", "Branch histories must be unique.")
+        branches[segment.branch] = index
+    maximum = max(map(len, branches), default=0)
+    for branch, index in branches.items():
+        path = f"/segments/{index}/branch"
+        if branch:
+            if branch[:-1] not in branches:
+                _fail("BRANCH", path, "A branch is missing its parent prefix.")
+            event, bit = branch[-1]
+            if (*branch[:-1], (event, 1 - bit)) not in branches:
+                _fail("BRANCH", path, "A branch is missing its sibling.")
+    child_counts: dict[tuple[tuple[str, int], ...], int] = {}
+    for branch in branches:
+        if branch:
+            child_counts[branch[:-1]] = child_counts.get(branch[:-1], 0) + 1
+    for branch, index in branches.items():
+        if len(branch) < maximum and child_counts.get(branch, 0) != 2:
+            _fail(
+                "BRANCH",
+                f"/segments/{index}/branch",
+                "A non-leaf segment must retain both children.",
+            )

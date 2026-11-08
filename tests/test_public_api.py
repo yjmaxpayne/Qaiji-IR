@@ -13,6 +13,7 @@ import qaiji.codec as codec
 import qaiji.core as core
 import qaiji.core.program as program
 import qaiji.core.semantics as semantics
+from factories import PROGRAM_V1_PUBLIC_NAMES
 from qaiji.constants import DEFAULT_TOLERANCE
 from qaiji.core.program import ProgramValidationError
 from qaiji.exceptions import (
@@ -87,7 +88,7 @@ SEMANTICS_PUBLIC_NAMES = {
     "freeze_summary",
 }
 
-PROGRAM_PUBLIC_NAMES = {
+PROGRAM_PUBLIC_NAMES = PROGRAM_V1_PUBLIC_NAMES | {
     "PROGRAM_SCHEMA_VERSION",
     "ExperimentMetadata",
     "ProgramIR",

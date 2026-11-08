@@ -35,7 +35,7 @@ L1 脉冲层依赖 L2 原生调度层，所以本包间接依赖 ``qaiji.core.na
 
 下列记录均不可修改、采用 ``slots``、仅接受关键字参数，且不可哈希。
 采样率为整数 Hz，时间为 ns。``WaveformIR.schema`` 的默认值为 ``WAVEFORM_SCHEMA``\
-（``qaiji.waveform/0.1``）。
+（``qaiji.waveform/0.2``）。
 
 .. list-table:: 公开记录字段（构造时均仅接受关键字参数）
    :header-rows: 1
@@ -46,7 +46,7 @@ L1 脉冲层依赖 L2 原生调度层，所以本包间接依赖 ``qaiji.core.na
    * - ``Channel``
      - ``id``, ``kind``, ``ports``
    * - ``Segment``
-     - ``id``, ``time_origin_ns``, ``condition``, ``samples``
+     - ``id``, ``time_origin_ns``, ``branch``, ``samples``
    * - ``TransformRecord``
      - ``kind``, ``params``
    * - ``WaveformIR``
@@ -55,8 +55,12 @@ L1 脉冲层依赖 L2 原生调度层，所以本包间接依赖 ``qaiji.core.na
      - ``category``, ``code``, ``path``, ``message``
 
 ``Channel.kind`` 取 ``dac_real``。``channels`` 按 ``id`` 唯一且升序。
-``Segment.condition`` 为 ``None`` 或 ``(condition_id, taken)``。``taken`` 表示条件寄存器等于
-L2 条件的 ``value``。每个条件须有 ``taken`` 为 True 与 False 的两个段。
+``Segment.branch`` 按事件顺序保存 ``(event_id, bit)`` 元组。
+根段使用空元组。``bit`` 必须是整数 0 或 1。
+分支树必须保留全部父前缀、兄弟与同深度叶段。
+同层段使用相同的事件序列。单条路径不得重复事件。
+三次测量形成 15 段。树的叶事件须与 L1 Acquire 顺序一致。
+0.1 字节以 ``SCHEMA`` 拒绝。新导出的波形身份随 schema 改变。
 每个段的 ``samples`` 按通道 ``id`` 升序列出，每项的样本为 f64le ``bytes``。
 ``time_origin_ns · sample_rate_hz`` 须为 1e9 的整数倍。
 ``source_pulse_ref`` 填写 ``pulse_program_id`` 的结果。

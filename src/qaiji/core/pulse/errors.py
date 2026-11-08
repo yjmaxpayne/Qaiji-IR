@@ -9,7 +9,7 @@ from typing import Any, ClassVar, Literal, NoReturn
 
 from qaiji.exceptions import QaijiIRError
 
-type PulseCategory = Literal["INVALID_PROGRAM", "SCHEDULE_MISMATCH"]
+type PulseCategory = Literal["INVALID_PROGRAM", "SCHEDULE_MISMATCH", "resources"]
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
@@ -17,7 +17,8 @@ class PulseDiagnostic:
     """一条 L1 诊断。
 
     ``INVALID_PROGRAM`` 表示记录、不变量或编码不合法。``SCHEDULE_MISMATCH`` 表示程序与
-    L2 调度不一致。``path`` 为 JSON Pointer，根为空串。
+    L2 调度不一致。``resources`` 表示独立端口资源映射不一致。
+    ``path`` 为 JSON Pointer，根为空串。
     """
 
     category: PulseCategory

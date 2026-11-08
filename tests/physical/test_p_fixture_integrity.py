@@ -13,6 +13,7 @@ from typing import Any
 
 import pytest
 
+from factories import PROGRAM_V1_PUBLIC_NAMES
 from qaiji.core import (
     Circuit,
     ClassicalBit,
@@ -320,7 +321,8 @@ def test_p_legacy_baseline_is_explicit() -> None:
         module = importlib.import_module(module_name)
         exported = list(module.__all__)
         _require(len(exported) == len(set(exported)), f"legacy.public_exports.{module_name}")
-        _require(set(exported) == set(expected), f"legacy.public_exports.{module_name}")
+        additions = PROGRAM_V1_PUBLIC_NAMES if module_name == "qaiji.core.program" else frozenset()
+        _require(set(exported) == set(expected) | additions, f"legacy.public_exports.{module_name}")
         _require(
             all(hasattr(module, name) for name in expected),
             f"legacy.public_exports.{module_name}",
@@ -383,8 +385,12 @@ def test_p_legacy_baseline_is_explicit() -> None:
     source_digests = baseline.get("source_digests")
     _require(isinstance(source_digests, dict), "legacy.source_digests")
     _require(len(source_digests) == 25, "legacy.source_digests.count")
+    # v1 扩展了这两个程序入口。其余历史源码继续逐字节检查。
+    evolved_sources = {"src/qaiji/core/program/__init__.py", "src/qaiji/core/program/validation.py"}
+    _require(evolved_sources <= set(source_digests), "legacy.source_digests.evolved")
     for path, digest in source_digests.items():
-        _require(_sha256_path(path) == digest, f"legacy.source_digests.{path}")
+        if path not in evolved_sources:
+            _require(_sha256_path(path) == digest, f"legacy.source_digests.{path}")
 
     selected = baseline.get("selected_legacy_tests")
     _require(isinstance(selected, dict), "legacy.selected_legacy_tests")
@@ -397,8 +403,12 @@ def test_p_legacy_baseline_is_explicit() -> None:
         isinstance(selected.get("files"), dict) and len(selected["files"]) == 6,
         "legacy.selected_legacy_tests.files",
     )
+    # 这两个测试文件增加了 v1 导出契约。其他历史测试保持原指纹。
+    evolved_tests = {"tests/test_public_api.py", "tests/native/test_compatibility.py"}
+    _require(evolved_tests <= set(selected["files"]), "legacy.selected_legacy_tests.evolved")
     for path, digest in selected["files"].items():
-        _require(_sha256_path(path) == digest, f"legacy.selected_legacy_tests.{path}")
+        if path not in evolved_tests:
+            _require(_sha256_path(path) == digest, f"legacy.selected_legacy_tests.{path}")
     _check_evidence(
         "legacy.selected_legacy_tests.evidence",
         selected["evidence"],

@@ -183,9 +183,9 @@ FACTS: tuple[Fact, ...] = (
     Fact(
         fact_id="XR-SEMPARAM",
         source_path=_GATE_BASE,
-        lines=(329, 342),
-        commit=_COMMIT,
-        extracted_on=_EXTRACTED_ON,
+        lines=(332, 355),
+        commit="99b3beb6a37a1bc34c098b8c8f069f98d5f98778",
+        extracted_on=date(2026, 11, 8),
         verbatim=r'''    def _semantic_parameter(self, name, value):
         """Normalize ``value`` and record it as this gate's ``name`` parameter.
 
@@ -193,6 +193,16 @@ FACTS: tuple[Fact, ...] = (
         angle into the tensor that enters its matrix, so recording it here
         makes the metadata true by construction rather than by convention.
         """
+        original = value if isinstance(value, torch.Tensor) else torch.as_tensor(value)
+        if not hasattr(self, "_original_parameters"):
+            self._original_parameters = {}
+            self._parameter_kinds = {}
+            self._parameter_versions = {}
+        self._original_parameters[name] = original
+        self._parameter_kinds[name] = "complex" if original.is_complex() else "real"
+        self._parameter_versions[name] = (
+            None if original.is_inference() else original._version
+        )
         tensor = self._as_tensor(value)
         try:
             recorded = self._semantic_parameters

@@ -60,7 +60,7 @@ def test_public_names_stay_in_the_subpackage() -> None:
         assert not hasattr(qaiji, name), name
         assert not hasattr(qaiji.core, name), name
     assert issubclass(WaveformContractError, QaijiIRError)
-    assert WAVEFORM_SCHEMA == "qaiji.waveform/0.1"
+    assert WAVEFORM_SCHEMA == "qaiji.waveform/0.2"
 
 
 RECORDS: list[tuple[type, Callable[[], Any]]] = [
@@ -93,8 +93,8 @@ def test_valid_records_keep_their_values() -> None:
     """合法输入原样保留。ports 存为 tuple，schema 默认值即 WAVEFORM_SCHEMA。"""
     built = channel(ports=["d0", "z0"])
     assert built.ports == ("d0", "z0") and type(built.ports) is tuple
-    cond = segment(id="s1", condition=("c1", True))
-    assert cond.condition == ("c1", True) and type(cond.condition) is tuple
+    cond = segment(id="s1", branch=(("c1", 1),))
+    assert cond.branch == (("c1", 1),) and type(cond.branch) is tuple
     built_waveform = waveform()
     assert built_waveform.schema == WAVEFORM_SCHEMA
     assert built_waveform.source_pulse_ref == REF
@@ -137,11 +137,11 @@ SEGMENT_NEGATIVE: list[tuple[str, dict[str, Any], str, str]] = [
     ("float-time", {"time_origin_ns": 0.0}, "INTEGER", "/time_origin_ns"),
     ("wide-time", {"time_origin_ns": 1 << 63}, "INTEGER", "/time_origin_ns"),
     ("wide-negative-time", {"time_origin_ns": -(1 << 63) - 1}, "INTEGER", "/time_origin_ns"),
-    ("string-condition", {"condition": "c1"}, "CONDITION", "/condition"),
-    ("short-condition", {"condition": ("c1",)}, "CONDITION", "/condition"),
-    ("long-condition", {"condition": ("c1", True, 0)}, "CONDITION", "/condition"),
-    ("empty-condition-id", {"condition": ("", True)}, "CONDITION", "/condition"),
-    ("int-taken", {"condition": ("c1", 1)}, "CONDITION", "/condition"),
+    ("string-condition", {"branch": "c1"}, "BRANCH", "/branch"),
+    ("short-condition", {"branch": ("c1",)}, "BRANCH", "/branch"),
+    ("long-condition", {"branch": ("c1", True, 0)}, "BRANCH", "/branch"),
+    ("empty-condition-id", {"branch": (("", 1),)}, "BRANCH", "/branch"),
+    ("int-taken", {"branch": (("c1", True),)}, "BRANCH", "/branch"),
     ("string-samples", {"samples": "ch0"}, "TYPE", "/samples"),
     ("none-samples", {"samples": None}, "TYPE", "/samples"),
     ("short-entry", {"samples": (("ch0",),)}, "SAMPLES", "/samples/0"),
@@ -154,7 +154,7 @@ SEGMENT_NEGATIVE: list[tuple[str, dict[str, Any], str, str]] = [
     ("negative-inf", {"samples": (("ch0", f64le([-_INF])),)}, "NONFINITE", "/samples/0"),
     ("reversed", {"samples": (_TWO[1], _TWO[0])}, "ORDER", "/samples/1"),
     ("repeated", {"samples": (_TWO[0], _TWO[0])}, "ORDER", "/samples/1"),
-    ("surrogate-condition", {"condition": ("\ud800", True)}, "UNICODE", "/condition"),
+    ("surrogate-condition", {"branch": (("\ud800", 1),)}, "UNICODE", "/branch"),
     ("surrogate-channel", {"samples": (("\ud800", f64le([0.0])),)}, "UNICODE", "/samples/0"),
 ]
 
@@ -232,28 +232,35 @@ def test_transform_negative_space(changes: dict[str, Any], code: str, path: str)
 
 def _pair(*taken: bool) -> tuple[Segment, ...]:
     """返回 1 个无条件段与若干个条件为 c1 的段，id 依次为 s0、s1、…。"""
-    branches = [segment(id=f"s{i + 1}", condition=("c1", t)) for i, t in enumerate(taken)]
+    branches = [segment(id=f"s{i + 1}", branch=(("c1", int(t)),)) for i, t in enumerate(taken)]
     return (segment(id="s0"), *branches)
 
 
 def test_valid_waveform_rules_accept() -> None:
-    """正控：分支对两种顺序都接受。1.5 GSps 下时刻 2 ns 对齐。两个条件各有一对段。"""
+    """正控：分支对两种顺序都接受。1.5 GSps 下时刻 2 ns 对齐。两次测量形成完整树。"""
     assert len(waveform(segments=_pair(True, False)).segments) == 3
     assert len(waveform(segments=_pair(False, True)).segments) == 3
     both = (
         *_pair(True, False),
-        segment(id="s3", condition=("c2", False)),
-        segment(id="s4", condition=("c2", True)),
+        *(
+            segment(id=f"leaf-{a}-{b}", branch=(("c1", a), ("c2", b)))
+            for a in (0, 1)
+            for b in (0, 1)
+        ),
     )
-    assert len(waveform(segments=both).segments) == 5
-    aligned = (segment(id="s0", time_origin_ns=2), segment(id="s1", time_origin_ns=4))
+    assert len(waveform(segments=both).segments) == 7
+    aligned = (
+        segment(id="s0", time_origin_ns=2),
+        segment(id="s1", time_origin_ns=4, branch=(("c1", 0),)),
+        segment(id="s2", time_origin_ns=4, branch=(("c1", 1),)),
+    )
     assert waveform(sample_rate_hz=1_500_000_000, segments=aligned).sample_rate_hz == 1_500_000_000
     two = (channel(), channel(id="ch1", ports=("z0",)))
     assert waveform(channels=two, segments=(segment(samples=_TWO),)).channels == two
 
 
 WAVEFORM_NEGATIVE: list[tuple[str, dict[str, Any], str, str]] = [
-    ("schema", {"schema": "qaiji.waveform/0.2"}, "SCHEMA", "/schema"),
+    ("schema", {"schema": "qaiji.waveform/0.1"}, "SCHEMA", "/schema"),
     ("short-ref", {"source_pulse_ref": "sha256:" + "0" * 63}, "REFERENCE", "/source_pulse_ref"),
     ("upper-ref", {"source_pulse_ref": "sha256:" + "A" * 64}, "REFERENCE", "/source_pulse_ref"),
     ("bare-ref", {"source_pulse_ref": "0" * 64}, "REFERENCE", "/source_pulse_ref"),
@@ -305,9 +312,9 @@ WAVEFORM_NEGATIVE: list[tuple[str, dict[str, Any], str, str]] = [
         "CHANNEL_REF",
         "/segments/0/samples/1",
     ),
-    ("lone-branch", {"segments": _pair(True)}, "BRANCH", "/segments/1/condition"),
-    ("same-taken", {"segments": _pair(True, True)}, "BRANCH", "/segments/2/condition"),
-    ("third-branch", {"segments": _pair(True, False, True)}, "BRANCH", "/segments/3/condition"),
+    ("lone-branch", {"segments": _pair(True)}, "BRANCH", "/segments/1/branch"),
+    ("same-taken", {"segments": _pair(True, True)}, "BRANCH", "/segments/2/branch"),
+    ("third-branch", {"segments": _pair(True, False, True)}, "BRANCH", "/segments/3/branch"),
 ]
 
 
@@ -334,10 +341,10 @@ def test_transform_equality_follows_canonical_bytes() -> None:
 
 
 def test_lists_are_stored_as_tuples() -> None:
-    """list 输入存为 tuple：ports、condition、samples 及其条目、channels。"""
+    """list 输入存为 tuple：ports、branch、samples 及其条目、channels。"""
     assert channel(ports=["d0"]).ports == ("d0",)
     assert type(channel(ports=["d0"]).ports) is tuple
-    built = segment(condition=["c1", True], samples=[["ch0", f64le([0.0])]])
-    assert type(built.condition) is tuple and built.condition == ("c1", True)
+    built = segment(branch=[["c1", 1]], samples=[["ch0", f64le([0.0])]])
+    assert type(built.branch) is tuple and built.branch == (("c1", 1),)
     assert type(built.samples) is tuple and type(built.samples[0]) is tuple
     assert type(waveform(channels=[channel()]).channels) is tuple

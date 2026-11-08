@@ -15,7 +15,13 @@ from qaiji.core.native import (
 from qaiji.core.native.model import _copy, _fail
 from qaiji.core.native.source import _capture_source
 from qaiji.core.native.validation import _validate_snapshot
-from qaiji.core.program import ProgramIR, validate_program
+from qaiji.core.program import (
+    ProgramIf,
+    ProgramIR,
+    ProgramIRV1,
+    ProgramValidationError,
+    validate_program,
+)
 
 from .model import (
     FinalBitBinding,
@@ -53,7 +59,9 @@ def _wrong_source() -> NativeValidationReport:
 
 
 def bridge_program_native(
-    program: ProgramIR, kernels: Mapping[str, Circuit], bindings: Mapping[int, NativeBinding]
+    program: ProgramIR | ProgramIRV1,
+    kernels: Mapping[str, Circuit],
+    bindings: Mapping[int, NativeBinding],
 ) -> ProgramNativeMap:
     """保留 L5 校验错误，汇总 L2 错误，再映射认证后的测量事件。
 
@@ -61,6 +69,14 @@ def bridge_program_native(
     不支持并发修改。
     """
     validate_program(program, kernels)
+    if isinstance(program, ProgramIRV1) and any(
+        isinstance(node, ProgramIf) for node in program.control_flow
+    ):
+        raise ProgramValidationError(
+            ("CONTROL_FLOW_UNSUPPORTED: native bridging requires unconditional calls",),
+            code="CONTROL_FLOW_UNSUPPORTED",
+            path="/control_flow",
+        )
     for name, value in (("kernels", kernels), ("bindings", bindings)):
         if not isinstance(value, Mapping):
             _fail("container", "$." + name, "Expected a mapping.")
@@ -121,7 +137,7 @@ def bridge_program_native(
 
 
 def _map_outputs(
-    program: ProgramIR, authenticated: dict[int, NativeScheduleIR]
+    program: ProgramIR | ProgramIRV1, authenticated: dict[int, NativeScheduleIR]
 ) -> ProgramNativeMap:
     histories: dict[tuple[int, str], list[InvocationEventRef]] = {}
     latest: dict[tuple[int, str], dict[int, InvocationEventRef]] = {}

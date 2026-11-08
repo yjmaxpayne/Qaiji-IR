@@ -13,6 +13,13 @@ from qaiji.core.program.model import (
     QuantumInvocation,
     ResultOutput,
 )
+from qaiji.core.program.structured import (
+    ProgramCall,
+    ProgramIf,
+    ProgramIRV1,
+    dump_program,
+    load_program,
+)
 from qaiji.core.program.validation import (
     ProgramValidationError,
     compute_kernel_ref,
@@ -22,10 +29,15 @@ from qaiji.core.program.validation import (
 __all__ = [
     "PROGRAM_SCHEMA_VERSION",
     "ExperimentMetadata",
+    "ProgramCall",
     "ProgramIR",
+    "ProgramIRV1",
+    "ProgramIf",
     "ProgramValidationError",
     "QuantumInvocation",
     "ResultOutput",
     "compute_kernel_ref",
+    "dump_program",
+    "load_program",
     "validate_program",
 ]
