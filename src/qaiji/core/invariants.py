@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import re
 from collections.abc import Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Literal
 
 from qaiji.core.circuit import Circuit
@@ -15,6 +15,16 @@ from qaiji.core.native import (
     NativeScheduleIR,
     ScheduleConfig,
     validate_native_schedule,
+)
+from qaiji.core.physical import (
+    CheckBudget,
+    PContractError,
+    Request,
+    Result,
+    check_request,
+    check_result,
+    load_request,
+    load_result,
 )
 from qaiji.core.program import (
     ProgramCall,
@@ -27,9 +37,12 @@ from qaiji.core.program import (
 )
 from qaiji.core.pulse import (
     Acquire,
+    PortResourceMap,
     PulseContractError,
     PulseProgramIR,
+    check_port_resources,
     check_pulse_program,
+    load_port_resources,
     load_pulse_program,
 )
 from qaiji.core.waveform import WaveformContractError, WaveformIR, dump_waveform, load_waveform
@@ -104,6 +117,18 @@ class L1InvariantInput:
     schedule: NativeScheduleIR | None = None
 
 
+@dataclass(frozen=True, slots=True, kw_only=True)
+class PInvariantInput:
+    """绑定物理请求、可选结果与共用预算。
+
+    字节字段使用既有 P 记录编码。该载体不增加交换 schema。
+    """
+
+    request: Request | bytes | None = None
+    result: Result | bytes | None = None
+    budget: CheckBudget = field(default_factory=CheckBudget)
+
+
 _REGISTRY = (
     Invariant(
         id="I-L5.4",
@@ -165,6 +190,38 @@ _REGISTRY = (
         codes=("BRANCH", "BRANCH_EVENTS"),
     ),
     Invariant(
+        id="I-P.6",
+        layer="P",
+        category="checked",
+        statement="状态半正定、迹归一且厄米。",
+        codes=("PSD", "NORMALIZATION", "HERMITIAN", "P_INPUT_MISSING"),
+    ),
+    Invariant(
+        id="I-P.7",
+        layer="P",
+        category="checked",
+        statement="物理检查不超过显式预算。",
+        codes=(
+            "DENSE_DIMENSION",
+            "RATIONAL_OPS",
+            "NUMERIC_ELEMENTS",
+            "RATIONAL_BITS",
+            "NUMERIC_RANGE",
+            "BYTES",
+            "DEPTH",
+            "ATTACHMENT_BYTES",
+            "RESOURCE_LIMIT",
+            "P_INPUT_MISSING",
+        ),
+    ),
+    Invariant(
+        id="I-X.1",
+        layer="X",
+        category="checked",
+        statement="端口映射资源被来源操作资源覆盖。",
+        codes=("RESOURCE_REF", "RESOURCE_PORT", "RESOURCE_MISSING", "RESOURCE_COVERAGE"),
+    ),
+    Invariant(
         id="I-X.2",
         layer="X",
         category="checked",
@@ -179,8 +236,17 @@ def invariant_registry() -> tuple[Invariant, ...]:
     return _REGISTRY
 
 
-def _report(layer: Layer, diagnostics: list[tuple[str, str, str]]) -> InvariantReport:
-    specs = [s for s in invariant_registry() if s.layer == layer and s.category == "checked"]
+def _report(
+    layer: Layer,
+    diagnostics: list[tuple[str, str, str]],
+    *,
+    ids: tuple[str, ...] | None = None,
+) -> InvariantReport:
+    specs = [
+        s
+        for s in invariant_registry()
+        if s.layer == layer and s.category == "checked" and (ids is None or s.id in ids)
+    ]
     results: list[InvariantResult] = []
     failed: set[str] = set()
     for code, path, message in diagnostics:
@@ -344,7 +410,14 @@ def _pulse(source: object) -> list[tuple[str, str, str]]:
 
 def check_invariants(source: object | bytes, *, layer: Layer) -> InvariantReport:
     """检查指定层的绑定输入。违规写入报告，类型不符时抛 TypeError。"""
-    checks = {"L5": _program, "L4": _summary, "L2": _timing, "L1": _pulse, "L0": _waveform}
+    checks = {
+        "L5": _program,
+        "L4": _summary,
+        "L2": _timing,
+        "L1": _pulse,
+        "L0": _waveform,
+        "P": _physical,
+    }
     if layer not in checks:
         raise ValueError("This layer has no bound checker")
     return _report(layer, checks[layer](source))
@@ -360,20 +433,117 @@ def _waveform(source: object) -> list[tuple[str, str, str]]:
     return []
 
 
-def check_waveform_events(*, waveform: WaveformIR, pulse: PulseProgramIR) -> InvariantReport:
-    """逐叶比较分支事件与全部 Acquire 事件。"""
-    if not isinstance(waveform, WaveformIR) or not isinstance(pulse, PulseProgramIR):
-        raise TypeError("Expected WaveformIR and PulseProgramIR")
+def _physical(source: object) -> list[tuple[str, str, str]]:
+    if isinstance(source, (Request, bytes)):
+        source = PInvariantInput(request=source)
+    if not isinstance(source, PInvariantInput):
+        raise TypeError("P requires PInvariantInput or a request record")
+    if not isinstance(source.budget, CheckBudget):
+        raise TypeError("Expected CheckBudget")
+    if source.request is None:
+        return [("P_INPUT_MISSING", "/request", "缺少物理请求。")]
+    if not isinstance(source.request, (Request, bytes)):
+        raise TypeError("Expected Request or request bytes")
+    if source.result is not None and not isinstance(source.result, (Result, bytes)):
+        raise TypeError("Expected Result or result bytes")
+    prefix = "/request" if isinstance(source.request, bytes) else ""
+    try:
+        request = (
+            load_request(source.request, budget=source.budget)
+            if isinstance(source.request, bytes)
+            else source.request
+        )
+        report = check_request(request, level="physical", budget=source.budget)
+        prefix = ""
+        if report.complete and not report.diagnostics and source.result is not None:
+            prefix = "/result"
+            result = (
+                load_result(source.result, budget=source.budget)
+                if isinstance(source.result, bytes)
+                else source.result
+            )
+            report = check_result(request, result, level="physical", budget=source.budget)
+        diagnostics = report.diagnostics
+        if not diagnostics and (not report.complete or report.unchecked):
+            return [("P_NOT_RUN", prefix, "物理检查未完成。")]
+    except PContractError as error:
+        diagnostics = error.diagnostics
+    return [
+        (
+            "RESOURCE_LIMIT" if item.category == "RESOURCE_LIMIT" else item.code,
+            prefix + item.path,
+            f"{item.category}: {item.code}: {item.message}",
+        )
+        for item in diagnostics
+    ]
+
+
+def _event_diagnostics(waveform: WaveformIR, pulse: PulseProgramIR) -> list[tuple[str, str, str]]:
     expected = tuple(item.event_id for item in pulse.instructions if isinstance(item, Acquire))
     depth = max(len(segment.branch) for segment in waveform.segments)
-    diagnostics = []
-    for index, segment in enumerate(waveform.segments):
-        if len(segment.branch) == depth and tuple(e for e, _ in segment.branch) != expected:
-            diagnostics.append(
-                (
-                    "BRANCH_EVENTS",
-                    f"/waveform/segments/{index}/branch",
-                    "叶路径事件与 Acquire 序列不一致。",
-                )
-            )
-    return _report("X", diagnostics)
+    return [
+        ("BRANCH_EVENTS", f"/waveform/segments/{index}/branch", "叶路径事件与 Acquire 序列不一致。")
+        for index, segment in enumerate(waveform.segments)
+        if len(segment.branch) == depth and tuple(e for e, _ in segment.branch) != expected
+    ]
+
+
+def check_waveform_events(*, waveform: WaveformIR, pulse: PulseProgramIR) -> InvariantReport:
+    """逐叶比较分支事件与全部 Acquire 事件。只认证 I-X.2。"""
+    if not isinstance(waveform, WaveformIR) or not isinstance(pulse, PulseProgramIR):
+        raise TypeError("Expected WaveformIR and PulseProgramIR")
+    diagnostics = _waveform(waveform)
+    if not diagnostics:
+        diagnostics = _event_diagnostics(waveform, pulse)
+    return _report("X", diagnostics, ids=("I-X.2",))
+
+
+def check_cross_layer(
+    *,
+    schedule: NativeScheduleIR | bytes,
+    pulse: PulseProgramIR | bytes,
+    port_resources: PortResourceMap | bytes,
+    waveform: WaveformIR | bytes,
+) -> InvariantReport:
+    """检查资源覆盖与叶路径事件，返回统一跨层报告。
+
+    输入使用记录对象或既有 JSON 字节。违规写入报告。
+    对象类型与对应记录不符时抛 TypeError。
+    """
+    for value, cls in (
+        (schedule, NativeScheduleIR),
+        (pulse, PulseProgramIR),
+        (port_resources, PortResourceMap),
+        (waveform, WaveformIR),
+    ):
+        if not isinstance(value, (cls, bytes)):
+            raise TypeError(f"Expected {cls.__name__} or record bytes")
+    prefix = "/schedule"
+    try:
+        if isinstance(schedule, bytes):
+            schedule = NativeScheduleIR.from_json(schedule.decode())
+        prefix = "/pulse"
+        if isinstance(pulse, bytes):
+            pulse = load_pulse_program(pulse)
+        check_pulse_program(pulse, schedule)
+        prefix = ""
+        if isinstance(port_resources, bytes):
+            port_resources = load_port_resources(port_resources)
+        check_port_resources(schedule, pulse, port_resources)
+        prefix = "/waveform"
+        waveform = load_waveform(
+            dump_waveform(waveform) if isinstance(waveform, WaveformIR) else waveform
+        )
+    except (PulseContractError, WaveformContractError) as error:
+        return _report(
+            "X",
+            [
+                (item.code, prefix + item.path, f"{item.category}: {item.message}")
+                for item in error.diagnostics
+            ],
+        )
+    except NativeInputError as error:
+        return _report("X", [(error.code, "/schedule" + _pointer(error.path), str(error))])
+    except UnicodeDecodeError as error:
+        return _report("X", [("SCHEMA", "/schedule", str(error))])
+    return _report("X", _event_diagnostics(waveform, pulse))

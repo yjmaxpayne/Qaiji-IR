@@ -104,7 +104,7 @@ v0 缺少权威控制树，不能认证该深度不变量。
 --------------
 
 ``qaiji.core.invariants`` 提供稳定 ID、诊断绑定与 JSON Pointer。
-当前检查入口支持 L5、L4、L2、L1 与 L0。
+当前检查入口支持 L5、L4、L2、L1、L0 与 P。
 层对象缺少上下文时，检查器返回失败报告。
 对象类型与层不符时，检查器抛出 ``TypeError``。
 未登记的诊断产生 ``UNREGISTERED`` 失败。
@@ -117,7 +117,19 @@ L4 检查不得从当前电路生成比较右值。
 L2 使用 ``L2InvariantInput(circuit, schedule, config)``。
 L1 使用 ``L1InvariantInput(pulse, schedule)``。
 L0 接受 ``WaveformIR`` 或 waveform JSON 字节。
+P 使用 ``PInvariantInput(request, result=None, budget=CheckBudget())``。
+P 字段接受记录对象或自包含的内联 JSON 字节。
+P 始终运行 ``physical`` 检查。有结果时，请求与结果共用预算。
+结果诊断增加 ``/result`` 前缀。解码诊断增加对应字段前缀。
+未完成的物理检查不得报告通过。
+
+``check_cross_layer(schedule=..., pulse=..., port_resources=..., waveform=...)``
+检查端口资源覆盖与叶路径事件。四个输入均接受记录对象或既有 JSON 字节。
 ``check_waveform_events`` 逐叶比较 L0 与 L1 的事件顺序。
+该入口只认证 I-X.2，不认证资源覆盖。
+
+登记表包含 12 条 ``checked`` 与 1 条 ``convention``。
+I-L2.8 只登记硬件对齐约定，不生成数值检查结果。
 
 上述载体只接受关键字参数。
 载体不改变既有 L1 字节或内容身份。
@@ -128,3 +140,9 @@ L0 接受 ``WaveformIR`` 或 waveform JSON 字节。
 .. autofunction:: qaiji.core.invariants.check_invariants
 
 .. autofunction:: qaiji.core.invariants.check_waveform_events
+
+
+.. autoclass:: qaiji.core.invariants.PInvariantInput
+   :members:
+
+.. autofunction:: qaiji.core.invariants.check_cross_layer

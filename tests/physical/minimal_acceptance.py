@@ -80,7 +80,18 @@ def check_legacy_contract() -> None:
     from qaiji.core.program import compute_kernel_ref
 
     baseline = json.loads((DATA / "legacy-baseline.json").read_bytes())
+    # 旧快照保持不变；结构化程序接口是显式批准的新增导出。
+    additions = {
+        "qaiji.core.program": {
+            "ProgramCall",
+            "ProgramIf",
+            "ProgramIRV1",
+            "dump_program",
+            "load_program",
+        }
+    }
     for module, exports in baseline["public_exports"].items():
+        exports = set(exports) | additions.get(module, set())
         require(
             sorted(importlib.import_module(module).__all__) == sorted(exports),
             "legacy-exports:" + module,

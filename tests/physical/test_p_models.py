@@ -192,12 +192,12 @@ SCHEMA_DEFAULTS = {
 }
 
 BUDGET_DEFAULTS = {
-    "max_wire_bytes": 16777216,
+    "max_wire_bytes": 67108864,
     "max_depth": 32,
     "max_attachment_bytes": 16777216,
-    "max_dense_dimension": 64,
+    "max_dense_dimension": 128,
     "max_numeric_elements": 1048576,
-    "max_rational_ops": 1000000,
+    "max_rational_ops": 8388608,
     "max_rational_bits": 16384,
 }
 

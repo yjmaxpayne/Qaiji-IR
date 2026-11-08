@@ -1,0 +1,1 @@
+{"entries":[{"port":"d0","resources":["q0"]},{"port":"d1","resources":["q1"]},{"port":"f01","resources":["q0","q1"]},{"port":"r0","resources":["q0"]},{"port":"r1","resources":["q1"]}],"pulse_program_ref":"sha256:a705e49dcf21db2668418fccf07c4b4ac3cefb8b070d67205cf32e2251167324","schema":"qaiji.port_resources/0.1"}

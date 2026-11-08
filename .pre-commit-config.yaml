@@ -10,6 +10,8 @@ repos:
     hooks:
       - id: trailing-whitespace
       - id: end-of-file-fixer
+        # Canonical JSON fixtures must retain the serializer's exact bytes.
+        exclude: ^tests/conformance/data/(native|pulse|request|resources|result|waveform)\.json$
       - id: check-yaml
       - id: check-toml
       - id: check-merge-conflict

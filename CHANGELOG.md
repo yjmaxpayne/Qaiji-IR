@@ -8,6 +8,8 @@ git tags via `poetry-dynamic-versioning`.
 
 ### Added
 
+- Add physical invariant inputs, unified cross-layer reports, and frozen conformance fixtures.
+
 - 新增 `two_body_drive` 端口角色，允许非零载频，CZ 目标必须恰为比特对。
 - 新增独立 `PortResourceMap`、严格编解码、内容身份与逐 Play 资源覆盖检查。
 
@@ -16,6 +18,8 @@ git tags via `poetry-dynamic-versioning`.
 - Compare waveform leaf events with L1 Acquire events.
 
 ### Changed
+
+- Raise default physical dimension, rational-operation and JSON byte budgets to 128, 8388608 and 64 MiB.
 
 - L1 保持 `qaiji.pulse/0.1`。旧 L1 字段、规范字节与身份保持不变。
 
