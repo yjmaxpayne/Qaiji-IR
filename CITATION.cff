@@ -33,6 +33,9 @@ identifiers:
   - type: doi
     value: 10.5281/zenodo.23918466
     description: Version-specific DOI for Qaiji-IR v0.4.0
+  - type: doi
+    value: 10.5281/zenodo.23920162
+    description: Version-specific DOI for Qaiji-IR v0.4.1
 repository-code: "https://github.com/yjmaxpayne/Qaiji-IR"
 url: "https://yjmaxpayne.github.io/Qaiji-IR/"
 abstract: >-
