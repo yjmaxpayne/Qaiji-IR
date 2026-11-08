@@ -16,7 +16,11 @@ from .phase import phases_equal
 
 _PULSED = ("RX90", "CZ", "MEASURE")
 _VIRTUAL = ("Z", "RZ")
-_PLAY_ROLES = {"RX90": ("drive",), "MEASURE": ("readout",), "CZ": ("flux", "coupler_flux")}
+_PLAY_ROLES = {
+    "RX90": ("drive",),
+    "MEASURE": ("readout",),
+    "CZ": ("flux", "coupler_flux", "two_body_drive"),
+}
 
 
 def check_pulse_program(program: PulseProgramIR, schedule: NativeScheduleIR) -> None:
@@ -30,7 +34,8 @@ def check_pulse_program(program: PulseProgramIR, schedule: NativeScheduleIR) -> 
        Z、RZ，时刻等于操作起点，增量与 −θ 按 ``phases_equal`` 相等（Z 取 θ = π）。
        ``origin="correction"`` 的 ``ShiftPhase`` 只来自 CZ，帧在 CZ 的比特上。
     4. 目标：RX90 的 ``Play`` 在本比特的驱动帧上，MEASURE 的在本比特的读出帧上，CZ 的在
-       flux 类帧上且帧的比特属于 CZ。``Acquire`` 的端口属于被测比特。
+       flux 类帧上且帧的比特属于 CZ，或在目标恰为 CZ 比特对的两体驱动帧上。
+       ``Acquire`` 的端口属于被测比特。
     5. 覆盖：每个 Z、RZ 在比特 q 的每个 ``targets == (q,)`` 的驱动帧上各有 1 条 gate
        ``ShiftPhase``。每个 RX90、CZ、MEASURE 至少有 1 条 ``Play``。
     6. 测量：每个 MEASURE 有 1 条读出 ``Play``。``Acquire`` 与 L2 测量事件一一对应。
@@ -114,8 +119,10 @@ def _check_records(
 
 
 def _check_target(port: Port, op: NativeOperation, path: str) -> None:
-    """RX90、MEASURE 的帧属于本比特。CZ 的帧是 flux 类，比特属于 CZ。"""
-    if op.kind == "CZ":
+    """检查单比特目标、flux 子集与两体驱动的精确比特对。"""
+    if op.kind == "CZ" and port.role == "two_body_drive":
+        fits = len(port.targets) == 2 and sorted(port.targets) == sorted(op.qubits)
+    elif op.kind == "CZ":
         fits = set(port.targets) <= set(op.qubits)
     else:
         fits = port.targets == op.qubits

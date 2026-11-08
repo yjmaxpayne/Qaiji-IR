@@ -8,11 +8,16 @@ git tags via `poetry-dynamic-versioning`.
 
 ### Added
 
+- 新增 `two_body_drive` 端口角色，允许非零载频，CZ 目标必须恰为比特对。
+- 新增独立 `PortResourceMap`、严格编解码、内容身份与逐 Play 资源覆盖检查。
+
 - Add `ProgramIRV1` with an authoritative conditional tree and strict `qaiji.program.v1` exchange.
 - Bind invariant checks to explicit program kernels, saved circuit hashes, and scheduling inputs.
 - Compare waveform leaf events with L1 Acquire events.
 
 ### Changed
+
+- L1 保持 `qaiji.pulse/0.1`。旧 L1 字段、规范字节与身份保持不变。
 
 - Replace waveform segment `condition` with ordered `branch` histories in `qaiji.waveform/0.2`.
 - Reject waveform 0.1 bytes with `SCHEMA` and validate complete binary trees.

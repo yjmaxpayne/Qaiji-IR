@@ -19,25 +19,41 @@ from .model import (
     ShiftPhase,
 )
 from .phase import PHASE_ATOL, carrier_phase, frame_phase, phases_equal
+from .resources import (
+    PORT_RESOURCES_SCHEMA,
+    PortResourceEntry,
+    PortResourceMap,
+    check_port_resources,
+    dump_port_resources,
+    load_port_resources,
+    port_resources_id,
+)
 
 __all__ = [
     "PHASE_ATOL",
+    "PORT_RESOURCES_SCHEMA",
     "PULSE_SCHEMA",
     "Acquire",
     "Envelope",
     "Frame",
     "Play",
     "Port",
+    "PortResourceEntry",
+    "PortResourceMap",
     "PulseContractError",
     "PulseDiagnostic",
     "PulseProgramIR",
     "ShiftPhase",
     "carrier_phase",
+    "check_port_resources",
     "check_pulse_program",
+    "dump_port_resources",
     "dump_pulse_program",
     "frame_phase",
+    "load_port_resources",
     "load_pulse_program",
     "native_schedule_ref",
     "phases_equal",
+    "port_resources_id",
     "pulse_program_id",
 ]

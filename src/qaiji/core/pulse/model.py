@@ -18,7 +18,7 @@ from .errors import _fail
 from .phase import phases_equal
 
 PULSE_SCHEMA = "qaiji.pulse/0.1"
-_ROLES = ("drive", "readout", "acquire", "flux", "coupler_flux")
+_ROLES = ("drive", "readout", "acquire", "flux", "coupler_flux", "two_body_drive")
 _FLUX_ROLES = ("flux", "coupler_flux")
 _ORIGINS = ("gate", "correction")
 _SHAPES: dict[str, tuple[str, ...]] = {
@@ -86,7 +86,7 @@ class Port:
     """物理信号端口。``targets`` 是端口作用的比特，非空且互不相同。"""
 
     id: str
-    role: Literal["drive", "readout", "acquire", "flux", "coupler_flux"]
+    role: Literal["drive", "readout", "acquire", "flux", "coupler_flux", "two_body_drive"]
     targets: tuple[int, ...]
     __hash__: ClassVar[Any] = None
 
