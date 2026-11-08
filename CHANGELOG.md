@@ -4,6 +4,20 @@ All notable changes to this project are documented here. The format follows
 [Conventional Commits](https://www.conventionalcommits.org/) and versions are derived from
 git tags via `poetry-dynamic-versioning`.
 
+## [Unreleased]
+
+### Added
+
+- Add `ProgramIRV1` with an authoritative conditional tree and strict `qaiji.program.v1` exchange.
+- Bind invariant checks to explicit program kernels, saved circuit hashes, and scheduling inputs.
+- Compare waveform leaf events with L1 Acquire events.
+
+### Changed
+
+- Replace waveform segment `condition` with ordered `branch` histories in `qaiji.waveform/0.2`.
+- Reject waveform 0.1 bytes with `SCHEMA` and validate complete binary trees.
+- Preserve program v0 exchange and L1 identities. Reject conditional v1 programs at the native bridge.
+
 ## [0.4.1] - 2026-11-03
 
 This release changes only the documentation, one docstring and the citation metadata. The

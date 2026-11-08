@@ -36,7 +36,7 @@ def channel(**changes: Any) -> Channel:
 
 def segment(**changes: Any) -> Segment:
     values: dict[str, Any] = dict(
-        id="s0", time_origin_ns=0, condition=None, samples=(("ch0", f64le([0.0, 0.5])),)
+        id="s0", time_origin_ns=0, branch=(), samples=(("ch0", f64le([0.0, 0.5])),)
     )
     return Segment(**(values | changes))
 

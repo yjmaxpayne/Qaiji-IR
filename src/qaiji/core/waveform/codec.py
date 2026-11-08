@@ -25,12 +25,12 @@ from qaiji.core._codec import (
 from qaiji.core._codec import json_pointer as _at
 
 from .errors import WaveformContractError, _fail
-from .model import Channel, Segment, TransformRecord, WaveformIR, _encoded
+from .model import WAVEFORM_SCHEMA, Channel, Segment, TransformRecord, WaveformIR, _encoded
 
 _ROOT = ("channels", "sample_rate_hz", "schema", "segments", "source_pulse_ref", "transforms")
 _CHANNEL = ("id", "kind", "ports")
-_SEGMENT = ("condition", "id", "samples", "time_origin_ns")
-_CONDITION = ("id", "taken")
+_SEGMENT = ("branch", "id", "samples", "time_origin_ns")
+_BRANCH = ("event_id", "bit")
 _SAMPLE = ("array", "channel")
 _ARRAY = ("data", "dtype", "shape")
 _TRANSFORM = ("kind", "params")
@@ -119,6 +119,8 @@ def load_waveform(data: bytes) -> WaveformIR:
         _fail(fault.code, fault.path, fault.message)
     root = _object(tree, "")
     _keys(root, _ROOT, "")
+    if root["schema"] != WAVEFORM_SCHEMA:
+        _fail("SCHEMA", "/schema", f"Expected schema {WAVEFORM_SCHEMA}.")
     values = dict(
         schema=root["schema"],
         source_pulse_ref=root["source_pulse_ref"],
@@ -131,11 +133,10 @@ def load_waveform(data: bytes) -> WaveformIR:
 
 
 def _encode_segment(segment: Segment) -> dict[str, Any]:
-    condition = segment.condition
     return dict(
         id=segment.id,
         time_origin_ns=segment.time_origin_ns,
-        condition=None if condition is None else dict(zip(_CONDITION, condition, strict=True)),
+        branch=[dict(zip(_BRANCH, pair, strict=True)) for pair in segment.branch],
         samples=[
             dict(channel=channel, array=inline_array("f64le", (len(data) // 8,), data))
             for channel, data in segment.samples
@@ -173,14 +174,18 @@ def _channel(value: Any, path: str) -> Channel:
 def _segment(value: Any, path: str) -> Segment:
     obj = _object(value, path)
     _keys(obj, _SEGMENT, path)
-    condition = obj["condition"]
-    if condition is not None:
-        condition_obj = _object(condition, _at(path, "condition"))
-        _keys(condition_obj, _CONDITION, _at(path, "condition"))
-        condition = (condition_obj["id"], condition_obj["taken"])
+    history = obj["branch"]
+    if type(history) is not list:
+        _fail("BRANCH", _at(path, "branch"), "Branch history must be a JSON array.")
+    branch = []
+    for index, pair in enumerate(history):
+        where = _at(_at(path, "branch"), str(index))
+        branch_obj = _object(pair, where)
+        _keys(branch_obj, _BRANCH, where)
+        branch.append((branch_obj["event_id"], branch_obj["bit"]))
     samples = _items(obj["samples"], _at(path, "samples"), _sample)
     values = dict(
-        id=obj["id"], time_origin_ns=obj["time_origin_ns"], condition=condition, samples=samples
+        id=obj["id"], time_origin_ns=obj["time_origin_ns"], branch=branch, samples=samples
     )
     return cast(Segment, _construct(Segment, values, path))
 

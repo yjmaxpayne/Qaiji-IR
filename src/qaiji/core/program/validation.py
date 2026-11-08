@@ -6,6 +6,7 @@ from collections.abc import Mapping, Sequence
 
 from qaiji.core import Circuit
 from qaiji.core.program.model import ProgramIR
+from qaiji.core.program.structured import ProgramCall, ProgramIf, ProgramIRV1
 from qaiji.core.semantics import (
     annotate_circuit,
     build_dataflow_summary,
@@ -33,12 +34,14 @@ class ProgramValidationError(QaijiIRError):
 
     problems: tuple[str, ...]
 
-    def __init__(self, problems: Sequence[str]) -> None:
+    def __init__(self, problems: Sequence[str], *, code: str | None = None, path: str = "") -> None:
         """保存问题并生成逐行汇总消息。
 
         Args:
             problems: 先调用序、后输出声明序的问题。
         """
+        self.code = code
+        self.path = path
         self.problems = tuple(problems)
         super().__init__(
             f"ProgramIR failed L4 validation with {len(self.problems)} problem(s):\n"
@@ -46,7 +49,7 @@ class ProgramValidationError(QaijiIRError):
         )
 
 
-def validate_program(program: ProgramIR, kernels: Mapping[str, Circuit]) -> None:
+def validate_program(program: ProgramIR | ProgramIRV1, kernels: Mapping[str, Circuit]) -> None:
     """认证调用并核对输出，按调用序、再输出声明序收集问题。
 
     认证的是解析表内容，而非调用方持有的对象；未被引用的表项不校验。
@@ -95,3 +98,72 @@ def validate_program(program: ProgramIR, kernels: Mapping[str, Circuit]) -> None
             problems.append(f"{prefix} bits {missing} are never written by a measurement")
     if problems:
         raise ProgramValidationError(tuple(problems))
+    if isinstance(program, ProgramIRV1):
+        _validate_control_flow(program, authenticated)
+
+
+def _validate_control_flow(program: ProgramIRV1, circuits: Mapping[int, Circuit]) -> None:
+    """检查调用绑定与结果必达。深度由不变量入口检查。"""
+    order: list[int] = []
+
+    def fail(path: str, message: str) -> None:
+        raise ProgramValidationError(
+            (f"CONTROL_FLOW {path}: {message}",),
+            code="CONTROL_FLOW",
+            path=path,
+        )
+
+    # 显式栈保留 then、else 顺序，避免深层对象先触发 Python 递归限制。
+    tasks: list[tuple[bool, tuple[ProgramCall | ProgramIf, ...], int, set[int], str]] = [
+        (False, program.control_flow, 0, set(), "/control_flow")
+    ]
+    completed: list[set[int]] = []
+    while tasks:
+        join, nodes, start, available, path = tasks.pop()
+        if join:
+            no = completed.pop()
+            yes = completed.pop()
+            tasks.append((False, nodes, start, yes & no, path))
+            continue
+        for offset in range(start, len(nodes)):
+            node = nodes[offset]
+            where = f"{path}/{offset}"
+            index = node.invocation_index
+            if index not in circuits:
+                fail(where + "/invocation_index", "Unknown invocation index")
+            if isinstance(node, ProgramCall):
+                order.append(index)
+                available.add(index)
+                continue
+            if index not in available:
+                fail(where + "/invocation_index", "The predicate result is not available")
+            circuit = circuits[index]
+            registers = [r for r in circuit.cregs if r.name == node.register_name]
+            if len(registers) != 1:
+                fail(where + "/register_name", "The predicate register must be declared once")
+            size = registers[0].size
+            written = {
+                h.creg_index
+                for h in build_dataflow_summary(circuit)["measurement_handles"]
+                if h.creg_name == node.register_name
+            }
+            if written != set(range(size)):
+                fail(where + "/register_name", "The predicate register must be fully measured")
+            if node.value >= 1 << size:
+                fail(where + "/value", "The predicate value exceeds the register width")
+            tasks.extend(
+                [
+                    (True, nodes, offset + 1, set(), path),
+                    (False, node.else_body, 0, set(available), where + "/else_body"),
+                    (False, node.then_body, 0, set(available), where + "/then_body"),
+                ]
+            )
+            break
+        else:
+            completed.append(available)
+    final = completed[0]
+    if order != list(range(len(program.quantum_invocations))):
+        fail("/control_flow", "Calls must cover the invocation table once in table order")
+    for index, output in enumerate(program.result_outputs):
+        if output.invocation_index not in final:
+            fail(f"/result_outputs/{index}", "The output is unavailable on some paths")

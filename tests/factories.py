@@ -14,6 +14,16 @@ basename 唯一就不存在这种冲突。
 from qaiji.core.circuit import Circuit, Gate, GateType
 from qaiji.core.classical import ClassicalBit, ClassicalRegister, Conditional, Measure
 
+PROGRAM_V1_PUBLIC_NAMES = frozenset(
+    {
+        "ProgramCall",
+        "ProgramIf",
+        "ProgramIRV1",
+        "dump_program",
+        "load_program",
+    }
+)
+
 
 def bell_circuit() -> Circuit:
     """构造一个带测量的两比特 Bell 电路。"""
