@@ -6,6 +6,11 @@ git tags via `poetry-dynamic-versioning`.
 
 ## [Unreleased]
 
+### Fix
+
+- The codec requires openqasm3 1.0.2 or later and parses with `ignore_version=True`.
+  Qaiji still checks the header after parsing, so OPENQASM 2.0 sources stay accepted.
+
 ## v0.5.0 (2026-11-08)
 
 ### BREAKING CHANGE

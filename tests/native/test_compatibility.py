@@ -260,7 +260,9 @@ def _ledger_errors(baseline, root):
         "guard_tests",
         "sources",
     }
-    planned = {f"L6-{i:02d}" for i in range(1, 11)} | {f"L7-{i:02d}" for i in range(1, 9)}
+    planned = (
+        {f"L6-{i:02d}" for i in range(1, 11)} | {f"L7-{i:02d}" for i in range(1, 9)} | {"L8-01"}
+    )
     # starts：每条链的起点，创建 hop 的起点是 None；touched：账本顺序中已经出现过的路径。
     seen, touched, starts = set(), set(), dict(origin)
     for row in ledger:
@@ -1036,7 +1038,9 @@ def test_stdgates_origin_is_pinned_to_the_t2_delivery():
 def test_ledger_covers_all_planned_rows():
     """账本 ID 必须与「计划 − pending」双向相等。"""
     baseline = json.loads(CASES.read_text())
-    planned = {f"L6-{i:02d}" for i in range(1, 11)} | {f"L7-{i:02d}" for i in range(1, 9)}
+    planned = (
+        {f"L6-{i:02d}" for i in range(1, 11)} | {f"L7-{i:02d}" for i in range(1, 9)} | {"L8-01"}
+    )
     assert {row["id"] for row in baseline["ledger"]} == planned - _PENDING_L7
 
 

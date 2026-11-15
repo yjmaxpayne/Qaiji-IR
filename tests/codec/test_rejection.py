@@ -485,7 +485,7 @@ def test_non_numeric_parser_version_is_wrapped(
     monkeypatch.setattr(
         qasm3_module.openqasm3,
         "parse",
-        lambda source: InvalidVersionProgram(),
+        lambda source, **_options: InvalidVersionProgram(),
     )
 
     error = _assert_rejected("ignored", Qasm3ParseError, "OPENQASM")
@@ -1556,7 +1556,7 @@ def test_evaluator_recursion_limit_is_a_parse_error(monkeypatch, bounded_recursi
     for _ in range(400):
         expression = ast.UnaryExpression(ast.UnaryOperator["-"], expression)
     program.statements[-1].arguments[0] = expression
-    monkeypatch.setattr(qasm3_module.openqasm3, "parse", lambda _: program)
+    monkeypatch.setattr(qasm3_module.openqasm3, "parse", lambda _, **_options: program)
     _assert_exact_rejection(
         source,
         Qasm3ParseError,
@@ -1589,7 +1589,7 @@ def test_empty_or_comment_only_source_has_no_qubit_declaration(source):
 def test_unexpected_parser_attribute_error_is_a_parse_error(monkeypatch):
     error = AttributeError("injected parser failure")
 
-    def fail_parse(source):
+    def fail_parse(source, **_options):
         raise error
 
     monkeypatch.setattr(qasm3_module.openqasm3, "parse", fail_parse)
@@ -3027,7 +3027,7 @@ def test_rejection_matrix(case_id, source, error_name, construct, detail, cause_
     if case_id == "NS-021":
         program = qasm3_module.openqasm3.parse("qubit q;")
         monkeypatch.setattr(program, "version", "not-a-version")
-        monkeypatch.setattr(qasm3_module.openqasm3, "parse", lambda _: program)
+        monkeypatch.setattr(qasm3_module.openqasm3, "parse", lambda _, **_options: program)
         source = "qubit q;"
     error_type = {
         "Qasm3ParseError": Qasm3ParseError,

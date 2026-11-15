@@ -715,7 +715,7 @@ def parse_qasm3(src: str) -> ParsedQasm3:
 
 def _parse_source(src: str) -> ParsedQasm3:
     try:
-        program = openqasm3.parse(src)
+        program = openqasm3.parse(src, ignore_version=True)
     except QASM3ParsingError as exc:
         raise Qasm3ParseError(_message(src, "source", "invalid OpenQASM syntax")) from exc
     except ValueError as exc:

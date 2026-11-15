@@ -273,7 +273,7 @@ def test_every_accepted_corpus_operation_has_traceable_origin():
         except QaijiIRError:
             continue
         accepted[row["set"]] += 1
-        statements = openqasm3.parse(src).statements
+        statements = openqasm3.parse(src, ignore_version=True).statements
         for operation, origin in zip(parsed.circuit.gates, parsed.origins, strict=True):
             assert len(origin.body) == len(getattr(operation, "body", ())), row["id"]
             _assert_traces_to(src, statements[origin.statement_index], origin)
