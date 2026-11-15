@@ -206,6 +206,19 @@ def test_discarded_measurement_is_rejected() -> None:
     assert "target" in str(error)
 
 
+def test_measurement_call_is_rejected_with_typed_error() -> None:
+    # The parser types a defcal measurement call as QuantumCallExpression.
+    # It has no qubit operand, so it must not leak an AttributeError.
+    source = "OPENQASM 3.0; qubit[1] q; bit[1] c; c[0] = measure_iq q[0];"
+
+    with pytest.raises(Qasm3UnsupportedConstructError) as raised:
+        qasm3_module.parse_qasm3(source)
+
+    message = str(raised.value)
+    assert message.startswith("measure at 1:")
+    assert "measurement call" in message
+
+
 def test_gate_parameter_count_error_is_wrapped_with_core_cause() -> None:
     source = 'OPENQASM 3.0; include "stdgates.inc"; qubit q; rx(0.1, 0.2) q[0];'
 

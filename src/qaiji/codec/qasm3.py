@@ -501,6 +501,12 @@ def _handle_measurement(stmt: ast.QuantumMeasurementStatement, state: _ParseStat
     _reject_annotations(stmt, construct)
     if stmt.target is None:
         _raise_unsupported(stmt, construct, "measurement target is required")
+    if not isinstance(stmt.measure, ast.QuantumMeasurement):
+        _raise_unsupported(
+            stmt,
+            construct,
+            "only qubit measurement is supported, not a measurement call",
+        )
 
     circuit = _require_circuit(state, stmt, construct)
     source_name, qubit = _gate_operand(stmt.measure.qubit, construct)

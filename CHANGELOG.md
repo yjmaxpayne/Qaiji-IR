@@ -10,6 +10,8 @@ git tags via `poetry-dynamic-versioning`.
 
 - The codec requires openqasm3 1.0.2 or later and parses with `ignore_version=True`.
   Qaiji still checks the header after parsing, so OPENQASM 2.0 sources stay accepted.
+- A defcal measurement call such as `c[0] = measure_iq q[0];` now raises
+  `Qasm3UnsupportedConstructError` for `measure`, not a bare `AttributeError`.
 
 ## v0.5.0 (2026-11-08)
 

@@ -122,7 +122,7 @@
   "frozen_sources": {
     "src/qaiji/__init__.py": "93fc5646dd76bb1e18e35e861df09811aca3d798bf793deea330393710693667",
     "src/qaiji/codec/__init__.py": "1d25d779044c5c6b8d30835bd0042b39e092ba554ba9fee7a2c8590a897dbc9b",
-    "src/qaiji/codec/qasm3.py": "850fadeaa425628c80334df6df520ebb7d20b99ca84c6a70b840c7d180d6c277",
+    "src/qaiji/codec/qasm3.py": "80af3ad346f69a769af30dd975fde38bc363d0e46b80b4ca28ad32367e79ddde",
     "src/qaiji/constants.py": "c38d491059de235ae71c4351e9dc355a87b6eb450fe46c8a46055f0c365aadd0",
     "src/qaiji/core/__init__.py": "af33db4a43be455b0394cde31526b9506e3574a2043bf3b26cf921c00bd3ea19",
     "src/qaiji/core/circuit.py": "71a6d94dba9aca5c66cb668c96401bdf98b04ebc9f97d7595ffd13914df954e9",
@@ -565,9 +565,9 @@
       "id": "L8-01",
       "kind": "fix",
       "surface": "source",
-      "decision": "Require openqasm3>=1.0.2; Qaiji keeps the version check",
+      "decision": "Require openqasm3>=1.0.2; Qaiji keeps the version check and rejects measurement calls",
       "before": "openqasm3.parse ran with its own version check. openqasm3 1.0.2 rejects every header other than OPENQASM 3.x, so OPENQASM 2.0 sources fail inside the parser before _validate_version runs.",
-      "after": "openqasm3.parse runs with ignore_version=True and the dependency floor is openqasm3>=1.0.2. _validate_version still checks the header after parsing: major versions 2 and 3 are accepted, others are rejected with the same Qasm3ParseError as before.",
+      "after": "openqasm3.parse runs with ignore_version=True and the dependency floor is openqasm3>=1.0.2. _validate_version still checks the header after parsing: major versions 2 and 3 are accepted, others are rejected with the same Qasm3ParseError as before. openqasm3 1.0.2 also types a defcal measurement call as QuantumCallExpression; it is rejected with Qasm3UnsupportedConstructError for the measure construct instead of a bare AttributeError.",
       "tests_rewritten": [
         "tests/codec/test_rejection.py::test_non_numeric_parser_version_is_wrapped",
         "tests/codec/test_rejection.py::test_evaluator_recursion_limit_is_a_parse_error",
@@ -578,12 +578,13 @@
       "guard_tests": [
         "tests/codec/test_rejection.py::test_supported_versions_parse_bell_circuit",
         "tests/codec/test_rejection.py::test_major_version_outside_two_and_three_is_rejected",
-        "tests/codec/test_roundtrip_qasm3.py::test_qasm2_input_is_reemitted_as_qasm3"
+        "tests/codec/test_roundtrip_qasm3.py::test_qasm2_input_is_reemitted_as_qasm3",
+        "tests/codec/test_rejection.py::test_measurement_call_is_rejected_with_typed_error"
       ],
       "sources": {
         "src/qaiji/codec/qasm3.py": {
           "before": "4c81bec473aeff9224775ace939b7d07d0b526e40ded0aad15c50c0ca55464f0",
-          "after": "850fadeaa425628c80334df6df520ebb7d20b99ca84c6a70b840c7d180d6c277"
+          "after": "80af3ad346f69a769af30dd975fde38bc363d0e46b80b4ca28ad32367e79ddde"
         }
       }
     }
