@@ -597,19 +597,23 @@
       "surface": "if",
       "decision": "Accept a bit-level condition on a multi-bit register",
       "before": "if (c[k] == v) was accepted only when register c has one bit. A multi-bit register was rejected with Qasm3UnsupportedConstructError 'bit-level condition on a multi-bit register is not supported'.",
-      "after": "Conditional has an optional bit_index field. if (c[k] == v) on a multi-bit register lowers to Conditional(c, v, body, bit_index=k) with v in {0, 1}, and to_qasm3 writes it back as c[k] == v. On a one-bit register bit_index 0 normalises to None, so existing programs keep their summary hash, native JSON and qasm3 text. The summary, node equality, preservation check and dataflow edges read bit_index.",
+      "after": "Conditional has an optional bit_index field. if (c[k] == v) on a multi-bit register lowers to Conditional(c, v, body, bit_index=k) with v in {0, 1}, and to_qasm3 writes it back as c[k] == v. On a one-bit register bit_index 0 normalises to None, so existing programs keep their summary hash, native JSON and qasm3 text. The summary, node equality, preservation check and dataflow edges read bit_index. The native ConditionRegion has an optional bit_index field with the same rules. A bit-level region reads one measurement event and keeps width equal to the register size. The scheduler and the layout and timing checks read bit_index. Native JSON writes bit_index only when it is not None.",
       "tests_rewritten": [
         "tests/codec/test_rejection.py::test_multi_bit_register_bit_condition_is_accepted",
         "tests/codec/test_rejection.py::test_statement_error_precedence_matches_slice_a",
         "tests/codec/test_rejection.py::test_bit_condition_check_order_is_contractual",
-        "tests/codec/test_source_origins_contract.py::test_every_accepted_corpus_operation_has_traceable_origin"
+        "tests/codec/test_source_origins_contract.py::test_every_accepted_corpus_operation_has_traceable_origin",
+        "tests/native/test_model.py::test_all_value_construction_protocol"
       ],
       "guard_tests": [
         "tests/test_public_api.py::test_public_exports_are_the_exact_contract",
         "tests/core/test_bit_condition.py::test_legacy_identity_is_frozen",
         "tests/core/test_bit_condition.py::test_summary_hash_distinguishes_bit_conditions",
         "tests/codec/test_bit_condition_qasm3.py::test_bit_condition_enters_on_the_indexed_bit",
-        "tests/codec/test_bit_condition_qasm3.py::test_bit_condition_round_trips_through_qasm3"
+        "tests/codec/test_bit_condition_qasm3.py::test_bit_condition_round_trips_through_qasm3",
+        "tests/native/test_bit_condition_region.py::test_scheduled_region_agrees_with_source_predicate",
+        "tests/native/test_bit_condition_region.py::test_layout_check_flags_changed_bit_index",
+        "tests/native/test_bit_condition_region.py::test_region_json_writes_bit_index_only_when_set"
       ],
       "sources": {
         "src/qaiji/codec/qasm3.py": {

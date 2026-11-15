@@ -70,6 +70,7 @@ _SCHEMA: dict[type, dict[str, Any]] = {
         "op_stop": None,
         "start_ns": None,
         "end_ns": None,
+        "bit_index": None,
     },
     NativeScheduleIR: {
         "schema_version": None,
@@ -84,6 +85,9 @@ _SCHEMA: dict[type, dict[str, Any]] = {
         "end_ns": None,
     },
 }
+
+# Keys written only when the value is not None; an explicit null is rejected.
+_OPTIONAL: dict[type, frozenset[str]] = {ConditionRegion: frozenset({"bit_index"})}
 
 
 def _depth(text: str) -> None:
@@ -138,11 +142,14 @@ def _construct(value: Any, descriptor: Any, path: str) -> Any:
         )
     if type(value) is not dict:
         raise NativeInputError("container", path, "Expected a JSON object.")
-    schema = _SCHEMA[descriptor]
-    if value.keys() != schema.keys():
+    schema, optional = _SCHEMA[descriptor], _OPTIONAL.get(descriptor, frozenset())
+    present = {name for name in optional if value.get(name) is not None}
+    if value.keys() != schema.keys() - optional | present:
         raise NativeInputError("keys", path, "JSON object fields differ from the schema.")
     kwargs = {
-        name: _construct(value[name], child, f"{path}.{name}") for name, child in schema.items()
+        name: _construct(value[name], child, f"{path}.{name}")
+        for name, child in schema.items()
+        if name in value
     }
     try:
         return descriptor(**kwargs)
@@ -155,8 +162,11 @@ def _project(value: Any, descriptor: Any) -> Any:
         return value
     if isinstance(descriptor, tuple):
         return [_project(item, descriptor[0]) for item in value]
+    optional = _OPTIONAL.get(descriptor, frozenset())
     return {
-        name: _project(getattr(value, name), child) for name, child in _SCHEMA[descriptor].items()
+        name: _project(getattr(value, name), child)
+        for name, child in _SCHEMA[descriptor].items()
+        if name not in optional or getattr(value, name) is not None
     }
 
 

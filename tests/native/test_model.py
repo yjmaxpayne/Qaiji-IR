@@ -57,6 +57,10 @@ def test_all_value_construction_protocol(cls):
         if field in ("schema_version", "ruleset_version"):
             continue
         kwargs = values()[cls].copy()
+        if (cls, field) == (ConditionRegion, "bit_index"):
+            # Optional field: omitting it means a whole-register condition.
+            assert cls(**kwargs).bit_index is None
+            continue
         del kwargs[field]
         with pytest.raises(TypeError):
             cls(**kwargs)

@@ -403,8 +403,13 @@ def test_p_legacy_baseline_is_explicit() -> None:
         isinstance(selected.get("files"), dict) and len(selected["files"]) == 6,
         "legacy.selected_legacy_tests.files",
     )
-    # 这两个测试文件增加了 v1 导出契约。其他历史测试保持原指纹。
-    evolved_tests = {"tests/test_public_api.py", "tests/native/test_compatibility.py"}
+    # 前两个测试文件增加了 v1 导出契约。native 模型测试在字段契约循环中
+    # 增加了可选字段分支。其他历史测试保持原指纹。
+    evolved_tests = {
+        "tests/test_public_api.py",
+        "tests/native/test_compatibility.py",
+        "tests/native/test_model.py",
+    }
     _require(evolved_tests <= set(selected["files"]), "legacy.selected_legacy_tests.evolved")
     for path, digest in selected["files"].items():
         if path not in evolved_tests:

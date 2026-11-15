@@ -156,7 +156,7 @@
     },
     "compatibility_baseline": {
       "path": "tests/native/compatibility_baseline.json",
-      "sha256": "0d48025e5783a401f2c3155233b108ed800c3235b2fa69c48ca75c0356a0b809"
+      "sha256": "c3e18a71361f994700a20d4d431448a446923f227217c4fb5722f2538fe30d10"
     },
     "kernel_ref_cases": [
       {

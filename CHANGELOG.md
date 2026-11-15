@@ -12,6 +12,10 @@ git tags via `poetry-dynamic-versioning`.
   register now lowers to a bit-level condition and exports back as `c[k] == v`. A one-bit
   register keeps `bit_index=None`, so existing summary hashes, native JSON and qasm3 text
   do not change.
+- **native**: `ConditionRegion` has an optional `bit_index` field with the same rules. A
+  bit-level region reads one measurement event and keeps `width` equal to the register size.
+  The scheduler and the layout and timing checks read `bit_index`. Native JSON writes
+  `bit_index` only when it is set, so existing native JSON does not change.
 
 ### Fix
 

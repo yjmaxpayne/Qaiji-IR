@@ -237,6 +237,7 @@ class ConditionRegion:
     op_stop: int
     start_ns: int
     end_ns: int
+    bit_index: int | None = None
     __hash__: ClassVar[Any] = None
 
     def __post_init__(self) -> None:
@@ -248,12 +249,21 @@ class ConditionRegion:
         _set(self, "reads", _objects(ConditionRead))
         if self.condition_id != f"c{self.gate_index}":
             _fail("condition_id", "$.condition_id", "Condition ID must match its source index.")
-        if self.value.bit_length() > self.width:
-            _fail("condition_value", "$.value", "Condition value exceeds register width.")
-        if len(self.reads) != self.width or any(
-            read.bit_index != i for i, read in enumerate(self.reads)
-        ):
-            _fail("read_bits", "$.reads", "Reads must contain each bit in register order.")
+        _set(self, "bit_index", _optional(_uint))
+        if self.width == 1 and self.bit_index == 0:
+            object.__setattr__(self, "bit_index", None)
+        if self.bit_index is None:
+            if self.value.bit_length() > self.width:
+                _fail("condition_value", "$.value", "Condition value exceeds register width.")
+            if tuple(read.bit_index for read in self.reads) != tuple(range(self.width)):
+                _fail("read_bits", "$.reads", "Reads must contain each bit in register order.")
+        else:
+            if self.bit_index >= self.width:
+                _fail("register_reference", "$.bit_index", "Bit outside register.")
+            if self.value not in (0, 1):
+                _fail("condition_value", "$.value", "Bit condition value must be 0 or 1.")
+            if tuple(read.bit_index for read in self.reads) != (self.bit_index,):
+                _fail("read_bits", "$.reads", "Reads must contain only the tested bit.")
         if self.op_stop < self.op_start:
             _fail("span", "$.op_stop", "Reversed operation span.")
         if self.end_ns < self.start_ns:
