@@ -77,6 +77,7 @@ def build_dataflow_summary(circuit: Circuit) -> dict[str, Any]:
                 ClassicalEdge(source_handle=handle.measurement_id, target=target)
                 for handle in handles
                 if handle.creg_name == operation.register.name
+                and operation.bit_index in (None, handle.creg_index)
             )
 
     return {

@@ -151,11 +151,17 @@ def _node(
         condition = _integer(value.value, path + ".value", "source_condition")
         if condition.bit_length() > register.size:
             _fail("source_condition", path + ".value", "Condition does not fit its register.")
+        bit_index = value.bit_index
+        if bit_index is not None:
+            bit_index = _integer(bit_index, path + ".bit_index", "source_condition")
+            if bit_index >= register.size or condition > 1:
+                _fail("source_condition", path + ".bit_index", "Bit condition does not fit.")
         body = _sequence(value.body, path + ".body")
         return Conditional(
             register,
             condition,
             tuple(_gate(item, f"{path}.body[{i}]", width) for i, item in enumerate(body)),
+            bit_index,
         )
     _fail("source_node", path, "Unknown source operation.")
 

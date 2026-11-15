@@ -262,7 +262,7 @@ def test_every_accepted_corpus_operation_has_traceable_origin():
     语料的枚举方式：``data/source_origin_corpus.json`` 收录前端差分核对报告 diff-v1 的
     ``results[].src`` 全部 148 个程序（set ``m1``），以及从 EmuPlat rst 文档抽取、相对 diff-v1
     逐字新增的 41 个程序（set ``doc``）；``id`` 是源码的 SHA256。其中被 ``from_qasm3`` 接受的
-    125 + 38 个在此逐个检查，其余由拒收等价测试使用。
+    127 + 38 个在此逐个检查，其余由拒收等价测试使用。
     """
     accepted: Counter[str] = Counter()
     for row in _corpus():
@@ -277,4 +277,4 @@ def test_every_accepted_corpus_operation_has_traceable_origin():
         for operation, origin in zip(parsed.circuit.gates, parsed.origins, strict=True):
             assert len(origin.body) == len(getattr(operation, "body", ())), row["id"]
             _assert_traces_to(src, statements[origin.statement_index], origin)
-    assert accepted == {"m1": 125, "doc": 38}
+    assert accepted == {"m1": 127, "doc": 38}

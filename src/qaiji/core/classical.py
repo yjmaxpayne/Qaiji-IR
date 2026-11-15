@@ -57,11 +57,13 @@ class Measure:
 
 @dataclass(frozen=True)
 class Conditional:
-    """当寄存器等于某个值时执行的门序列。"""
+    """当寄存器（或其中一个比特）等于某个值时执行的门序列。"""
 
     register: ClassicalRegister
     value: int
     body: tuple[Gate, ...]
+    bit_index: int | None = None
+    """被比较的比特下标；``None`` 表示比较整个寄存器。1 位寄存器上的 0 归一为 ``None``。"""
 
     def __post_init__(self) -> None:
         body = tuple(self.body)
@@ -69,5 +71,15 @@ class Conditional:
 
         if self.value < 0:
             raise ValueError("Conditional value must be non-negative")
+        if self.bit_index is not None:
+            if not 0 <= self.bit_index < self.register.size:
+                raise ValueError(
+                    f"Conditional bit index {self.bit_index} is outside register "
+                    f"{self.register.name!r} of size {self.register.size}"
+                )
+            if self.value not in (0, 1):
+                raise ValueError("Bit-level conditional value must be 0 or 1")
+            if self.register.size == 1:
+                object.__setattr__(self, "bit_index", None)
         if any(not isinstance(operation, Gate) for operation in body):
             raise ValueError("Conditional body may only contain gates")

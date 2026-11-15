@@ -86,13 +86,14 @@ def test_non_equality_condition_is_rejected() -> None:
 
 @pytest.mark.parametrize("size", [2, 3])
 @pytest.mark.parametrize("extra", ["", "bit d;"])
-def test_multi_bit_register_bit_condition_is_rejected(size, extra):
-    _assert_exact_rejection(
-        f"qubit q; bit[{size}] c; {extra} if (c[0] == 1) {{ x q[0]; }}",
-        Qasm3UnsupportedConstructError,
-        "if",
-        "bit-level condition on a multi-bit register is not supported",
-    )
+def test_multi_bit_register_bit_condition_is_accepted(size, extra):
+    conditional = from_qasm3(f"qubit q; bit[{size}] c; {extra} if (c[0] == 1) {{ x q[0]; }}").gates[
+        -1
+    ]
+
+    assert isinstance(conditional, Conditional)
+    assert (conditional.register.name, conditional.register.size) == ("c", size)
+    assert (conditional.bit_index, conditional.value) == (0, 1)
 
 
 def test_compound_condition_is_rejected() -> None:
@@ -883,8 +884,8 @@ def test_register_used_before_declaration_is_rejected(operation, construct):
             "OPENQASM 3.0; qubit q; bit[2] c; if (c[0] == 1) { x q[5]; }",
             "Qasm3UnsupportedConstructError",
             "if",
-            "bit-level condition on a multi-bit register is not supported",
-            None,
+            "index 5 is outside qubit register 'q' of size 1",
+            "ValueError",
             (1, 34),
         ),
         (
@@ -1506,8 +1507,8 @@ def test_bit_condition_on_undeclared_register_is_rejected():
         (
             "bit[2] c;",
             "c[2] == 1",
-            "bit-level condition on a multi-bit register is not supported",
-            None,
+            "Classical bit index 2 is outside register 'c' of size 2",
+            "ValueError",
         ),
         (
             "bit c;",

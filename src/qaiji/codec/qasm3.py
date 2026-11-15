@@ -577,10 +577,6 @@ def _handle_branching(stmt: ast.BranchingStatement, state: _ParseState) -> None:
         )
     if bit_index is not None:
         register = state.registers[register_name]
-        if register.size != 1:
-            _raise_unsupported(
-                stmt, construct, "bit-level condition on a multi-bit register is not supported"
-            )
         _core_call(stmt, construct, partial(ClassicalBit, register, bit_index))
         if _checked_int(stmt.condition.rhs, construct) not in {0, 1}:
             _raise_unsupported(stmt, construct, "bit condition value must be 0 or 1")
@@ -600,7 +596,9 @@ def _handle_branching(stmt: ast.BranchingStatement, state: _ParseState) -> None:
         ) from first_bounds_error
     register = state.registers[register_name]
     value = _checked_int(stmt.condition.rhs, construct)
-    conditional = _core_call(stmt, construct, lambda: Conditional(register, value, tuple(body)))
+    conditional = _core_call(
+        stmt, construct, lambda: Conditional(register, value, tuple(body), bit_index)
+    )
     _core_call(stmt, construct, lambda: circuit.add_conditional(conditional))
     state.origins.append(_origin(stmt, state, construct, body=tuple(body_origins)))
 
@@ -663,9 +661,12 @@ def _measure_to_ast(measurement: Measure, qubit_name: str) -> ast.QuantumMeasure
 
 
 def _conditional_to_ast(conditional: Conditional, qubit_name: str) -> ast.BranchingStatement:
+    lhs: ast.Expression = ast.Identifier(conditional.register.name)
+    if conditional.bit_index is not None:
+        lhs = ast.IndexExpression(collection=lhs, index=[ast.IntegerLiteral(conditional.bit_index)])
     condition = ast.BinaryExpression(
         op=ast.BinaryOperator["=="],
-        lhs=ast.Identifier(conditional.register.name),
+        lhs=lhs,
         rhs=ast.IntegerLiteral(conditional.value),
     )
     return ast.BranchingStatement(

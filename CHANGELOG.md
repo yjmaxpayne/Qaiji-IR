@@ -6,6 +6,13 @@ git tags via `poetry-dynamic-versioning`.
 
 ## [Unreleased]
 
+### Feat
+
+- **core**: `Conditional` has an optional `bit_index` field. `if (c[k] == v)` on a multi-bit
+  register now lowers to a bit-level condition and exports back as `c[k] == v`. A one-bit
+  register keeps `bit_index=None`, so existing summary hashes, native JSON and qasm3 text
+  do not change.
+
 ### Fix
 
 - The codec requires openqasm3 1.0.2 or later and parses with `ignore_version=True`.
