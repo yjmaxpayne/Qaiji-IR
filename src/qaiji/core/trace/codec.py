@@ -91,7 +91,7 @@ def _event_of(tree: Any) -> TraceEvent:
 
 
 def dump_trace_log(log: TraceLog) -> bytes:
-    """Encode a trace log as canonical JSON bytes; floats are binary64 hex strings."""
+    """把轨迹日志编码为规范 JSON 字节；浮点数写为 binary64 十六进制字符串。"""
     source = log.source
     return canonical_json(
         {
@@ -108,11 +108,11 @@ def dump_trace_log(log: TraceLog) -> bytes:
 
 
 def load_trace_log(data: bytes) -> TraceLog:
-    """Decode bytes from ``dump_trace_log``.
+    """解码 ``dump_trace_log`` 输出的字节。
 
     Raises:
-        TraceInputError: The schema is unknown, a key is missing or unknown, a float is
-            not a hex string, or a value breaks the type contract.
+        TraceInputError: 模式未知、缺键或有未知键、浮点数不是十六进制字符串，
+            或值违反类型契约。
     """
     tree = _object("trace log", _parse(data, TRACE_LOG_SCHEMA), {"schema", "source", "events"})
 
@@ -167,7 +167,7 @@ def _comparison_of(tree: Any) -> Comparison:
 
 
 def dump_certificate(certificate: PreservationCertificate) -> bytes:
-    """Encode a preservation certificate as canonical JSON bytes."""
+    """把保持证书编码为规范 JSON 字节。"""
     symbolic = certificate.symbolic
     latency = certificate.assumptions.result_latency_ns
     return canonical_json(
@@ -197,11 +197,11 @@ def dump_certificate(certificate: PreservationCertificate) -> bytes:
 
 
 def load_certificate(data: bytes) -> PreservationCertificate:
-    """Decode bytes from ``dump_certificate``.
+    """解码 ``dump_certificate`` 输出的字节。
 
     Raises:
-        TraceInputError: The schema is unknown, a key is missing or unknown, a float is
-            not a hex string, or a value breaks the type or verdict contract.
+        TraceInputError: 模式未知、缺键或有未知键、浮点数不是十六进制字符串，
+            或值违反类型契约或判决契约。
     """
     tree = _object("certificate", _parse(data, CERTIFICATE_SCHEMA), _CERTIFICATE_KEYS)
 
@@ -240,7 +240,7 @@ _TOLERANCES_KEYS = {"schema", "rule", "comparisons", "calibration_records"}
 
 
 def dump_tolerances(table: ToleranceTable) -> bytes:
-    """Encode a tolerance table as canonical JSON bytes; floats are binary64 hex strings."""
+    """把容差表编码为规范 JSON 字节；浮点数写为 binary64 十六进制字符串。"""
     return canonical_json(
         {
             "schema": table.schema,
@@ -258,11 +258,11 @@ def dump_tolerances(table: ToleranceTable) -> bytes:
 
 
 def load_tolerances(data: bytes) -> ToleranceTable:
-    """Decode bytes from ``dump_tolerances``; the precision ladder is not checked here.
+    """解码 ``dump_tolerances`` 输出的字节；此处不检查精度阶梯。
 
     Raises:
-        TraceInputError: The schema or rule is unknown, a key is missing or unknown, a
-            float is not a hex string, or a value breaks the type contract.
+        TraceInputError: 模式或规则未知、缺键或有未知键、浮点数不是十六进制字符串，
+            或值违反类型契约。
     """
     tree = _object("tolerances", _parse(data, TOLERANCES_SCHEMA), _TOLERANCES_KEYS)
 

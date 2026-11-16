@@ -22,10 +22,10 @@ _DECIDABLE_LEVELS = (EquivLevel.EXACT, EquivLevel.UP_TO_PHASE)
 
 
 class TraceInputError(QaijiIRError, ValueError):
-    """Raised when a trace value or an encoded document breaks the trace-layer contract."""
+    """轨迹值或编码文档违反 T 层契约时抛出。"""
 
 
-# --- field checks -------------------------------------------------------------------
+# --- 字段检查 -------------------------------------------------------------------
 
 
 def _text(name: str, value: Any) -> None:
@@ -65,7 +65,7 @@ def _items(name: str, values: Iterable[Any], item_type: type) -> tuple[Any, ...]
     return items
 
 
-# --- trace log ----------------------------------------------------------------------
+# --- 轨迹日志 ----------------------------------------------------------------------
 
 _KINDS: dict[str, tuple[re.Pattern[str], dict[str, Callable[[str, Any], None]]]] = {
     "measurement": (
@@ -97,7 +97,7 @@ def _is_event_id(value: Any) -> bool:
 
 @dataclass(frozen=True, kw_only=True)
 class TraceEvent:
-    """One measurement, branch, or observable event of a trace log.
+    """轨迹日志中的一个测量、分支或可观测事件。
 
     Example:
         >>> TraceEvent(id="b:01", kind="branch", conditional_weight=0.5,
@@ -106,25 +106,25 @@ class TraceEvent:
     """
 
     id: str
-    """``m<i>`` for a measurement, ``b:<bit key>`` for a branch, ``o:<name>`` for an observable."""
+    """测量为 ``m<i>``，分支为 ``b:<bit key>``，可观测量为 ``o:<name>``。"""
     kind: str
-    """``measurement``, ``branch``, or ``observable``."""
+    """``measurement``、``branch`` 或 ``observable``。"""
     qubit: int | None = None
-    """Measured qubit (measurement only)."""
+    """被测量子比特（仅测量事件）。"""
     register: str | None = None
-    """Classical register that receives the result (measurement only)."""
+    """接收结果的经典寄存器（仅测量事件）。"""
     bit_index: int | None = None
-    """Bit of the register that receives the result (measurement only)."""
+    """寄存器中接收结果的位（仅测量事件）。"""
     conditional_weight: float | None = None
-    """Probability of the branch given its parent (branch only)."""
+    """给定父分支时本分支的概率（仅分支事件）。"""
     path_weight: float | None = None
-    """Probability of the whole path to the branch (branch only)."""
+    """到达本分支的整条路径的概率（仅分支事件）。"""
     pruned: bool | None = None
-    """True when the simulation dropped the branch (branch only)."""
+    """模拟丢弃本分支时为 True（仅分支事件）。"""
     value: float | None = None
-    """Observable value (observable only)."""
+    """可观测量的值（仅可观测事件）。"""
     result_digest: str | None = None
-    """Digest of the result the value comes from (observable only)."""
+    """该值所来自结果的摘要（仅可观测事件）。"""
 
     def __post_init__(self) -> None:
         if self.kind not in _KINDS:
@@ -149,16 +149,16 @@ def _order_key(event: TraceEvent) -> tuple[int, int, str]:
 
 @dataclass(frozen=True, kw_only=True)
 class TraceSource:
-    """Identity of the record a trace log comes from; the record format is not parsed."""
+    """轨迹日志所来自记录的身份；不解析记录格式。"""
 
     kind: str
-    """Format name of the source record."""
+    """来源记录的格式名。"""
     digest: str
-    """Hash of the source record."""
+    """来源记录的哈希。"""
     program_ref: str
-    """Reference of the program the source record runs."""
+    """来源记录所运行程序的引用。"""
     layer: str
-    """Layer that produced the source record, such as ``l0`` or ``l1``."""
+    """产生来源记录的层，例如 ``l0`` 或 ``l1``。"""
 
     def __post_init__(self) -> None:
         for name in ("kind", "digest", "program_ref", "layer"):
@@ -167,18 +167,18 @@ class TraceSource:
 
 @dataclass(frozen=True, kw_only=True)
 class TraceLog:
-    """Events of one source record in canonical order.
+    """一条来源记录的事件，按规范顺序排列。
 
-    Measurements come first by id, then branches by (key length, key), then observables
-    by name. Ids are unique.
+    测量在前，按 id 排序；其次是分支，按（键长，键）排序；
+    最后是可观测量，按名称排序。id 唯一。
     """
 
     source: TraceSource
-    """Record the events come from."""
+    """事件所来自的记录。"""
     events: tuple[TraceEvent, ...]
-    """Events in canonical order."""
+    """按规范顺序排列的事件。"""
     schema: str = TRACE_LOG_SCHEMA
-    """Schema literal; only ``qaiji.t.trace_log/1.0`` is accepted."""
+    """模式字面量；只接受 ``qaiji.t.trace_log/1.0``。"""
 
     def __post_init__(self) -> None:
         _choice("trace log schema", self.schema, (TRACE_LOG_SCHEMA,))
@@ -194,19 +194,19 @@ class TraceLog:
             raise TraceInputError(f"trace log events are not in canonical order: {ids}")
 
 
-# --- certificate ----------------------------------------------------------------------
+# --- 证书 ----------------------------------------------------------------------
 
 
 @dataclass(frozen=True, kw_only=True)
 class SymbolicLevel:
-    """Symbolic equivalence level of one lowering stage."""
+    """一个降级阶段的符号等价级别。"""
 
     level: EquivLevel
-    """Any level; the checker accepts only ``EXACT`` and ``UP_TO_PHASE``."""
+    """任一级别；检查器只接受 ``EXACT`` 与 ``UP_TO_PHASE``。"""
     stage: str
-    """Lowering stage the level belongs to."""
+    """该级别所属的降级阶段。"""
     ruleset_version: str
-    """Version of the rule set the stage applied."""
+    """该阶段所用规则集的版本。"""
 
     def __post_init__(self) -> None:
         if not isinstance(self.level, EquivLevel):
@@ -217,20 +217,20 @@ class SymbolicLevel:
 
 @dataclass(frozen=True, kw_only=True)
 class Comparison:
-    """One numerical comparison and the events that support it."""
+    """一项数值比较及支撑它的事件。"""
 
     name: str
-    """Name of the compared quantity."""
+    """被比较量的名称。"""
     kind: str
-    """``same_layer`` or ``cross_layer``."""
+    """``same_layer`` 或 ``cross_layer``。"""
     tolerance: float | None
-    """Allowed difference; None for a same-layer hash comparison."""
+    """允许的差值；同层哈希比较时为 None。"""
     delta: float
-    """Measured difference."""
+    """实测差值。"""
     verdict: str
-    """``within`` or ``exceeded``."""
+    """``within`` 或 ``exceeded``。"""
     evidence_refs: tuple[tuple[str, str], ...]
-    """``(record_hash, event_id)`` pairs."""
+    """``(record_hash, event_id)`` 二元组。"""
 
     def __post_init__(self) -> None:
         _text("comparison.name", self.name)
@@ -250,12 +250,12 @@ class Comparison:
 
 @dataclass(frozen=True, kw_only=True)
 class Exclusion:
-    """A layer whose dominant key differs from the expected key."""
+    """主导键与期望键不同的层。"""
 
     layer: str
-    """Excluded layer."""
+    """被排除的层。"""
     dominant_key: str
-    """Dominant key that the layer produced."""
+    """该层产生的主导键。"""
 
     def __post_init__(self) -> None:
         _text("exclusion.layer", self.layer)
@@ -264,12 +264,12 @@ class Exclusion:
 
 @dataclass(frozen=True, kw_only=True)
 class ToleranceSource:
-    """Frozen tolerance file and the rule that picked the values."""
+    """冻结容差文件及选取容差值的规则。"""
 
     rule: str
-    """Name of the rule that picked the tolerances."""
+    """选取容差的规则名。"""
     digest: str
-    """Hash of the frozen tolerance file."""
+    """冻结容差文件的哈希。"""
 
     def __post_init__(self) -> None:
         _text("tolerance_source.rule", self.rule)
@@ -278,12 +278,12 @@ class ToleranceSource:
 
 @dataclass(frozen=True, kw_only=True)
 class ResultLatency:
-    """Assumed latency of a measurement result."""
+    """测量结果的假定延迟。"""
 
     value: int
-    """Latency in ns."""
+    """延迟，单位 ns。"""
     source: str
-    """``config`` or ``verilator``."""
+    """``config`` 或 ``verilator``。"""
 
     def __post_init__(self) -> None:
         _uint("result_latency_ns.value", self.value)
@@ -292,10 +292,10 @@ class ResultLatency:
 
 @dataclass(frozen=True, kw_only=True)
 class Assumptions:
-    """Assumptions recorded with a certificate; no check or reference uses them."""
+    """随证书记录的假设；检查与引用均不使用。"""
 
     result_latency_ns: ResultLatency
-    """Assumed result latency."""
+    """假定的结果延迟。"""
 
     def __post_init__(self) -> None:
         if not isinstance(self.result_latency_ns, ResultLatency):
@@ -303,15 +303,15 @@ class Assumptions:
 
 
 def numerical_verdict_of(comparisons: Iterable[Comparison], exclusions: Iterable[Exclusion]) -> str:
-    """Return the certificate verdict that the comparisons and exclusions imply.
+    """返回比较项与排除项所蕴含的证书判决。
 
     Args:
-        comparisons: Comparisons of the certificate.
-        exclusions: Excluded layers of the certificate.
+        comparisons: 证书的比较项。
+        exclusions: 证书的排除层。
 
     Returns:
-        ``exceeded`` if any comparison exceeded, else ``excluded`` if a layer is excluded,
-        else ``within``.
+        任一比较超限时返回 ``exceeded``；否则有层被排除时返回 ``excluded``；
+        否则返回 ``within``。
     """
     if any(c.verdict == "exceeded" for c in comparisons):
         return "exceeded"
@@ -320,30 +320,29 @@ def numerical_verdict_of(comparisons: Iterable[Comparison], exclusions: Iterable
 
 @dataclass(frozen=True, kw_only=True)
 class PreservationCertificate:
-    """Symbolic level and numerical verdict that one program keeps its meaning.
+    """一个程序保持其含义的符号级别与数值判决。
 
-    The symbolic level and the numerical verdict are separate fields; no verdict changes
-    the level.
+    符号级别与数值判决是两个独立字段；任何判决都不改变符号级别。
     """
 
     program_ref: str
-    """Reference of the certified program."""
+    """被认证程序的引用。"""
     expected_key: str
-    """Ideal dominant key, as the issuer states it."""
+    """理想主导键，由签发方给出。"""
     symbolic: SymbolicLevel
-    """Symbolic equivalence level of the lowering."""
+    """降级的符号等价级别。"""
     comparisons: tuple[Comparison, ...]
-    """One entry per compared quantity."""
+    """每个被比较量一项。"""
     exclusions: tuple[Exclusion, ...]
-    """Layers whose dominant key differs from ``expected_key``."""
+    """主导键与 ``expected_key`` 不同的层。"""
     numerical_verdict: str
-    """``within``, ``exceeded``, or ``excluded``; must equal ``numerical_verdict_of``."""
+    """``within``、``exceeded`` 或 ``excluded``；必须等于 ``numerical_verdict_of`` 的结果。"""
     tolerance_source: ToleranceSource
-    """Origin of the tolerances."""
+    """容差的来源。"""
     assumptions: Assumptions
-    """Recorded assumptions."""
+    """记录的假设。"""
     schema: str = CERTIFICATE_SCHEMA
-    """Schema literal; only ``qaiji.t.preservation_certificate/1.0`` is accepted."""
+    """模式字面量；只接受 ``qaiji.t.preservation_certificate/1.0``。"""
 
     def __post_init__(self) -> None:
         _choice("certificate schema", self.schema, (CERTIFICATE_SCHEMA,))
@@ -369,12 +368,12 @@ class PreservationCertificate:
 
 @dataclass(frozen=True, kw_only=True)
 class ToleranceEntry:
-    """Calibrated spread of one compared quantity and the tolerance picked for it."""
+    """一个被比较量的校准离散度及为其选取的容差。"""
 
     max_abs_delta: float
-    """Largest difference seen on the calibration records."""
+    """校准记录上观测到的最大差值。"""
     tolerance: float
-    """Allowed difference."""
+    """允许的差值。"""
 
     def __post_init__(self) -> None:
         _finite("max_abs_delta", self.max_abs_delta)
@@ -383,16 +382,16 @@ class ToleranceEntry:
 
 @dataclass(frozen=True, kw_only=True)
 class ToleranceTable:
-    """Frozen tolerance file: one entry per cross-layer comparison name."""
+    """冻结容差文件：每个跨层比较名一项。"""
 
     comparisons: Mapping[str, ToleranceEntry]
-    """Entries by comparison name."""
+    """按比较名索引的条目。"""
     calibration_records: tuple[str, ...]
-    """Hashes of the records that gave the spreads."""
+    """给出离散度的记录的哈希。"""
     rule: str = "precision_ladder"
-    """Rule that picks a tolerance; only ``precision_ladder`` is accepted."""
+    """选取容差的规则；只接受 ``precision_ladder``。"""
     schema: str = TOLERANCES_SCHEMA
-    """Schema literal; only ``qaiji.t.tolerances/1.0`` is accepted."""
+    """模式字面量；只接受 ``qaiji.t.tolerances/1.0``。"""
 
     def __post_init__(self) -> None:
         _choice("tolerances schema", self.schema, (TOLERANCES_SCHEMA,))

@@ -28,7 +28,7 @@ from qaiji.core.trace.model import (
     numerical_verdict_of,
 )
 
-# --- certificate check ----------------------------------------------------------------
+# --- 证书检查 ----------------------------------------------------------------
 
 _FAILURE_CODES = (
     "REF_SOURCE_MISSING",
@@ -51,7 +51,7 @@ _FAILURE_CODES = (
 
 
 def _required_evidence(name: str, sides: Iterable[TraceLog]) -> set[tuple[str, str]]:
-    """Return the references a cross-layer comparison must cite on its two sides."""
+    """返回跨层比较两侧必须给出的引用。"""
     if name == "branch_weights":
         return {(s.source.digest, e.id) for s in sides for e in s.events if e.kind == "branch"}
     return {(s.source.digest, f"o:{name}") for s in sides}
@@ -63,9 +63,9 @@ def _comparison_codes(
     program_ref: str,
     verdicts: dict[str, str],
 ) -> set[str]:
-    """Return the reference, pairing, evidence, and verdict codes of one comparison.
+    """返回一项比较的引用、配对、证据与判决失败码。
 
-    The recomputed verdict goes into ``verdicts`` by comparison name.
+    重算的判决按比较名写入 ``verdicts``。
     """
     if not comparison.evidence_refs:
         return {"EVIDENCE_EMPTY"}
@@ -105,7 +105,7 @@ def _comparison_codes(
 def _exclusion_codes(
     certificate: PreservationCertificate, logs: Mapping[str, TraceLog], verdicts: dict[str, str]
 ) -> set[str]:
-    """Return ``EXCLUSION_MISMATCH`` if the recomputed exclusions or verdict disagree."""
+    """重算的排除项或判决不一致时，返回 ``EXCLUSION_MISMATCH``。"""
     cited = {d for c in certificate.comparisons for d, e in c.evidence_refs if d in logs}
     keys = {(logs[d].source.layer, _dominant_key(logs[d])) for d in cited}
     excluded = {(lay, k) for lay, k in keys if k is not None and k != certificate.expected_key}
@@ -120,7 +120,7 @@ def _exclusion_codes(
 
 
 def _recomputed_delta(comparison: Comparison, sides: list[TraceLog]) -> float | None:
-    """Return the delta of a comparison from its two sides; None if it cannot be computed."""
+    """由比较的两侧计算差值；无法计算时返回 None。"""
     if comparison.kind == "same_layer":
         return 0.0 if len(sides) == 1 else 1.0
     if len(sides) != 2:
@@ -142,14 +142,14 @@ def _recomputed_delta(comparison: Comparison, sides: list[TraceLog]) -> float | 
 
 
 def _verdict_of(comparison: Comparison, delta: float) -> str:
-    """Return ``within`` if ``|delta| <= tolerance``; a same-layer comparison needs delta 0."""
+    """``|delta| <= tolerance`` 时返回 ``within``；同层比较要求差值为 0。"""
     if comparison.tolerance is None:
         return "within" if delta == 0.0 else "exceeded"
     return "within" if abs(delta) <= comparison.tolerance else "exceeded"
 
 
 def _dominant_key(log: TraceLog) -> str | None:
-    """Return the leaf branch key with the largest path weight; None without branches."""
+    """返回路径权重最大的叶分支键；没有分支时返回 None。"""
     keys = {e.id[2:]: e.path_weight or 0.0 for e in log.events if e.kind == "branch"}
     leaves = [k for k in keys if not any(o != k and o.startswith(k) for o in keys)]
     return max(leaves, key=lambda k: (keys[k], k), default=None)
@@ -160,7 +160,7 @@ _DOCUMENT_ERRORS = (ValueError, KeyError, TypeError, IndexError, struct.error)
 
 
 def _fetch(digest: str, documents: Mapping[str, bytes]) -> bytes | str:
-    """Return the document under ``digest``; a failure code if it is absent or altered."""
+    """返回 ``digest`` 对应的文档；文档缺失或被改动时返回失败码。"""
     data = documents.get(digest)
     if data is None:
         return "DOCUMENT_MISSING"
@@ -170,10 +170,10 @@ def _fetch(digest: str, documents: Mapping[str, bytes]) -> bytes | str:
 
 
 def _population(definition: Mapping[str, Any], document: bytes) -> float:
-    """Return the final-state population of the definition's target in one result document.
+    """返回定义的目标在一份结果文档中的末态布居。
 
     Raises:
-        ValueError: The document does not fit the definition (order, dimension, layout).
+        ValueError: 文档与定义不符（阶数、维度或布局）。
     """
     result = json.loads(document)
     order, dims = list(definition["tensor_order"]), list(definition["site_dims"])
@@ -206,9 +206,9 @@ def _population(definition: Mapping[str, Any], document: bytes) -> float:
 def _observation_codes(
     event: TraceEvent, log: TraceLog, documents: Mapping[str, bytes] | None
 ) -> set[str]:
-    """Return the document and observation codes of one observable event.
+    """返回一个可观测事件的文档失败码与观测失败码。
 
-    The definition comes first, then the leaf documents; each is hashed before it is parsed.
+    先处理定义，再处理叶文档；每份文档先算哈希，再解析。
     """
     if documents is None:
         return {"DOCUMENT_MISSING"}
@@ -224,7 +224,7 @@ def _observation_codes(
     if codes:
         return codes
     found = {key: data for key, data in leaves.items() if isinstance(data, bytes)}
-    # A leaf without a branch event or without a path weight is an observation mismatch.
+    # 叶事件缺少分支事件或路径权重时，记为观测不符。
     weights = {
         e.id[2:]: e.path_weight
         for e in log.events
@@ -242,7 +242,7 @@ def _observation_codes(
 
 
 def _tolerance_codes(certificate: PreservationCertificate, document: bytes) -> set[str]:
-    """Return the tolerance-file and comparison-set codes; the hash is checked before parsing."""
+    """返回容差文件与比较集合的失败码；先核对哈希，再解析。"""
     digest = "sha256:" + hashlib.sha256(document).hexdigest()
     if digest != certificate.tolerance_source.digest:
         return {"TOLERANCE_SOURCE_MISMATCH"}
@@ -270,24 +270,24 @@ def check_certificate(
     tolerance_document: bytes,
     result_documents: Mapping[str, bytes] | None = None,
 ) -> tuple[str, ...]:
-    """Check a certificate against its trace logs, the ideal key, and the tolerance file.
+    """用轨迹日志、理想键与容差文件检查一份证书。
 
-    A reference is checked for its kind, then its record, then its event; a bad
-    reference does not enter the later checks.
+    检查每个引用时，依次检查其种类、记录与事件；
+    引用有误时，不进入后续检查。
 
     Args:
-        certificate: Certificate to check.
-        trace_logs: Trace logs that the references cite, found by ``source.digest``.
-        expected_key: Ideal dominant key, as the caller computes it.
-        tolerance_document: Bytes of the frozen tolerance file.
-        result_documents: Observation definitions and leaf result documents, by
-            ``sha256:<hex>`` digest. Each cited observable event is recomputed from them.
+        certificate: 待检查的证书。
+        trace_logs: 引用所指的轨迹日志，按 ``source.digest`` 查找。
+        expected_key: 理想主导键，由调用方计算。
+        tolerance_document: 冻结容差文件的字节。
+        result_documents: 观测定义与叶结果文档，按 ``sha256:<hex>`` 摘要索引。
+            每个被引用的可观测事件都由这些文档重算。
 
     Returns:
-        Failure codes without duplicates, in a fixed order; empty when the certificate holds.
+        无重复、顺序固定的失败码；证书成立时为空。
 
     Raises:
-        TraceInputError: An argument has the wrong type.
+        TraceInputError: 参数类型错误。
     """
     if not isinstance(certificate, PreservationCertificate):
         raise TraceInputError("certificate must be a PreservationCertificate")

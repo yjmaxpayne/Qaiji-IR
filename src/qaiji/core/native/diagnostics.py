@@ -128,17 +128,17 @@ class NativeValidationError(QaijiIRError):
 
 
 def equiv_level_of_native(report: NativeValidationReport) -> EquivLevel | None:
-    """Return the symbolic level that a native validation report supports.
+    """返回原生验证报告支持的符号等价级别。
 
     Args:
-        report: Report of the native lowering.
+        report: 原生降级的验证报告。
 
     Returns:
-        None for an invalid report, ``EXACT`` when every group phase is 0 or None, else
-        ``UP_TO_PHASE``.
+        报告无效时返回 None。每个组相位均为 0 或 None 时返回 ``EXACT``，
+        否则返回 ``UP_TO_PHASE``。
 
     Raises:
-        TraceInputError: ``report`` is not a ``NativeValidationReport``.
+        TraceInputError: ``report`` 不是 ``NativeValidationReport``。
     """
     if not isinstance(report, NativeValidationReport):
         raise TraceInputError("report must be a NativeValidationReport")
