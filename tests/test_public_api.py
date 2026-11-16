@@ -117,6 +117,7 @@ TRACE_PUBLIC_NAMES = {
     "TraceInputError",
     "TraceLog",
     "TraceSource",
+    "check_certificate",
     "dump_certificate",
     "dump_tolerances",
     "dump_trace_log",

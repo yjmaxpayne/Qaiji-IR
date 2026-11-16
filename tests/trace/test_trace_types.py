@@ -40,7 +40,11 @@ from qaiji.core.trace import (
 )
 from qaiji.exceptions import QaijiIRError
 
-MODULE_PATHS = (Path(model_module.__file__), Path(codec_module.__file__))
+MODULE_PATHS = (
+    Path(model_module.__file__),
+    Path(codec_module.__file__),
+    Path(model_module.__file__).with_name("check.py"),
+)
 SOURCE = TraceSource(
     kind="cross_layer_record/0.2", digest="sha256:" + "ab" * 32, program_ref="k-1", layer="l0"
 )
@@ -418,3 +422,10 @@ def test_equiv_level_of_native_zero_or_missing_phase_is_exact() -> None:
 def test_equiv_level_of_native_nonzero_phase_is_up_to_phase() -> None:
     report = _report([0.0, None, -math.pi / 2])
     assert equiv_level_of_native(report) is EquivLevel.UP_TO_PHASE
+
+
+@pytest.mark.parametrize("value", [None, {}, "report"], ids=["none", "dict", "text"])
+def test_equiv_level_of_native_rejects_non_report(value: object) -> None:
+    """非报告输入不得得到层级：类型分支抛 TraceInputError，而不是返回 None 或别的异常。"""
+    with pytest.raises(TraceInputError, match="NativeValidationReport"):
+        equiv_level_of_native(value)  # type: ignore[arg-type]

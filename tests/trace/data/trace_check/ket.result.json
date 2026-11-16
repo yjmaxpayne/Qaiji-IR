@@ -1,0 +1,31 @@
+{
+  "frame": "lab",
+  "observations": [
+    {
+      "data": {
+        "data": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA8D8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACtejcD0K1z+4HoXrUbjeP5qZmZmZmek/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "dtype": "c128le",
+        "shape": [
+          2,
+          6
+        ]
+      },
+      "id": "full_state",
+      "kind": "full_state",
+      "representation": "ket"
+    }
+  ],
+  "output_times": {
+    "data": "AAAAAAAAAAAAAAAAAABEQA==",
+    "dtype": "f64le",
+    "shape": [
+      2
+    ]
+  },
+  "request_id": "sha256:a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1",
+  "schema": "qaiji.p.result/1.1",
+  "tensor_order": [
+    "1",
+    "0"
+  ]
+}
