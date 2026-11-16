@@ -6,6 +6,8 @@ git tags via `poetry-dynamic-versioning`.
 
 ## [Unreleased]
 
+## v0.6.0 (2026-11-16)
+
 ### Feat
 
 - **core**: `Conditional` has an optional `bit_index` field. `if (c[k] == v)` on a multi-bit
@@ -31,6 +33,11 @@ git tags via `poetry-dynamic-versioning`.
   Qaiji still checks the header after parsing, so OPENQASM 2.0 sources stay accepted.
 - A defcal measurement call such as `c[0] = measure_iq q[0];` now raises
   `Qasm3UnsupportedConstructError` for `measure`, not a bare `AttributeError`.
+
+### Dependencies
+
+- The lower bound of `openqasm3[parser]` rises from 1.0.1 to 1.0.2. The upper bound stays
+  below 2.0.0. See Fix for the codec change that goes with this bound.
 
 ## v0.5.0 (2026-11-08)
 
