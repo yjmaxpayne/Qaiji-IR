@@ -127,6 +127,7 @@
       "ScheduleConfig",
       "SourceGroup",
       "SourceLocation",
+      "equiv_level_of_native",
       "lower_to_native",
       "qubic_mapping",
       "validate_native_schedule"
@@ -156,7 +157,7 @@
     },
     "compatibility_baseline": {
       "path": "tests/native/compatibility_baseline.json",
-      "sha256": "c3e18a71361f994700a20d4d431448a446923f227217c4fb5722f2538fe30d10"
+      "sha256": "a7fc120d00345e3840c8287e0e0dd3c2bff6b510746e7ffbb6aced029539b84f"
     },
     "kernel_ref_cases": [
       {
@@ -198,7 +199,7 @@
     "src/qaiji/version.py": "39a2fa1ba47a0d4e301aa1c241a6add1e95296a1b484947f0af4c14eec2b5adf",
     "src/qaiji/codec/_stdgates.py": "b1738a3335907d5475279edd952c98a91ffb254193cbeab867700909137fcda7",
     "src/qaiji/py.typed": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-    "src/qaiji/core/native/__init__.py": "f72ccf4481a0c9482122cf02d22cad3d185647ef56914a538cc564928de99c72",
+    "src/qaiji/core/native/__init__.py": "4cb329fc0738bd98b3977abfa4c3df9e32ac5e6666f18097078e9e2a38135128",
     "src/qaiji/core/program_native/__init__.py": "553fc2cf7e6f7c52f32b8ce2d5381172cbd7e02a0b48519b6dfc606b15215ee6"
   },
   "selected_legacy_tests": {

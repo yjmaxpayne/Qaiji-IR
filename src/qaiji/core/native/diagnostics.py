@@ -7,6 +7,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, ClassVar
 
+from qaiji.core.semantics import EquivLevel
+from qaiji.core.trace.model import TraceInputError
 from qaiji.exceptions import QaijiIRError
 
 from .errors import NativeInputError as NativeInputError
@@ -123,3 +125,29 @@ class NativeValidationError(QaijiIRError):
             + tuple(issue for group in self.report.groups for issue in group.hp.issues)
             + self.report.schedule.issues
         )
+
+
+def equiv_level_of_native(report: NativeValidationReport) -> EquivLevel | None:
+    """Return the symbolic level that a native validation report supports.
+
+    Args:
+        report: Report of the native lowering.
+
+    Returns:
+        None for an invalid report, ``EXACT`` when every group phase is 0 or None, else
+        ``UP_TO_PHASE``.
+
+    Raises:
+        TraceInputError: ``report`` is not a ``NativeValidationReport``.
+    """
+    if not isinstance(report, NativeValidationReport):
+        raise TraceInputError("report must be a NativeValidationReport")
+    if not report.valid:
+        return None
+    phases = (group.expected_phase_rad for group in report.groups)
+    if all(phase is None or phase == 0 for phase in phases):
+        return EquivLevel.EXACT
+    return EquivLevel.UP_TO_PHASE
+
+
+# --- codec ----------------------------------------------------------------------------

@@ -390,6 +390,7 @@ def test_native_exports_available_contract_only():
         "lower_to_native",
         "validate_native_schedule",
         "qubic_mapping",
+        "equiv_level_of_native",
     }
     assert set(getattr(native, "__all__", ())) == expected
     for name in expected:

@@ -10,6 +10,7 @@ from .diagnostics import (
     NativeIssue,
     NativeValidationError,
     NativeValidationReport,
+    equiv_level_of_native,
 )
 from .errors import NativeInputError
 from .model import (
@@ -49,6 +50,7 @@ __all__ = [
     "ScheduleConfig",
     "SourceGroup",
     "SourceLocation",
+    "equiv_level_of_native",
     "lower_to_native",
     "qubic_mapping",
     "validate_native_schedule",

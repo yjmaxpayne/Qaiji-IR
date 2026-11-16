@@ -94,6 +94,7 @@
       "ScheduleConfig",
       "SourceGroup",
       "SourceLocation",
+      "equiv_level_of_native",
       "lower_to_native",
       "qubic_mapping",
       "validate_native_schedule"

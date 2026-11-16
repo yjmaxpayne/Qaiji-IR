@@ -13,6 +13,7 @@ import qaiji.codec as codec
 import qaiji.core as core
 import qaiji.core.program as program
 import qaiji.core.semantics as semantics
+import qaiji.core.trace as trace
 from factories import PROGRAM_V1_PUBLIC_NAMES
 from qaiji.constants import DEFAULT_TOLERANCE
 from qaiji.core.program import ProgramValidationError
@@ -99,6 +100,32 @@ PROGRAM_PUBLIC_NAMES = PROGRAM_V1_PUBLIC_NAMES | {
     "validate_program",
 }
 
+TRACE_PUBLIC_NAMES = {
+    "CERTIFICATE_SCHEMA",
+    "TOLERANCES_SCHEMA",
+    "TRACE_LOG_SCHEMA",
+    "Assumptions",
+    "Comparison",
+    "Exclusion",
+    "PreservationCertificate",
+    "ResultLatency",
+    "SymbolicLevel",
+    "ToleranceEntry",
+    "ToleranceSource",
+    "ToleranceTable",
+    "TraceEvent",
+    "TraceInputError",
+    "TraceLog",
+    "TraceSource",
+    "dump_certificate",
+    "dump_tolerances",
+    "dump_trace_log",
+    "load_certificate",
+    "load_tolerances",
+    "load_trace_log",
+    "numerical_verdict_of",
+}
+
 
 def test_package_metadata_is_readable() -> None:
     assert isinstance(qaiji.__version__, str)
@@ -114,6 +141,7 @@ def test_package_metadata_is_readable() -> None:
         (codec, CODEC_PUBLIC_NAMES),
         (semantics, SEMANTICS_PUBLIC_NAMES),
         (program, PROGRAM_PUBLIC_NAMES),
+        (trace, TRACE_PUBLIC_NAMES),
     ],
 )
 def test_public_exports_are_the_exact_contract(
