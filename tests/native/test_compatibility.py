@@ -260,7 +260,11 @@ def _ledger_errors(baseline, root):
         "guard_tests",
         "sources",
     }
-    planned = {f"L6-{i:02d}" for i in range(1, 11)} | {f"L7-{i:02d}" for i in range(1, 9)}
+    planned = (
+        {f"L6-{i:02d}" for i in range(1, 11)}
+        | {f"L7-{i:02d}" for i in range(1, 9)}
+        | {"L8-01", "L8-02"}
+    )
     # starts：每条链的起点，创建 hop 的起点是 None；touched：账本顺序中已经出现过的路径。
     seen, touched, starts = set(), set(), dict(origin)
     for row in ledger:
@@ -364,7 +368,7 @@ def _ledger_errors(baseline, root):
 
 
 def _origin_errors(origin):
-    """origin 必须恰为 8 个钉住的路径，且每个值等于钉住时的字面哈希。"""
+    """origin 必须恰为 11 个钉住的路径，且每个值等于钉住时的字面哈希。"""
     pins = {
         "src/qaiji/codec/qasm3.py": (
             "231237a1bee5a2a480e90dde0a662fdec6753312f921a6e5d96a3886f63964ac"
@@ -389,6 +393,15 @@ def _origin_errors(origin):
         ),
         "src/qaiji/core/semantics/types.py": (
             "990effb63a98f75cd7bba34d567904a008ce3f9e070b091aca060fea325dd415"
+        ),
+        "src/qaiji/core/circuit.py": (
+            "71a6d94dba9aca5c66cb668c96401bdf98b04ebc9f97d7595ffd13914df954e9"
+        ),
+        "src/qaiji/core/classical.py": (
+            "db07b191897426d34b6ba7e44780d1a45a228420e08b4d19bf0e3370440976e3"
+        ),
+        "src/qaiji/core/semantics/preservation.py": (
+            "ed8c912cc533a931aa5540c00223069db021ee090049238855b6738e9f4edfda"
         ),
     }
     for path, value in origin.items():
@@ -973,7 +986,7 @@ def test_ledger_guards_detect_tampering(tmp_path, tamper):
 
 
 def test_ledger_origin_is_pinned_to_the_qm5_baseline():
-    """钉住已发布源文件的初始哈希与允许纳入账本的 8 个路径；每个路径的改值与缺失都须报出。"""
+    """钉住已发布源文件的初始哈希与允许纳入账本的 11 个路径；每个路径的改值与缺失都须报出。"""
     baseline = json.loads(CASES.read_text())
     origin = baseline["origin"]
     assert "src/qaiji/codec/qasm3.py" in origin
@@ -1036,7 +1049,11 @@ def test_stdgates_origin_is_pinned_to_the_t2_delivery():
 def test_ledger_covers_all_planned_rows():
     """账本 ID 必须与「计划 − pending」双向相等。"""
     baseline = json.loads(CASES.read_text())
-    planned = {f"L6-{i:02d}" for i in range(1, 11)} | {f"L7-{i:02d}" for i in range(1, 9)}
+    planned = (
+        {f"L6-{i:02d}" for i in range(1, 11)}
+        | {f"L7-{i:02d}" for i in range(1, 9)}
+        | {"L8-01", "L8-02"}
+    )
     assert {row["id"] for row in baseline["ledger"]} == planned - _PENDING_L7
 
 

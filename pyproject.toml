@@ -15,7 +15,7 @@ classifiers = [
 dynamic = ["version"]
 dependencies = [
     # OpenQASM3 parser — consumed as a front-end adapter (not a semantic authority).
-    "openqasm3[parser]>=1.0.1,<2.0.0",
+    "openqasm3[parser]>=1.0.2,<2.0.0",
 ]
 
 [project.urls]

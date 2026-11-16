@@ -58,12 +58,16 @@ def _encode_operation(operation: Gate | Measure | Conditional) -> list[Any]:
     if isinstance(operation, Measure):
         return ["measure", operation.qubit, operation.target.register.name, operation.target.index]
     if isinstance(operation, Conditional):
-        return [
+        encoded = [
             "conditional",
             operation.register.name,
             operation.value,
             [_encode_gate_triple(gate) for gate in operation.body],
         ]
+        # 只为位级条件追加比特下标，存量整寄存器条件的编码与哈希保持不变。
+        if operation.bit_index is not None:
+            encoded.append(operation.bit_index)
+        return encoded
     raise TypeError(f"Cannot encode {type(operation).__name__} into operations")
 
 

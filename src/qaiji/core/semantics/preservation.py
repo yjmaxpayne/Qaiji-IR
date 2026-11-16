@@ -248,6 +248,7 @@ def check_preservation(
             if (
                 left.register != right.register
                 or left.value != right.value
+                or left.bit_index != right.bit_index
                 or len(left.body) != len(right.body)
             ):
                 violations.append(index)

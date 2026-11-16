@@ -200,6 +200,7 @@ def _node_eq(
         return (
             left.register == right.register
             and left.value == right.value
+            and left.bit_index == right.bit_index
             and len(left.body) == len(right.body)
             and all(
                 _node_eq(left_gate, right_gate)
@@ -352,7 +353,9 @@ class Circuit:
                 canonical.add_measure(operation)
             else:
                 body = tuple(gate.canonicalize() for gate in operation.body)
-                canonical.add_conditional(Conditional(operation.register, operation.value, body))
+                canonical.add_conditional(
+                    Conditional(operation.register, operation.value, body, operation.bit_index)
+                )
         return canonical
 
     def __eq__(self, other: object) -> bool:

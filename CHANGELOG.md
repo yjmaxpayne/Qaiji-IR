@@ -6,6 +6,39 @@ git tags via `poetry-dynamic-versioning`.
 
 ## [Unreleased]
 
+## v0.6.0 (2026-11-16)
+
+### Feat
+
+- **core**: `Conditional` has an optional `bit_index` field. `if (c[k] == v)` on a multi-bit
+  register now lowers to a bit-level condition and exports back as `c[k] == v`. A one-bit
+  register keeps `bit_index=None`, so existing summary hashes, native JSON and qasm3 text
+  do not change.
+- **native**: `ConditionRegion` has an optional `bit_index` field with the same rules. A
+  bit-level region reads one measurement event and keeps `width` equal to the register size.
+  The scheduler and the layout and timing checks read `bit_index`. Native JSON writes
+  `bit_index` only when it is set, so existing native JSON does not change.
+- **trace**: New `qaiji.core.trace` package (T layer). It has value types for trace logs,
+  preservation certificates and tolerance tables, a canonical JSON codec for the three
+  documents, and `check_certificate`. The checker recomputes each statement of a certificate
+  from the cited trace logs, the ideal key, the frozen tolerance file and the result
+  documents. It returns failure codes without duplicates in a fixed order.
+- **native**: `equiv_level_of_native(report)` returns the symbolic level that a native
+  validation report supports: `None` for an invalid report, `EXACT` when every group phase
+  is 0 or `None`, else `UP_TO_PHASE`.
+
+### Fix
+
+- The codec requires openqasm3 1.0.2 or later and parses with `ignore_version=True`.
+  Qaiji still checks the header after parsing, so OPENQASM 2.0 sources stay accepted.
+- A defcal measurement call such as `c[0] = measure_iq q[0];` now raises
+  `Qasm3UnsupportedConstructError` for `measure`, not a bare `AttributeError`.
+
+### Dependencies
+
+- The lower bound of `openqasm3[parser]` rises from 1.0.1 to 1.0.2. The upper bound stays
+  below 2.0.0. See Fix for the codec change that goes with this bound.
+
 ## v0.5.0 (2026-11-08)
 
 ### BREAKING CHANGE

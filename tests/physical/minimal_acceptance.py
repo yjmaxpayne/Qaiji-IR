@@ -42,7 +42,7 @@ class BlockNumericalImports(importlib.abc.MetaPathFinder):
 def check_dependencies(requirements: list[str]) -> None:
     """检查 wheel 的必需依赖精确集合。"""
     normalized = [re.sub(r"[\s()]", "", item).lower() for item in requirements]
-    require(normalized == ["openqasm3[parser]>=1.0.1,<2.0.0"], "required-dependencies")
+    require(normalized == ["openqasm3[parser]>=1.0.2,<2.0.0"], "required-dependencies")
 
 
 def check_wheel_origin(origin: Path) -> None:

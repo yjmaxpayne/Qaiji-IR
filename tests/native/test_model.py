@@ -57,6 +57,10 @@ def test_all_value_construction_protocol(cls):
         if field in ("schema_version", "ruleset_version"):
             continue
         kwargs = values()[cls].copy()
+        if (cls, field) == (ConditionRegion, "bit_index"):
+            # Optional field: omitting it means a whole-register condition.
+            assert cls(**kwargs).bit_index is None
+            continue
         del kwargs[field]
         with pytest.raises(TypeError):
             cls(**kwargs)
@@ -386,6 +390,7 @@ def test_native_exports_available_contract_only():
         "lower_to_native",
         "validate_native_schedule",
         "qubic_mapping",
+        "equiv_level_of_native",
     }
     assert set(getattr(native, "__all__", ())) == expected
     for name in expected:

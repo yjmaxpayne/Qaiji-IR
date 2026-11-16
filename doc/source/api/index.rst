@@ -49,6 +49,9 @@
    * - ``qaiji.core.physical``
      - P
      - :doc:`physical`
+   * - ``qaiji.core.trace``
+     - T
+     - :doc:`trace`
    * - ``qaiji`` 与各子包
      - 通用
      - :doc:`exceptions`
@@ -101,5 +104,6 @@ T 层没有公开接口。各层的实现状态见 :doc:`/core-concepts/architec
    program
    program_native
    physical
+   trace
    exceptions
    constants

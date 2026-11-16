@@ -86,13 +86,14 @@ def test_non_equality_condition_is_rejected() -> None:
 
 @pytest.mark.parametrize("size", [2, 3])
 @pytest.mark.parametrize("extra", ["", "bit d;"])
-def test_multi_bit_register_bit_condition_is_rejected(size, extra):
-    _assert_exact_rejection(
-        f"qubit q; bit[{size}] c; {extra} if (c[0] == 1) {{ x q[0]; }}",
-        Qasm3UnsupportedConstructError,
-        "if",
-        "bit-level condition on a multi-bit register is not supported",
-    )
+def test_multi_bit_register_bit_condition_is_accepted(size, extra):
+    conditional = from_qasm3(f"qubit q; bit[{size}] c; {extra} if (c[0] == 1) {{ x q[0]; }}").gates[
+        -1
+    ]
+
+    assert isinstance(conditional, Conditional)
+    assert (conditional.register.name, conditional.register.size) == ("c", size)
+    assert (conditional.bit_index, conditional.value) == (0, 1)
 
 
 def test_compound_condition_is_rejected() -> None:
@@ -204,6 +205,19 @@ def test_discarded_measurement_is_rejected() -> None:
 
     error = _assert_rejected(source, Qasm3UnsupportedConstructError, "measure")
     assert "target" in str(error)
+
+
+def test_measurement_call_is_rejected_with_typed_error() -> None:
+    # The parser types a defcal measurement call as QuantumCallExpression.
+    # It has no qubit operand, so it must not leak an AttributeError.
+    source = "OPENQASM 3.0; qubit[1] q; bit[1] c; c[0] = measure_iq q[0];"
+
+    with pytest.raises(Qasm3UnsupportedConstructError) as raised:
+        qasm3_module.parse_qasm3(source)
+
+    message = str(raised.value)
+    assert message.startswith("measure at 1:")
+    assert "measurement call" in message
 
 
 def test_gate_parameter_count_error_is_wrapped_with_core_cause() -> None:
@@ -485,7 +499,7 @@ def test_non_numeric_parser_version_is_wrapped(
     monkeypatch.setattr(
         qasm3_module.openqasm3,
         "parse",
-        lambda source: InvalidVersionProgram(),
+        lambda source, **_options: InvalidVersionProgram(),
     )
 
     error = _assert_rejected("ignored", Qasm3ParseError, "OPENQASM")
@@ -870,8 +884,8 @@ def test_register_used_before_declaration_is_rejected(operation, construct):
             "OPENQASM 3.0; qubit q; bit[2] c; if (c[0] == 1) { x q[5]; }",
             "Qasm3UnsupportedConstructError",
             "if",
-            "bit-level condition on a multi-bit register is not supported",
-            None,
+            "index 5 is outside qubit register 'q' of size 1",
+            "ValueError",
             (1, 34),
         ),
         (
@@ -1493,8 +1507,8 @@ def test_bit_condition_on_undeclared_register_is_rejected():
         (
             "bit[2] c;",
             "c[2] == 1",
-            "bit-level condition on a multi-bit register is not supported",
-            None,
+            "Classical bit index 2 is outside register 'c' of size 2",
+            "ValueError",
         ),
         (
             "bit c;",
@@ -1556,7 +1570,7 @@ def test_evaluator_recursion_limit_is_a_parse_error(monkeypatch, bounded_recursi
     for _ in range(400):
         expression = ast.UnaryExpression(ast.UnaryOperator["-"], expression)
     program.statements[-1].arguments[0] = expression
-    monkeypatch.setattr(qasm3_module.openqasm3, "parse", lambda _: program)
+    monkeypatch.setattr(qasm3_module.openqasm3, "parse", lambda _, **_options: program)
     _assert_exact_rejection(
         source,
         Qasm3ParseError,
@@ -1589,7 +1603,7 @@ def test_empty_or_comment_only_source_has_no_qubit_declaration(source):
 def test_unexpected_parser_attribute_error_is_a_parse_error(monkeypatch):
     error = AttributeError("injected parser failure")
 
-    def fail_parse(source):
+    def fail_parse(source, **_options):
         raise error
 
     monkeypatch.setattr(qasm3_module.openqasm3, "parse", fail_parse)
@@ -3027,7 +3041,7 @@ def test_rejection_matrix(case_id, source, error_name, construct, detail, cause_
     if case_id == "NS-021":
         program = qasm3_module.openqasm3.parse("qubit q;")
         monkeypatch.setattr(program, "version", "not-a-version")
-        monkeypatch.setattr(qasm3_module.openqasm3, "parse", lambda _: program)
+        monkeypatch.setattr(qasm3_module.openqasm3, "parse", lambda _, **_options: program)
         source = "qubit q;"
     error_type = {
         "Qasm3ParseError": Qasm3ParseError,

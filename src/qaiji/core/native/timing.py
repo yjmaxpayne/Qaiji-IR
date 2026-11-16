@@ -66,6 +66,7 @@ def _check_source_layout(snapshot: _SourceSnapshot, schedule: NativeScheduleIR) 
             ("register_name", node.register.name),
             ("width", node.register.size),
             ("value", node.value),
+            ("bit_index", node.bit_index),
             ("op_start", start),
             ("op_stop", operation_index),
         )
@@ -189,11 +190,12 @@ def _check_timing(
             path = f"$.conditions[{condition_index}]"
             source = SourceLocation(gate_index=gate_index, body_offset=None)
             ready = 0
-            for bit in range(node.register.size):
+            bits = range(node.register.size) if node.bit_index is None else (node.bit_index,)
+            for position, bit in enumerate(bits):
                 preceding = latest.get((node.register.name, bit))
-                if preceding is None or region.reads[bit].event_id != f"m{preceding}":
+                if preceding is None or region.reads[position].event_id != f"m{preceding}":
                     return _TimingCheck(
-                        "condition_binding", path + f".reads[{bit}].event_id", source
+                        "condition_binding", path + f".reads[{position}].event_id", source
                     )
                 ready = max(ready, ready_times[preceding])
             if region.start_ns < ready:

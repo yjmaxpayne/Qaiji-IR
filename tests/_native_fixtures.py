@@ -58,6 +58,7 @@ FIELDS = {
         "op_stop",
         "start_ns",
         "end_ns",
+        "bit_index",
     ),
     NativeScheduleIR: (
         "schema_version",

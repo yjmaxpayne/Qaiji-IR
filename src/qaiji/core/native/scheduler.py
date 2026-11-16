@@ -106,12 +106,13 @@ def _schedule_source(
         if isinstance(node, Conditional):
             source = SourceLocation(gate_index=gate_index, body_offset=None)
             reads = []
-            for bit in range(node.register.size):
+            bits = range(node.register.size) if node.bit_index is None else (node.bit_index,)
+            for position, bit in enumerate(bits):
                 event = latest.get((node.register.name, bit))
                 if event is None:
                     raise _SchedulingError(
                         "condition_binding",
-                        f"$.conditions[{len(conditions)}].reads[{bit}].event_id",
+                        f"$.conditions[{len(conditions)}].reads[{position}].event_id",
                         source,
                         None,
                         "Condition bit has no preceding measurement.",
@@ -129,6 +130,7 @@ def _schedule_source(
                     register_name=node.register.name,
                     width=node.register.size,
                     value=node.value,
+                    bit_index=node.bit_index,
                     reads=tuple(reads),
                     op_start=op_start,
                     op_stop=len(operations),
