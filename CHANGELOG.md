@@ -16,6 +16,14 @@ git tags via `poetry-dynamic-versioning`.
   bit-level region reads one measurement event and keeps `width` equal to the register size.
   The scheduler and the layout and timing checks read `bit_index`. Native JSON writes
   `bit_index` only when it is set, so existing native JSON does not change.
+- **trace**: New `qaiji.core.trace` package (T layer). It has value types for trace logs,
+  preservation certificates and tolerance tables, a canonical JSON codec for the three
+  documents, and `check_certificate`. The checker recomputes each statement of a certificate
+  from the cited trace logs, the ideal key, the frozen tolerance file and the result
+  documents. It returns failure codes without duplicates in a fixed order.
+- **native**: `equiv_level_of_native(report)` returns the symbolic level that a native
+  validation report supports: `None` for an invalid report, `EXACT` when every group phase
+  is 0 or `None`, else `UP_TO_PHASE`.
 
 ### Fix
 
