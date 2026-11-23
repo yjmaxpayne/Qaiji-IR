@@ -2,8 +2,10 @@
 # SPDX-License-Identifier: Apache-2.0
 """Native input errors."""
 
+from qaiji.exceptions import QaijiIRError
 
-class NativeInputError(ValueError):
+
+class NativeInputError(QaijiIRError, ValueError):
     """原生调度的输入或结构不符合要求。"""
 
     def __init__(self, code: str, path: str, message: str):
