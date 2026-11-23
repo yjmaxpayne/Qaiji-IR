@@ -362,6 +362,45 @@ def test_looped_entry_adversarial_bounds_raise_only_qaiji_errors(surface, value)
 
 
 @pytest.mark.parametrize("value", ADVERSARIAL_VALUES)
+def test_looped_const_bound_writes_back_or_raises_a_qaiji_error(value):
+    """const 作循环两端时，被接受的程序能写回且再解析相等；其他结局只能是 QaijiIRError。"""
+    from qaiji.codec import parse_looped_qasm3
+
+    source = (
+        f"qubit q;\nconst int n = {ADVERSARIAL_VALUES[value]};\nfor int i in [n:n] {{ x q[0]; }}"
+    )
+    try:
+        circuit = parse_looped_qasm3(source).circuit
+    except QaijiIRError:
+        return
+    assert parse_looped_qasm3(to_qasm3(circuit)).circuit == circuit
+
+
+# 两个运算数都在位数上限内，只有乘积越限：拦截者只能是计算结果的位数检查。
+COMPUTED_BOUNDS = {
+    "const-product": (
+        f"qubit q;\nconst int n = {DEC_AT};\nconst int m = n * n;\nfor int i in [m:m] {{ x q[0]; }}",
+        "const",
+    ),
+    "counter-start-product": (
+        f"qubit q;\nconst int n = {DEC_AT};\nint i = n * n;\nwhile (i <= n) {{ x q[0]; i += 1; }}",
+        "while",
+    ),
+}
+
+
+@pytest.mark.parametrize("case", COMPUTED_BOUNDS)
+def test_looped_computed_bound_over_the_digit_limit_is_a_parse_error(case):
+    from qaiji.codec import parse_looped_qasm3
+
+    source, construct = COMPUTED_BOUNDS[case]
+    with pytest.raises(Qasm3ParseError) as raised:
+        parse_looped_qasm3(source)
+    assert str(raised.value).startswith(f"{construct} at ")
+    assert f"({_D} digits)" in str(raised.value)
+
+
+@pytest.mark.parametrize("value", ADVERSARIAL_VALUES)
 def test_accepted_programs_round_trip_after_integer_checks(value):
     """仍被接受的程序都能写回并原样读回；曾经接受后在 to_qasm3 外泄的格现在于解析时拒收。"""
     accepted = []

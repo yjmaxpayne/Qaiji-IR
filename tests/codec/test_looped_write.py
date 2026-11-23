@@ -19,6 +19,7 @@ from qaiji.core.loop import (
 from qaiji.core.program.validation import compute_kernel_ref
 from qaiji.core.semantics.registry import annotate_circuit
 from qaiji.core.semantics.summary import build_semantic_summary, canonical_summary_hash
+from qaiji.exceptions import LoopedCircuitError
 
 HEADER = 'OPENQASM 3.0;\ninclude "stdgates.inc";\nqubit[4] q;\n'
 ROUND = """h q[3]; cz q[0], q[3]; cz q[3], q[1]; h q[3]; s[0] = measure q[3];
@@ -64,6 +65,10 @@ ROUND_TRIP_SOURCES = {
     "operations-around-the-loop": f"{H}x q[0];\nfor int i in [2:3] {{ x q[i]; }}\nh q[1];\n",
     "zero-iterations": f"{H}for int i in [2:1] {{ x q[i]; }}\n",
     "repetition-code-two-rounds": repetition_loop_text("x q[1];\n"),
+    # 写回把顶层寄存器声明提到循环之前；名称不撞循环变量时，再解析仍相等。
+    "top-level-register-after-a-loop": (
+        f"{H}for int i in [0:1] {{ x q[i]; }}\nbit[1] d;\nd[0] = measure q[0];\n"
+    ),
 }
 
 
@@ -98,6 +103,35 @@ def test_to_qasm3_qubit_name_avoids_loop_names() -> None:
 
     assert "qubit[2] q1;" in text
     assert parse_looped_qasm3(text).circuit == circuit
+
+
+def _single_loop(
+    variable: str = "i",
+    cregs: tuple[ClassicalRegister, ...] = (),
+    registers: tuple[ClassicalRegister, ...] = (),
+    qubit: int = 0,
+) -> LoopedCircuit:
+    body = (GateTemplate(GateType.X, (qubit,)),)
+    loop = BoundedLoop(variable, 0, 0, registers, body, SourceSpan(1, 0, 1, 0))
+    return LoopedCircuit(1, cregs, (loop,))
+
+
+_S = (ClassicalRegister("s", 1),)
+# 直接构造或经 from_json 得到的非法值：解析器拒收其写回文本，写回本身必须报错。
+INVALID_LOOPED = {
+    "loop-variable-named-like-a-register": _single_loop(cregs=(ClassicalRegister("i", 1),)),
+    "loop-register-named-like-a-register": _single_loop(cregs=_S, registers=_S),
+    "qubit-index-out-of-range": _single_loop(qubit=1),
+    "loop-variable-not-an-identifier": _single_loop(variable="1a"),
+    "loop-variable-named-like-a-gate": _single_loop(variable="x"),
+    "loop-variable-named-like-a-constant": _single_loop(variable="pi"),
+}
+
+
+@pytest.mark.parametrize("case", INVALID_LOOPED)
+def test_to_qasm3_rejects_looped_circuits_the_parser_would_reject(case: str) -> None:
+    with pytest.raises(LoopedCircuitError):
+        to_qasm3(INVALID_LOOPED[case])
 
 
 # 金标准取自写回循环之前的序列化器输出（浮点格式、位条件、整寄存器条件）。

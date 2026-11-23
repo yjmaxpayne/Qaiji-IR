@@ -76,7 +76,12 @@ REJECTED = {
     "offset-index": (_loop("x q[i+1];"), _UC, "for", ""),
     "variable-as-parameter": (_loop("rz(i) q[0];"), _UC, "for", ""),
     "variable-in-condition": (_loop("if (i == 0) { x q[0]; }"), _UC, "for", ""),
-    "variable-assignment": (_loop("i = 1;\n  x q[0];"), _UC, "for", ""),
+    "variable-assignment": (
+        _loop("i = 1;\n  x q[0];"),
+        _UC,
+        "for",
+        "is not allowed in a loop body",
+    ),
     "uint-variable": (_loop("x q[i];", "for uint i in [0:1]"), _UC, "for", ""),
     "sized-int-variable": (_loop("x q[i];", "for int[8] i in [0:1]"), _UC, "for", ""),
     "stepped-range": (_loop("x q[i];", "for int i in [0:2:3]"), _UC, "for", ""),
@@ -187,6 +192,56 @@ REJECTED = {
         "while",
         "1024",
     ),
+    # 循环变量名与计数器名在循环后保留：写回把顶层声明提到循环之前，同名声明无法写回。
+    "register-named-like-an-earlier-loop-variable": (
+        _loop("x q[i];", "for int i in [0:0]") + "bit[1] i;\n",
+        _UC,
+        "for",
+        "name 'i' is already used by a loop",
+    ),
+    "register-named-like-an-earlier-counter": (
+        _while(head="int i = 0;\nwhile (i < 1)", tail="bit[1] i;\n"),
+        _UC,
+        "for",
+        "name 'i' is already used by a loop",
+    ),
+    "const-named-like-an-earlier-loop-variable": (
+        _loop("x q[i];", "for int i in [0:0]")
+        + "const int i = 1;\nfor int j in [0:i] { x q[j]; }\n",
+        _UC,
+        "const",
+        "has a declared, gate or constant name",
+    ),
+    "const-named-like-a-constant": (
+        H + "const int pi = 1;\nfor int i in [0:pi] { x q[i]; }\n",
+        _UC,
+        "const",
+        "has a declared, gate or constant name",
+    ),
+    "const-named-like-a-gate": (
+        H + "const int x = 1;\nfor int i in [0:x] { h q[i]; }\n",
+        _UC,
+        "const",
+        "has a declared, gate or constant name",
+    ),
+    "upper-case-loop-variable-named-like-a-gate": (
+        _loop("X q[0];", "for int X in [0:0]"),
+        _UC,
+        "for",
+        "has a declared, gate or constant name",
+    ),
+    "if-body-index-out-of-range": (
+        _loop("if (c[0] == 1) { x q[9]; }"),
+        _UC,
+        "if",
+        "index 9 is outside",
+    ),
+    "if-body-index-out-of-range-in-empty-loop": (
+        _loop("if (c[0] == 1) { x q[9]; }", "for int i in [1:0]"),
+        _UC,
+        "if",
+        "index 9 is outside",
+    ),
 }
 
 # (源码, 等价的平坦正文, 循环节点的 (start, stop))。
@@ -275,6 +330,15 @@ def test_looped_entry_rejects_outside_the_subset(case):
     assert type(error) is error_type
     assert str(error).startswith(f"{construct} at ")
     assert fragment in str(error)
+
+
+def test_looped_entry_accepts_two_loops_with_the_same_variable():
+    """循环变量名在循环后保留，但不算已声明名称：之后的循环可以再用同一个变量名。"""
+    parsed = _entry()(H + "for int i in [0:1] { x q[i]; }\nfor int i in [2:3] { x q[i]; }\n")
+    assert [(loop.variable, loop.start, loop.stop) for loop in _loops(parsed)] == [
+        ("i", 0, 1),
+        ("i", 2, 3),
+    ]
 
 
 @pytest.mark.parametrize("case", EXPANDED)

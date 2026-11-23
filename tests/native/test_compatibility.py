@@ -282,7 +282,7 @@ def _ledger_errors(baseline, root):
     planned = (
         {f"L6-{i:02d}" for i in range(1, 11)}
         | {f"L7-{i:02d}" for i in range(1, 9)}
-        | {"L8-01", "L8-02", "L9-01", "L9-02"}
+        | {"L8-01", "L8-02", "L9-01", "L9-02", "L9-03"}
     )
     # starts：每条链的起点，创建 hop 的起点是 None；touched：账本顺序中已经出现过的路径。
     seen, touched, starts = set(), set(), dict(origin)
@@ -1071,7 +1071,7 @@ def test_ledger_covers_all_planned_rows():
     planned = (
         {f"L6-{i:02d}" for i in range(1, 11)}
         | {f"L7-{i:02d}" for i in range(1, 9)}
-        | {"L8-01", "L8-02", "L9-01", "L9-02"}
+        | {"L8-01", "L8-02", "L9-01", "L9-02", "L9-03"}
     )
     assert {row["id"] for row in baseline["ledger"]} == planned - _PENDING_L7
 

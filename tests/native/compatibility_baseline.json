@@ -123,7 +123,7 @@
   "frozen_sources": {
     "src/qaiji/__init__.py": "93fc5646dd76bb1e18e35e861df09811aca3d798bf793deea330393710693667",
     "src/qaiji/codec/__init__.py": "cbe4e75bc1024e24075ba1f7909871438e78d2b93205cc8f08b9430654fbb670",
-    "src/qaiji/codec/qasm3.py": "59f74c83701a1deb81a4988f6cd7c7b2833069ff1ce3dd8bc2f74f8a0afe29f7",
+    "src/qaiji/codec/qasm3.py": "f7a7d69cd99d9f83487c24246094a87b266b7b4de5835c552ad6d470f0a4e7e4",
     "src/qaiji/constants.py": "c38d491059de235ae71c4351e9dc355a87b6eb450fe46c8a46055f0c365aadd0",
     "src/qaiji/core/__init__.py": "af33db4a43be455b0394cde31526b9506e3574a2043bf3b26cf921c00bd3ea19",
     "src/qaiji/core/circuit.py": "be98a50d34446ae9d3c3a5766b3273d721c6fbd6aa803d4408b08dec2f04cd12",
@@ -698,6 +698,30 @@
         "src/qaiji/codec/qasm3.py": {
           "before": "46438e00420715f08533d3bce84e0140c65de90f9a2f747b2922f5991a52ef65",
           "after": "59f74c83701a1deb81a4988f6cd7c7b2833069ff1ce3dd8bc2f74f8a0afe29f7"
+        }
+      }
+    },
+    {
+      "id": "L9-03",
+      "kind": "extend",
+      "surface": "loop",
+      "decision": "Keep loop-variable and counter names reserved after their loop, give const the loop-variable name rules, and let to_qasm3 reject a LoopedCircuit whose text the loop-aware entry would reject",
+      "before": "parse_looped_qasm3 accepted a later register or const declaration that reused a loop-variable or counter name, and a const named like a gate or a built-in constant. Loop-variable and counter names were compared with gate names in a case-sensitive way. An out-of-range literal index in an if body inside a loop was reported with the gate name. to_qasm3 wrote every LoopedCircuit without checks, so an invalid one gave text that parse_looped_qasm3 rejects.",
+      "after": "parse_looped_qasm3 rejects with Qasm3UnsupportedConstructError a later register or const declaration that reuses a loop-variable or counter name. It also rejects a const, counter or loop variable whose name is a declared name, a gate name in any letter case, or a built-in constant. Two loops can still use the same loop variable. An out-of-range literal index in an if body inside a loop is reported as if, the same as in a flat program. to_qasm3 expands a LoopedCircuit and checks each loop-variable name before it writes, and raises LoopedCircuitError when parse_looped_qasm3 would reject the text. parse_qasm3 and from_qasm3 accept and reject the same sources as before.",
+      "tests_rewritten": [],
+      "guard_tests": [
+        "tests/test_public_api.py::test_public_exports_are_the_exact_contract",
+        "tests/codec/test_looped_parse.py::test_strict_entries_reject_looped_sources",
+        "tests/codec/test_looped_parse.py::test_looped_entry_rejects_outside_the_subset",
+        "tests/codec/test_looped_parse.py::test_looped_entry_accepts_two_loops_with_the_same_variable",
+        "tests/codec/test_looped_write.py::test_to_qasm3_round_trips_looped_circuits",
+        "tests/codec/test_looped_write.py::test_to_qasm3_rejects_looped_circuits_the_parser_would_reject",
+        "tests/codec/test_integer_limits.py::test_looped_computed_bound_over_the_digit_limit_is_a_parse_error"
+      ],
+      "sources": {
+        "src/qaiji/codec/qasm3.py": {
+          "before": "59f74c83701a1deb81a4988f6cd7c7b2833069ff1ce3dd8bc2f74f8a0afe29f7",
+          "after": "f7a7d69cd99d9f83487c24246094a87b266b7b4de5835c552ad6d470f0a4e7e4"
         }
       }
     }
