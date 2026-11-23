@@ -8,28 +8,11 @@ import json
 import pytest
 
 from _fresh_process import run_fresh_process
+from factories import CORRECTED_TWO_ROUND_CODE, LOOP_WITH_CONDITIONAL
 from qaiji.codec import from_qasm3, parse_looped_qasm3
 from qaiji.core.loop import BoundedLoop, ConditionalTemplate, LoopedCircuit
 from qaiji.core.semantics import annotate_circuit
 from qaiji.core.semantics.region import Region, annotate_looped, regions_of
-
-# 两轮重复码：循环前注入一个错误，循环体在两次症状测量后做 4 个条件纠正。
-# 注入使循环位于顶层位置 1；循环体内的声明 `bit[2] s;` 不计位置，
-# 10 个门与测量节点之后，4 个条件体位于位置 10 至 13。
-CORRECTED_TWO_ROUND_CODE = """OPENQASM 3.0;
-include "stdgates.inc";
-qubit[4] q;
-x q[1];
-for int r in [0:1] {
-  bit[2] s;
-  h q[3]; cz q[0], q[3]; cz q[3], q[1]; h q[3]; s[0] = measure q[3];
-  h q[3]; cz q[1], q[3]; cz q[2], q[3]; h q[3]; s[1] = measure q[3];
-  if (s == 3) { x q[0]; }
-  if (s == 1) { x q[1]; }
-  if (s == 2) { x q[2]; }
-  if (s[1] == 1) { x q[3]; }
-}
-"""
 
 # 两个内容相同的顶层条件体；它们之前有 2 个声明（不计位置）与 1 个测量。
 TWIN_CONDITIONALS = """OPENQASM 3.0;
@@ -38,15 +21,6 @@ bit[1] c;
 c[0] = measure q[0];
 if (c == 1) { x q[0]; }
 if (c == 1) { x q[0]; }
-"""
-
-# 测量之后的循环位于顶层位置 1；循环体内的条件体位于位置 1。
-LOOP_WITH_CONDITIONAL = """OPENQASM 3.0;
-include "stdgates.inc";
-qubit[2] q;
-bit[1] c;
-c[0] = measure q[0];
-for int i in [0:{stop}] {{ x q[0]; if (c[0] == 1) {{ x q[1]; }} }}
 """
 
 # 顶层条件体（位置 1）含两个门，条件头本身不在条件体内。

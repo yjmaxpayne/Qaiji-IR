@@ -136,7 +136,7 @@
     "src/qaiji/core/semantics/annotation.py": "ca3f8fea48d01d87611e5cb7e476976d85ff94b403a0526d0ad0dabfa31834d3",
     "src/qaiji/core/semantics/dataflow.py": "701f4f525eb263c8bcc1f59277137aac82458dba664e298e984a04186f4edf8e",
     "src/qaiji/core/semantics/handle.py": "0c21f817e3adf027b70bc316e3c7faa71774b88f87a543f10c97c97c03cc1a64",
-    "src/qaiji/core/semantics/preservation.py": "de2c08c6304e4699bfd4c33696ae4fa2fbb3083f7fd35219b0e182690e6f539e",
+    "src/qaiji/core/semantics/preservation.py": "c775609270cf470c7f0c1f7fa11cd368fc413309dde4e484d8d156e10fe2e85b",
     "src/qaiji/core/semantics/registry.py": "04f8cc635e04e2db6f53338cc1f96eb61f4b05808f89a1e6d275da75f5730201",
     "src/qaiji/core/semantics/summary.py": "7cc2db82af074f679aefba5c646cbfe2af7913f9551969877a0a65f70e4e32b1",
     "src/qaiji/core/semantics/types.py": "819cfad698a45550f2b65b8d4a2d90147669dfcb591d55e7f34812a502854aa7",
@@ -722,6 +722,31 @@
         "src/qaiji/codec/qasm3.py": {
           "before": "59f74c83701a1deb81a4988f6cd7c7b2833069ff1ce3dd8bc2f74f8a0afe29f7",
           "after": "f7a7d69cd99d9f83487c24246094a87b266b7b4de5835c552ad6d470f0a4e7e4"
+        }
+      }
+    },
+    {
+      "id": "L9-04",
+      "kind": "extend",
+      "surface": "preservation",
+      "decision": "Let check_preservation decide UP_TO_LOCAL inside one region, keep ENTANGLEMENT rejected, and take the gate matrices from a neutral module",
+      "before": "check_preservation raised UnsupportedEquivLevelError for UP_TO_LOCAL and ENTANGLEMENT. It had no region parameter. A LoopedCircuit input raised LoopNotExpandedError when the pipeline read its gate list.",
+      "after": "check_preservation takes a keyword region. With UP_TO_LOCAL and a region it compares only that region: the two sides must have the same qubit count, registers, regions and nodes outside the region, and the same condition and loop bounds around it. It returns passed with EXACT, UP_TO_PHASE or UP_TO_LOCAL, failed, or unsupported; the morphism fields stay None on this path. UP_TO_LOCAL without a region, EXACT or UP_TO_PHASE with a region, and inputs of different types return unsupported. ENTANGLEMENT still raises UnsupportedEquivLevelError. EXACT and UP_TO_PHASE without a region keep the existing pipeline, and a LoopedCircuit input still raises LoopNotExpandedError. The limits are MAX_LOCAL_QUBITS = 6 per instance, MAX_LOCAL_GATES = 256 over all instances and MAX_LOCAL_RESIDUAL = 1e-10. The module __all__ is unchanged.",
+      "tests_rewritten": [],
+      "guard_tests": [
+        "tests/test_public_api.py::test_public_exports_are_the_exact_contract",
+        "tests/semantics/test_up_to_local.py::test_entanglement_raises_for_any_region_and_input",
+        "tests/semantics/test_up_to_local.py::test_flat_levels_without_region_keep_the_existing_pipeline",
+        "tests/semantics/test_up_to_local.py::test_flat_levels_without_region_reject_looped_input",
+        "tests/semantics/test_up_to_local.py::test_local_level_without_region_is_unsupported",
+        "tests/semantics/test_up_to_local.py::test_local_verdicts_on_a_single_iteration_body",
+        "tests/semantics/test_up_to_local.py::test_difference_outside_the_target_region_is_unsupported",
+        "tests/semantics/test_up_to_local.py::test_local_limits_are_public_constants"
+      ],
+      "sources": {
+        "src/qaiji/core/semantics/preservation.py": {
+          "before": "de2c08c6304e4699bfd4c33696ae4fa2fbb3083f7fd35219b0e182690e6f539e",
+          "after": "c775609270cf470c7f0c1f7fa11cd368fc413309dde4e484d8d156e10fe2e85b"
         }
       }
     }
