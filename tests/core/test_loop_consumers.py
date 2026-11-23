@@ -166,11 +166,19 @@ CIRCUIT_TYPE = re.compile(r"\bCircuit\b")
 CIRCUIT_PARAMETER_NAMES = {"circuit", "original", "transformed"}
 
 
-def public_modules() -> list[Any]:
-    return [
-        importlib.import_module(info.name)
-        for info in pkgutil.walk_packages(qaiji.__path__, "qaiji.")
-    ]
+def public_members() -> list[tuple[str, object]]:
+    """List public names defined in each public qaiji module, with or without ``__all__``."""
+    members = []
+    for info in pkgutil.walk_packages(qaiji.__path__, "qaiji."):
+        if any(part.startswith("_") for part in info.name.split(".")):
+            continue
+        module = importlib.import_module(info.name)
+        members.extend(
+            (f"{module.__name__}.{name}", obj)
+            for name, obj in vars(module).items()
+            if not name.startswith("_") and getattr(obj, "__module__", None) == module.__name__
+        )
+    return members
 
 
 def takes_circuit(function: Callable[..., object]) -> bool:
@@ -235,37 +243,37 @@ def test_check_invariants_keeps_type_error_for_other_inputs(case: str) -> None:
         check_invariants(source, layer=layer)  # type: ignore[arg-type]
 
 
+def test_check_invariants_ignores_unreferenced_looped_kernel() -> None:
+    program_input, layer = invariant_sources(flat())["L5-kernels"]
+    assert isinstance(program_input, ProgramInvariantInput)
+    kernels = {**program_input.kernels, "sha256:" + "1" * 64: looped()}  # type: ignore[dict-item]
+
+    report = check_invariants(dataclasses.replace(program_input, kernels=kernels), layer=layer)
+
+    assert report.ok
+
+
 def test_native_input_error_is_a_qaiji_value_error() -> None:
     assert issubclass(NativeInputError, QaijiIRError)
     assert issubclass(NativeInputError, ValueError)
 
 
 def test_every_public_circuit_consumer_has_a_disposition() -> None:
-    consumers = set()
-    for module in public_modules():
-        for name in getattr(module, "__all__", ()):
-            obj = getattr(module, name, None)
-            if inspect.isfunction(obj) and takes_circuit(obj):
-                consumers.add(f"{obj.__module__}.{obj.__qualname__}")
+    consumers = {
+        name for name, obj in public_members() if inspect.isfunction(obj) and takes_circuit(obj)
+    }
 
     assert consumers == set(CONSUMERS)
 
 
 def test_every_public_circuit_field_has_a_disposition() -> None:
-    circuit_fields = set()
-    for module in public_modules():
-        if any(part.startswith("_") for part in module.__name__.split(".")):
-            continue
-        for name, obj in vars(module).items():
-            if name.startswith("_") or not dataclasses.is_dataclass(obj):
-                continue
-            if not inspect.isclass(obj) or obj.__module__ != module.__name__:
-                continue
-            circuit_fields.update(
-                f"{module.__name__}.{name}.{field.name}"
-                for field in dataclasses.fields(obj)
-                if CIRCUIT_TYPE.search(str(field.type))
-            )
+    circuit_fields = {
+        f"{name}.{field.name}"
+        for name, obj in public_members()
+        if inspect.isclass(obj) and dataclasses.is_dataclass(obj)
+        for field in dataclasses.fields(obj)
+        if CIRCUIT_TYPE.search(str(field.type))
+    }
 
     assert circuit_fields == set(CIRCUIT_FIELDS)
 

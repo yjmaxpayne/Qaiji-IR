@@ -423,7 +423,16 @@ def _pulse(source: object) -> list[tuple[str, str, str]]:
 def check_invariants(source: object | bytes, *, layer: Layer) -> InvariantReport:
     """检查指定层的绑定输入。违规写入报告，类型不符时抛 TypeError。
 
-    电路输入是未展开的 ``LoopedCircuit`` 时抛 ``LoopNotExpandedError``。
+    下列电路是未展开的 ``LoopedCircuit`` 时抛 ``LoopNotExpandedError``：
+
+    1. L5：解析表中被调用引用的内核。
+    2. L4：直接传入的电路，或 ``L4InvariantInput.circuit``。
+    3. L2：``L2InvariantInput.circuit``。
+
+    下列情况不抛该错误：
+
+    1. 解析表中未被调用引用的表项。该层不检查这些表项。
+    2. 输入缺项，例如 L4 缺记录摘要、L2 缺 schedule。该层先返回缺项报告。
     """
     checks = {
         "L5": _program,
