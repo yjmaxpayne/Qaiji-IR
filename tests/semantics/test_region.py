@@ -9,7 +9,7 @@ import pytest
 
 from _fresh_process import run_fresh_process
 from qaiji.codec import from_qasm3, parse_looped_qasm3
-from qaiji.core.loop import BoundedLoop, ConditionalTemplate
+from qaiji.core.loop import BoundedLoop, ConditionalTemplate, LoopedCircuit
 from qaiji.core.semantics import annotate_circuit
 from qaiji.core.semantics.region import Region, annotate_looped, regions_of
 
@@ -38,6 +38,24 @@ bit[1] c;
 c[0] = measure q[0];
 if (c == 1) { x q[0]; }
 if (c == 1) { x q[0]; }
+"""
+
+# 测量之后的循环位于顶层位置 1；循环体内的条件体位于位置 1。
+LOOP_WITH_CONDITIONAL = """OPENQASM 3.0;
+include "stdgates.inc";
+qubit[2] q;
+bit[1] c;
+c[0] = measure q[0];
+for int i in [0:{stop}] {{ x q[0]; if (c[0] == 1) {{ x q[1]; }} }}
+"""
+
+# 顶层条件体（位置 1）含两个门，条件头本身不在条件体内。
+TOP_LEVEL_CONDITIONAL = """OPENQASM 3.0;
+include "stdgates.inc";
+qubit[2] q;
+bit[1] c;
+c[0] = measure q[0];
+if (c[0] == 1) { x q[1]; h q[1]; }
 """
 
 LOOP = "loop:1"
@@ -106,12 +124,15 @@ def test_region_fields_are_exactly_id_kind_parent():
     assert {field.name for field in dataclasses.fields(Region)} == {"id", "kind", "parent"}
 
 
-def _expected_region_id(gate_index):
+def _expected_region_id(annotation):
     # 展开后：位置 0 是注入的门，之后每次迭代依次是 14 个循环体节点。
-    if gate_index == 0:
+    # 条件头（body_offset 为 None）属于外层循环体，条件体内的门属于条件体。
+    if annotation.gate_index == 0:
         return None
-    offset = (gate_index - 1) % BODY_LENGTH
-    return LOOP if offset < 10 else f"{LOOP}/if:{offset}"
+    offset = (annotation.gate_index - 1) % BODY_LENGTH
+    if offset < 10 or annotation.body_offset is None:
+        return LOOP
+    return f"{LOOP}/if:{offset}"
 
 
 def test_annotate_looped_references_the_region_ids():
@@ -121,8 +142,9 @@ def test_annotate_looped_references_the_region_ids():
     assert len(expanded.gates) == 1 + 2 * BODY_LENGTH
     annotations = annotate_looped(circuit)
     assert [annotation.region_id for annotation in annotations] == [
-        _expected_region_id(annotation.gate_index) for annotation in annotations
+        _expected_region_id(annotation) for annotation in annotations
     ]
+    assert sum(annotation.region_id == LOOP for annotation in annotations) == 2 * (10 + 4)
     assert {annotation.gate_index for annotation in annotations} == set(range(len(expanded.gates)))
     referenced = {annotation.region_id for annotation in annotations} - {None}
     assert referenced == {region.id for region in regions_of(circuit)}
@@ -135,3 +157,101 @@ def test_annotate_circuit_leaves_region_id_empty():
     """平坦入口不知道 region，注解字段保持默认值。"""
     expanded = _corrected_code().expand().circuit
     assert all(annotation.region_id is None for annotation in annotate_circuit(expanded))
+
+
+def _loop_with_conditional(stop):
+    circuit = parse_looped_qasm3(LOOP_WITH_CONDITIONAL.format(stop=stop)).circuit
+    loop = circuit.operations[1]
+    assert isinstance(loop, BoundedLoop)
+    assert isinstance(loop.body[1], ConditionalTemplate)
+    return circuit
+
+
+@pytest.mark.parametrize("stop", [-1, 0, 2])
+def test_region_set_does_not_depend_on_iteration_count(stop):
+    """region 由结构决定：0 次迭代的循环与它的内层条件体也列出。"""
+    circuit = _loop_with_conditional(stop)
+    assert len(circuit.operations[1].values) == max(0, stop + 1)
+    assert regions_of(circuit) == (
+        Region(id=LOOP, kind="loop_body", parent=None),
+        Region(id=f"{LOOP}/if:1", kind="conditional_body", parent=LOOP),
+    )
+
+
+def test_empty_body_loop_is_a_region():
+    """循环体只有声明时没有节点，循环体仍是一个 region。"""
+    circuit = parse_looped_qasm3(
+        'OPENQASM 3.0;\ninclude "stdgates.inc";\nqubit[1] q;\nfor int i in [0:1] { bit[1] s; }\n'
+    ).circuit
+    (loop,) = circuit.operations
+    assert isinstance(loop, BoundedLoop)
+    assert loop.body == ()
+    assert regions_of(circuit) == (Region(id="loop:0", kind="loop_body", parent=None),)
+
+
+@pytest.mark.parametrize(
+    ("build", "expected"),
+    [
+        pytest.param(
+            _corrected_code,
+            (
+                Region(id=LOOP, kind="loop_body", parent=None),
+                *(Region(id=inner, kind="conditional_body", parent=LOOP) for inner in INNER),
+            ),
+            id="looped",
+        ),
+        pytest.param(
+            lambda: from_qasm3(TWIN_CONDITIONALS),
+            (
+                Region(id="if:1", kind="conditional_body", parent=None),
+                Region(id="if:2", kind="conditional_body", parent=None),
+            ),
+            id="flat",
+        ),
+    ],
+)
+def test_regions_of_reads_structure_without_expanding(monkeypatch, build, expected):
+    """列出 region 不展开循环，所以成本与迭代数无关，展开失败也不影响结构查询。"""
+    circuit = build()
+
+    def refuse_expansion(self):
+        raise AssertionError("regions_of must not expand the circuit")
+
+    monkeypatch.setattr(LoopedCircuit, "expand", refuse_expansion)
+    assert regions_of(circuit) == expected
+
+
+@pytest.mark.parametrize(
+    "build",
+    [
+        pytest.param(_corrected_code, id="two_rounds"),
+        pytest.param(lambda: parse_looped_qasm3(TWIN_CONDITIONALS).circuit, id="twins"),
+        pytest.param(lambda: _loop_with_conditional(0), id="one_iteration"),
+        pytest.param(lambda: _loop_with_conditional(2), id="three_iterations"),
+        pytest.param(lambda: parse_looped_qasm3(TOP_LEVEL_CONDITIONAL).circuit, id="header"),
+    ],
+)
+def test_annotated_region_ids_are_listed_regions(build):
+    """展开路径与结构路径用同一标识规则：注解引用的标识都在 regions_of 中。"""
+    circuit = build()
+    referenced = {annotation.region_id for annotation in annotate_looped(circuit)} - {None}
+    assert referenced
+    assert referenced <= {region.id for region in regions_of(circuit)}
+
+
+def test_condition_header_annotation_belongs_to_the_parent_region():
+    """条件头是经典控制，不在条件体内：顶层条件头为 None，循环内条件头为循环体。"""
+    top = annotate_looped(parse_looped_qasm3(TOP_LEVEL_CONDITIONAL).circuit)
+    assert [(a.gate_index, a.body_offset, a.region_id) for a in top] == [
+        (0, None, None),
+        (1, None, None),
+        (1, 0, "if:1"),
+        (1, 1, "if:1"),
+    ]
+    inner = annotate_looped(_loop_with_conditional(0))
+    assert [(a.gate_index, a.body_offset, a.region_id) for a in inner] == [
+        (0, None, None),
+        (1, None, LOOP),
+        (2, None, LOOP),
+        (2, 0, f"{LOOP}/if:1"),
+    ]

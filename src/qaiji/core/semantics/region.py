@@ -7,7 +7,8 @@ from dataclasses import dataclass
 from typing import Literal
 
 from qaiji.core.circuit import Circuit
-from qaiji.core.loop import LoopedCircuit
+from qaiji.core.classical import Conditional
+from qaiji.core.loop import BoundedLoop, ConditionalTemplate, LoopedCircuit
 from qaiji.core.semantics.annotation import SemanticAnnotation
 from qaiji.core.semantics.registry import annotate_circuit
 
@@ -32,39 +33,40 @@ class Region:
 
 
 def regions_of(circuit: Circuit | LoopedCircuit) -> tuple[Region, ...]:
-    """按文档顺序列出电路中的 region，父 region 排在子 region 之前。
+    """按文档顺序列出电路中的 region：循环体排在它的内层条件体之前。
 
-    标识取自展开结果的来源记录，所以只列出展开后有操作的 region：
-    0 次迭代的循环没有 region。循环体只含条件体时，循环体仍作为父 region 列出。
+    只遍历节点结构，不展开循环。所以 0 次迭代的循环与空体循环也列出，
+    成本与迭代数无关。标识规则与 :meth:`LoopedCircuit.expand` 的来源记录相同。
 
     Args:
         circuit: 平坦电路或含有界循环的电路。
 
     Returns:
-        去重后的 region 元组。
+        region 元组。
     """
-    if isinstance(circuit, Circuit):
-        circuit = LoopedCircuit(circuit.num_qubits, tuple(circuit.cregs), tuple(circuit.gates))
-    regions: dict[str, Region] = {}
-    for provenance in circuit.expand().provenance:
-        if provenance.region_id is None or provenance.region_id in regions:
-            continue
-        parent, _, leaf = provenance.region_id.rpartition("/")
-        if parent and parent not in regions:
-            regions[parent] = Region(id=parent, kind="loop_body", parent=None)
-        kind: Literal["loop_body", "conditional_body"] = (
-            "conditional_body" if leaf.startswith("if:") else "loop_body"
-        )
-        regions[provenance.region_id] = Region(
-            id=provenance.region_id, kind=kind, parent=parent or None
-        )
-    return tuple(regions.values())
+    nodes = circuit.gates if isinstance(circuit, Circuit) else circuit.operations
+    regions: list[Region] = []
+    for position, node in enumerate(nodes):
+        if isinstance(node, Conditional):
+            regions.append(Region(id=f"if:{position}", kind="conditional_body", parent=None))
+        elif isinstance(node, BoundedLoop):
+            loop_id = f"loop:{position}"
+            regions.append(Region(id=loop_id, kind="loop_body", parent=None))
+            regions.extend(
+                Region(id=f"{loop_id}/if:{body_position}", kind="conditional_body", parent=loop_id)
+                for body_position, template in enumerate(node.body)
+                if isinstance(template, ConditionalTemplate)
+            )
+    return tuple(regions)
 
 
 def annotate_looped(circuit: LoopedCircuit) -> tuple[SemanticAnnotation, ...]:
-    """在展开电路上标注每个操作，并填写它所在 region 的标识。
+    """在展开电路上标注每个操作，并填写它所在的最内层 region 的标识。
 
-    除 ``region_id`` 外，结果与 ``annotate_circuit(circuit.expand().circuit)`` 相同。
+    条件头注解（``body_offset`` 为 ``None``）是经典控制，不在条件体内，
+    所以取条件体的父 region：顶层为 ``None``，循环内为 ``loop:<位置>``。
+    条件体内的注解取条件体的标识。除 ``region_id`` 外，结果与
+    ``annotate_circuit(circuit.expand().circuit)`` 相同。
 
     Args:
         circuit: 含有界循环的电路。
@@ -75,7 +77,20 @@ def annotate_looped(circuit: LoopedCircuit) -> tuple[SemanticAnnotation, ...]:
     expanded = circuit.expand()
     return tuple(
         dataclasses.replace(
-            annotation, region_id=expanded.provenance[annotation.gate_index].region_id
+            annotation,
+            region_id=_innermost_region(
+                expanded.provenance[annotation.gate_index].region_id, annotation.body_offset
+            ),
         )
         for annotation in annotate_circuit(expanded.circuit)
     )
+
+
+def _innermost_region(node_region: str | None, body_offset: int | None) -> str | None:
+    """返回注解所在的最内层 region：条件头取条件体的父 region，其余取节点的 region。"""
+    if node_region is None or body_offset is not None:
+        return node_region
+    parent, _, leaf = node_region.rpartition("/")
+    if leaf.startswith("if:"):
+        return parent or None
+    return node_region
