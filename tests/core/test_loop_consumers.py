@@ -47,6 +47,7 @@ from qaiji.core.program import (
 from qaiji.core.program_native import NativeBinding, bridge_program_native
 from qaiji.core.semantics.dataflow import build_dataflow_summary
 from qaiji.core.semantics.preservation import check_preservation
+from qaiji.core.semantics.region import annotate_looped, regions_of
 from qaiji.core.semantics.registry import annotate_circuit
 from qaiji.core.semantics.summary import build_semantic_summary
 from qaiji.exceptions import LoopNotExpandedError, QaijiIRError
@@ -150,6 +151,8 @@ CONSUMERS: dict[str, tuple[Callable[[LoopedCircuit], object], type]] = {
         lambda c: check_preservation(c, flat()),
         LoopNotExpandedError,
     ),
+    "qaiji.core.semantics.region.annotate_looped": (annotate_looped, tuple),
+    "qaiji.core.semantics.region.regions_of": (regions_of, tuple),
 }
 
 # Public dataclass fields typed with Circuit: the consumer that rejects a looped value,
@@ -201,7 +204,8 @@ def test_consumer_result_on_looped_circuit(name: str) -> None:
     else:
         result = consume(looped())
         assert type(result) is expected
-        assert "for int i in [0:1]" in str(result)
+        # The writer keeps the loop text; region consumers name the loop region.
+        assert ("for int i in [0:1]" if expected is str else "'loop:0'") in str(result)
 
 
 def invariant_sources(circuit: object) -> dict[str, tuple[object, str]]:
