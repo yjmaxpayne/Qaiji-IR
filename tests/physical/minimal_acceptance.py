@@ -101,7 +101,7 @@ def check_legacy_contract() -> None:
             "ProgramIRV1",
             "dump_program",
             "load_program",
-        }
+        },
     }
     for module, exports in baseline["public_exports"].items():
         exports = set(exports) | additions.get(module, set())
