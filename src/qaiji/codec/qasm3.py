@@ -4,12 +4,14 @@
 
 from __future__ import annotations
 
+import copy
 import math
+import operator
 import re
-from collections.abc import Callable
-from dataclasses import dataclass, field
+from collections.abc import Callable, Iterator
+from dataclasses import dataclass, field, fields
 from functools import partial
-from typing import Never
+from typing import Any, Literal, Never, overload
 
 import openqasm3
 from openqasm3 import ast
@@ -18,6 +20,18 @@ from openqasm3.parser import QASM3ParsingError
 from qaiji.codec._stdgates import _EXPANSIONS, _Expansion
 from qaiji.core.circuit import CANONICAL_ALIASES, Circuit, Gate, GateType
 from qaiji.core.classical import ClassicalBit, ClassicalRegister, Conditional, Measure
+from qaiji.core.loop import (
+    MAX_LOOP_ITERATIONS,
+    BodyNode,
+    BoundedLoop,
+    ConditionalTemplate,
+    GateTemplate,
+    LoopedCircuit,
+    LoopIndex,
+    MeasureTemplate,
+    Operation,
+    SourceSpan,
+)
 from qaiji.exceptions import (
     Qasm3ParseError,
     Qasm3UnsupportedConstructError,
@@ -27,8 +41,10 @@ from qaiji.exceptions import (
 __all__ = [
     "GateSpec",
     "OperationOrigin",
+    "ParsedLoopedQasm3",
     "ParsedQasm3",
     "from_qasm3",
+    "parse_looped_qasm3",
     "parse_qasm3",
     "to_qasm3",
 ]
@@ -81,6 +97,11 @@ _FALLBACK_CONSTRUCT_NAMES = {
     "QuantumBarrier": "barrier",
     "QuantumReset": "reset",
     "WhileLoop": "while",
+}
+_INTEGER_OPERATORS: dict[str, Callable[[int, int], int]] = {
+    "+": operator.add,
+    "-": operator.sub,
+    "*": operator.mul,
 }
 
 
@@ -136,6 +157,22 @@ class ParsedQasm3:
         return self.declared_version is not None
 
 
+@dataclass(frozen=True)
+class ParsedLoopedQasm3:
+    """``parse_looped_qasm3`` 的产物：保留有界循环的电路，加上声明的版本。
+
+    ``declared_version`` 是版本头原文，缺头为 ``None``。
+
+    Example:
+        >>> parsed = parse_looped_qasm3("qubit[2] q; for int i in [0:1] { x q[i]; }")
+        >>> (parsed.declared_version, len(parsed.circuit.expand().circuit.gates))
+        (None, 2)
+    """
+
+    circuit: LoopedCircuit
+    declared_version: str | None
+
+
 @dataclass
 class _ParseState:
     circuit: Circuit | None = None
@@ -145,6 +182,11 @@ class _ParseState:
     registers: dict[str, ClassicalRegister] = field(default_factory=dict)
     statement_index: int = 0
     origins: list[OperationOrigin] = field(default_factory=list)
+    constants: dict[str, tuple[int, ast.ConstantDeclaration]] = field(default_factory=dict)
+    used_constants: set[str] = field(default_factory=set)
+    loop_names: set[str] = field(default_factory=set)
+    loops: list[tuple[int, int, BoundedLoop]] = field(default_factory=list)
+    """每个循环在平坦操作序列中的起止位置与循环节点。"""
 
 
 def _span(node: object) -> tuple[int, int, int, int]:
@@ -416,7 +458,7 @@ def _gate_operand(node: object, construct: str) -> tuple[str, int | None]:
 
 def _validate_gate_operands(
     spec: GateSpec | _Expansion,
-    indexed_qubits: tuple[tuple[str, int | None], ...],
+    indexed_qubits: tuple[tuple[str, int | LoopIndex | None], ...],
     parameters: tuple[float, ...],
 ) -> None:
     name = spec.qasm_name if isinstance(spec, GateSpec) else spec.name
@@ -430,12 +472,8 @@ def _validate_gate_operands(
         raise ValueError("Gate qubits must be unique")
 
 
-def _build_gate(
-    stmt: ast.QuantumGate,
-    state: _ParseState,
-) -> tuple[tuple[Gate, ...], tuple[OperationOrigin, ...], ValueError | None]:
-    raw_name = str(stmt.name.name)
-    gate_name = raw_name.lower()
+def _gate_spec(stmt: ast.QuantumGate, state: _ParseState) -> tuple[str, GateSpec | _Expansion]:
+    gate_name = str(stmt.name.name).lower()
     _reject_annotations(stmt, gate_name)
     if stmt.modifiers:
         _raise_unsupported_gate(stmt, gate_name, "gate modifiers are not supported")
@@ -447,8 +485,16 @@ def _build_gate(
         spec = _EXPANSIONS.get(gate_name)
     if spec is None:
         _raise_unsupported_gate(stmt, gate_name, "gate is not registered")
-
     _require_circuit(state, stmt, gate_name)
+    return gate_name, spec
+
+
+def _build_gate(
+    stmt: ast.QuantumGate,
+    state: _ParseState,
+) -> tuple[tuple[Gate, ...], tuple[OperationOrigin, ...], ValueError | None]:
+    raw_name = str(stmt.name.name)
+    gate_name, spec = _gate_spec(stmt, state)
     indexed_qubits = tuple(_gate_operand(qubit, gate_name) for qubit in stmt.qubits)
     for register_name, _ in indexed_qubits:
         _require_qubit_register(stmt, gate_name, register_name, state)
@@ -603,6 +649,396 @@ def _handle_branching(stmt: ast.BranchingStatement, state: _ParseState) -> None:
     state.origins.append(_origin(stmt, state, construct, body=tuple(body_origins)))
 
 
+def _descendants(node: object) -> Iterator[ast.QASMNode]:
+    """按先序遍历语法节点及其全部子节点。"""
+    if isinstance(node, list):
+        for item in node:
+            yield from _descendants(item)
+    elif isinstance(node, ast.QASMNode):
+        yield node
+        for node_field in fields(node):
+            yield from _descendants(getattr(node, node_field.name))
+
+
+def _single_index(node: object) -> tuple[str, object] | None:
+    """``name[index]`` 形态返回名称与唯一下标节点，其他形态返回 ``None``。"""
+    if isinstance(node, ast.IndexedIdentifier) and len(node.indices) == 1:
+        group = node.indices[0]
+        if isinstance(group, list) and len(group) == 1:
+            return str(node.name.name), group[0]
+    if isinstance(node, ast.IndexExpression) and isinstance(node.collection, ast.Identifier):
+        if isinstance(node.index, list) and len(node.index) == 1:
+            return str(node.collection.name), node.index[0]
+    return None
+
+
+def _is_variable(node: object, variable: str) -> bool:
+    return isinstance(node, ast.Identifier) and str(node.name) == variable
+
+
+def _sole_index(node: object, variable: str) -> int | None:
+    """循环变量作 ``name[i]`` 的唯一下标时，返回该变量节点的 id。"""
+    indexed = _single_index(node)
+    if indexed is not None and _is_variable(indexed[1], variable):
+        return id(indexed[1])
+    return None
+
+
+def _declared_names(state: _ParseState) -> set[str]:
+    return {*state.qubit_registers, *state.registers, *state.constants, *state.loop_names}
+
+
+def _integer_value(expression: object, state: _ParseState, construct: str) -> int:
+    """求整数常量表达式：字面量、已声明的 const、一元负号与 ``+ - *``。"""
+    if isinstance(expression, ast.IntegerLiteral):
+        return _checked_int(expression, construct)
+    if isinstance(expression, ast.Identifier) and str(expression.name) in state.constants:
+        name = str(expression.name)
+        state.used_constants.add(name)
+        return state.constants[name][0]
+    if isinstance(expression, ast.UnaryExpression) and expression.op.name == "-":
+        value = -_integer_value(expression.expression, state, construct)
+    elif isinstance(expression, ast.BinaryExpression) and expression.op.name in _INTEGER_OPERATORS:
+        left = _integer_value(expression.lhs, state, construct)
+        right = _integer_value(expression.rhs, state, construct)
+        value = _INTEGER_OPERATORS[expression.op.name](left, right)
+    else:
+        _raise_unsupported(
+            expression,
+            construct,
+            f"unsupported integer expression {type(expression).__name__}",
+        )
+    error = _decimal_limit_error(value)
+    if error is not None:
+        raise Qasm3ParseError(_message(expression, construct, str(error))) from error
+    return value
+
+
+def _handle_const(stmt: ast.ConstantDeclaration, state: _ParseState) -> None:
+    construct = "const"
+    _reject_annotations(stmt, construct)
+    if not isinstance(stmt.type, ast.IntType) or stmt.type.size is not None:
+        _raise_unsupported(stmt, construct, "only unsized int constants are supported")
+    name = str(stmt.identifier.name)
+    if name in _declared_names(state):
+        _raise_unsupported(stmt, construct, f"name {name!r} is already declared")
+    value = _integer_value(stmt.init_expression, state, construct)
+    state.constants[name] = (value, stmt)
+
+
+def _loop_operand(
+    node: object, construct: str, variable: str
+) -> tuple[str, int | LoopIndex | None]:
+    indexed = _single_index(node)
+    if indexed is not None and _is_variable(indexed[1], variable):
+        return indexed[0], LoopIndex()
+    return _gate_operand(node, construct)
+
+
+def _gate_templates(
+    stmt: ast.QuantumGate, state: _ParseState, variable: str
+) -> tuple[GateTemplate, ...]:
+    gate_name, spec = _gate_spec(stmt, state)
+    operands = tuple(_loop_operand(qubit, gate_name, variable) for qubit in stmt.qubits)
+    for register_name, _ in operands:
+        _require_qubit_register(stmt, gate_name, register_name, state)
+    parameters = tuple(_evaluate_parameter(argument) for argument in stmt.arguments)
+    _core_call(stmt, gate_name, lambda: _validate_gate_operands(spec, operands, parameters))
+    literal = tuple((name, index) for name, index in operands if isinstance(index, int))
+    bounds_error = _qubit_bounds_error(literal, state)
+    if bounds_error is not None:
+        raise Qasm3UnsupportedConstructError(
+            _message(stmt, gate_name, str(bounds_error))
+        ) from bounds_error
+    # 循环只允许一个量子寄存器，它的偏移为 0，所以寄存器内下标就是电路比特号。
+    ((_, size),) = state.qubit_registers.values()
+    width = size if any(index is None for _, index in operands) else 1
+    templates: list[GateTemplate] = []
+    for i in range(width):
+        refs = tuple(i if index is None else index for _, index in operands)
+        if isinstance(spec, GateSpec):
+            templates.append(GateTemplate(spec.gate_type, refs, parameters))
+            continue
+        # 展开式在占位比特 0..arity-1 上构造，再把占位比特映射回操作数。
+        build = spec.build
+        built = _core_call(stmt, gate_name, partial(build, tuple(range(spec.arity)), parameters))
+        templates.extend(
+            GateTemplate(gate.gate_type, tuple(refs[q] for q in gate.qubits), gate.params)
+            for gate in built
+        )
+    return tuple(templates)
+
+
+def _measure_templates(
+    stmt: ast.QuantumMeasurementStatement,
+    state: _ParseState,
+    variable: str,
+    scope: dict[str, ClassicalRegister],
+) -> tuple[MeasureTemplate, ...]:
+    construct = "measure"
+    _reject_annotations(stmt, construct)
+    if stmt.target is None:
+        _raise_unsupported(stmt, construct, "measurement target is required")
+    if not isinstance(stmt.measure, ast.QuantumMeasurement):
+        _raise_unsupported(
+            stmt,
+            construct,
+            "only qubit measurement is supported, not a measurement call",
+        )
+    _require_circuit(state, stmt, construct)
+    source_name, qubit = _loop_operand(stmt.measure.qubit, construct, variable)
+    target_name, bit = _loop_operand(stmt.target, construct, variable)
+    _require_qubit_register(stmt, construct, source_name, state)
+    if target_name not in scope:
+        _raise_unsupported(stmt, construct, f"target register {target_name!r} is not declared")
+    register = scope[target_name]
+    if isinstance(bit, int):
+        _core_call(stmt, construct, partial(ClassicalBit, register, bit))
+    if isinstance(qubit, int):
+        bounds_error = _qubit_bounds_error(((source_name, qubit),), state)
+        if bounds_error is not None:
+            raise Qasm3UnsupportedConstructError(
+                _message(stmt, construct, str(bounds_error))
+            ) from bounds_error
+    _, size = state.qubit_registers[source_name]
+    qubits: tuple[int | LoopIndex, ...] = tuple(range(size)) if qubit is None else (qubit,)
+    bits: tuple[int | LoopIndex, ...] = tuple(range(register.size)) if bit is None else (bit,)
+    if len(qubits) != len(bits):
+        _raise_unsupported(stmt, construct, "broadcast operands have different register sizes")
+    return tuple(
+        MeasureTemplate(source, target_name, target)
+        for source, target in zip(qubits, bits, strict=True)
+    )
+
+
+def _conditional_template(
+    stmt: ast.BranchingStatement,
+    state: _ParseState,
+    variable: str,
+    scope: dict[str, ClassicalRegister],
+) -> ConditionalTemplate:
+    construct = "if"
+    _reject_annotations(stmt, construct)
+    if stmt.else_block:
+        _raise_unsupported(stmt, construct, "else branch is not supported")
+    body_statements = _conditional_gate_body(stmt)
+    condition = stmt.condition
+    if not isinstance(condition, ast.BinaryExpression) or condition.op.name != "==":
+        _raise_unsupported(stmt, construct, "non-equality condition")
+    if not isinstance(condition.rhs, ast.IntegerLiteral):
+        _raise_unsupported(stmt, construct, "non-literal rhs")
+    if not isinstance(condition.lhs, ast.IndexExpression | ast.Identifier):
+        _raise_unsupported(stmt, construct, "condition lhs must be a whole register")
+    register_name, bit = _loop_operand(condition.lhs, construct, variable)
+    if register_name not in scope:
+        _raise_unsupported(stmt, construct, f"condition register {register_name!r} is not declared")
+    value = _checked_int(condition.rhs, construct)
+    if bit is not None:
+        if isinstance(bit, int):
+            _core_call(stmt, construct, partial(ClassicalBit, scope[register_name], bit))
+        if value not in {0, 1}:
+            _raise_unsupported(stmt, construct, "bit condition value must be 0 or 1")
+    _require_circuit(state, stmt, construct)
+    body = tuple(
+        template
+        for operation in body_statements
+        for template in _gate_templates(operation, state, variable)
+    )
+    return ConditionalTemplate(register_name, value, body, bit)
+
+
+def _bind_loop_variable(node: Any, variable: str, value: int) -> Any:
+    """复制语法树，把循环变量换成携带原位置的整数字面量。"""
+    if isinstance(node, list):
+        return [_bind_loop_variable(item, variable, value) for item in node]
+    if not isinstance(node, ast.QASMNode):
+        return node
+    if _is_variable(node, variable):
+        literal = ast.IntegerLiteral(value)
+        literal.span = node.span
+        return literal
+    # span 与 annotations 不是 init 字段，dataclasses.replace 会丢掉它们，所以逐字段复制。
+    bound = copy.copy(node)
+    for node_field in fields(node):
+        setattr(
+            bound,
+            node_field.name,
+            _bind_loop_variable(getattr(node, node_field.name), variable, value),
+        )
+    return bound
+
+
+def _loop_body_allowed(operation: object) -> bool:
+    if isinstance(operation, ast.ClassicalDeclaration):
+        return isinstance(operation.type, ast.BitType)
+    return isinstance(
+        operation,
+        ast.QuantumGate | ast.QuantumMeasurementStatement | ast.BranchingStatement,
+    )
+
+
+def _loop_register(
+    operation: ast.ClassicalDeclaration, count: int, taken: set[str]
+) -> ClassicalRegister:
+    """检查循环体寄存器的声明形态，及其名称与各轮展开名是否已被占用。"""
+    base = str(operation.identifier.name)
+    names = {base, *(f"{base}__{k}" for k in range(count))}
+    if names & taken:
+        _raise_unsupported(
+            operation, "for", f"loop register {base!r} or its expanded name is already declared"
+        )
+    taken.update(names)
+    construct = "classical declaration"
+    _reject_annotations(operation, construct)
+    if operation.init_expression is not None:
+        _raise_unsupported(operation, construct, "initialized declarations are not supported")
+    assert isinstance(operation.type, ast.BitType)
+    size = _literal_size(operation.type.size, operation, construct)
+    return _core_call(operation, construct, lambda: ClassicalRegister(base, size))
+
+
+def _handle_for(stmt: ast.ForInLoop, state: _ParseState) -> None:
+    """解析一个有界 ``for`` 循环。
+
+    先由边界算出迭代数并检查循环体，再按取值逐轮实例化，交给既有处理器校验与添加操作。
+    循环变量与已声明名称、门名或常量（如 ``x``、``pi``）同名时一律拒收。
+    0 次迭代的循环只做模板检查（形状、存在性、字面量下标、元数与参数）。
+    """
+    construct = "for"
+    _reject_annotations(stmt, construct)
+    if not isinstance(stmt.type, ast.IntType) or stmt.type.size is not None:
+        _raise_unsupported(stmt, construct, "loop variable must be an unsized int")
+    bounds = stmt.set_declaration
+    if (
+        not isinstance(bounds, ast.RangeDefinition)
+        or bounds.step is not None
+        or bounds.start is None
+        or bounds.end is None
+    ):
+        _raise_unsupported(stmt, construct, "loop range must be [start:stop] without a step")
+    start = _integer_value(bounds.start, state, construct)
+    stop = _integer_value(bounds.end, state, construct)
+    # 不在消息中写出迭代数：超过 4300 位的整数无法转成十进制。
+    if stop - start + 1 > MAX_LOOP_ITERATIONS:
+        _raise_unsupported(
+            stmt, construct, f"loop range has more than {MAX_LOOP_ITERATIONS} iterations"
+        )
+    count = max(0, stop - start + 1)
+    circuit = _require_circuit(state, stmt, construct)
+    if len(state.qubit_registers) != 1:
+        _raise_unsupported(stmt, construct, "a loop requires exactly one quantum register")
+    variable = str(stmt.identifier.name)
+    reserved = {*_declared_names(state), *_GATE_REGISTRY, *_EXPANSIONS, *_CONSTANTS}
+    if variable in reserved:
+        _raise_unsupported(
+            stmt, construct, f"loop variable {variable!r} has a declared, gate or constant name"
+        )
+
+    body = list(stmt.block)
+    for operation in body:
+        if not _loop_body_allowed(operation) or any(
+            isinstance(node, ast.ForInLoop) for node in _descendants(operation)
+        ):
+            _raise_unsupported(
+                operation, construct, f"{type(operation).__name__} is not allowed in a loop body"
+            )
+    nodes = list(_descendants(body))
+    indexes = {index for node in nodes if (index := _sole_index(node, variable)) is not None}
+    for node in nodes:
+        if _is_variable(node, variable) and id(node) not in indexes:
+            _raise_unsupported(
+                node, construct, f"loop variable {variable!r} may only be a single index"
+            )
+
+    taken = _declared_names(state)
+    scope = dict(state.registers)
+    registers: list[ClassicalRegister] = []
+    templates: list[BodyNode] = []
+    for operation in body:
+        if isinstance(operation, ast.ClassicalDeclaration):
+            register = _loop_register(operation, count, taken)
+            registers.append(register)
+            scope[register.name] = register
+        elif isinstance(operation, ast.QuantumGate):
+            templates.extend(_gate_templates(operation, state, variable))
+        elif isinstance(operation, ast.QuantumMeasurementStatement):
+            templates.extend(_measure_templates(operation, state, variable, scope))
+        elif isinstance(operation, ast.BranchingStatement):
+            templates.append(_conditional_template(operation, state, variable, scope))
+    state.loop_names.update(taken - _declared_names(state))
+
+    begin = len(circuit.gates)
+    for iteration, value in enumerate(range(start, stop + 1)):
+        for operation in body:
+            bound = _bind_loop_variable(operation, variable, value)
+            if isinstance(bound, ast.ClassicalDeclaration):
+                base = str(bound.identifier.name)
+                size = scope[base].size
+                register = _core_call(
+                    bound, construct, partial(ClassicalRegister, f"{base}__{iteration}", size)
+                )
+                _core_call(bound, construct, partial(circuit.add_register, register))
+                state.registers[base] = register
+            elif isinstance(bound, ast.QuantumGate):
+                _handle_gate(bound, state)
+            elif isinstance(bound, ast.QuantumMeasurementStatement):
+                _handle_measurement(bound, state)
+            else:
+                _handle_branching(bound, state)
+    for register in registers:
+        state.registers.pop(register.name, None)
+    loop = BoundedLoop(
+        variable, start, stop, tuple(registers), tuple(templates), SourceSpan(*_span(stmt))
+    )
+    state.loops.append((begin, len(circuit.gates), loop))
+
+
+def _declaration_name(statement: object) -> str | None:
+    if isinstance(statement, ast.QubitDeclaration):
+        return str(statement.qubit.name)
+    if isinstance(statement, ast.ClassicalDeclaration):
+        return str(statement.identifier.name)
+    return None
+
+
+def _looped_statement(statement: object, state: _ParseState) -> bool:
+    """处理循环语法独有的语句；返回 ``True`` 表示语句已处理完毕。"""
+    if isinstance(statement, ast.ForInLoop):
+        _handle_for(statement, state)
+        return True
+    if isinstance(statement, ast.ConstantDeclaration):
+        _handle_const(statement, state)
+        return True
+    if isinstance(statement, ast.BranchingStatement) and any(
+        isinstance(node, ast.ForInLoop)
+        for node in _descendants([statement.if_block, statement.else_block])
+    ):
+        _raise_unsupported(statement, "for", "a loop inside an if body is not supported")
+    if isinstance(statement, ast.QubitDeclaration) and state.loops:
+        _raise_unsupported(statement, "for", "every qubit declaration must precede the loops")
+    name = _declaration_name(statement)
+    if name in state.constants:
+        _raise_unsupported(statement, "const", f"name {name!r} is already declared as a const")
+    if name in state.loop_names:
+        _raise_unsupported(statement, "for", f"name {name!r} is already used by a loop")
+    return False
+
+
+def _looped_circuit(state: _ParseState, circuit: Circuit) -> LoopedCircuit:
+    """检查 const 都用于边界，再把每个循环的平坦操作段换成循环节点。"""
+    for name, (_, declaration) in state.constants.items():
+        if name not in state.used_constants:
+            _raise_unsupported(declaration, "const", f"const {name!r} is not used in a loop bound")
+    operations: list[Operation] = []
+    position = 0
+    for begin, end, loop in state.loops:
+        operations.extend(circuit.gates[position:begin])
+        operations.append(loop)
+        position = end
+    operations.extend(circuit.gates[position:])
+    return LoopedCircuit(circuit.num_qubits, tuple(state.registers.values()), tuple(operations))
+
+
 def _fallback_construct_name(statement: object) -> str:
     node_name = type(statement).__name__
     return _FALLBACK_CONSTRUCT_NAMES.get(node_name, node_name)
@@ -720,7 +1156,44 @@ def parse_qasm3(src: str) -> ParsedQasm3:
         raise Qasm3ParseError("source at 1:1: expression nesting exceeds parser limit") from exc
 
 
-def _parse_source(src: str) -> ParsedQasm3:
+def parse_looped_qasm3(src: str) -> ParsedLoopedQasm3:
+    """解析含有界 ``for`` 循环与 ``const int`` 的程序，保留循环结构。
+
+    不含循环的程序与 ``parse_qasm3`` 的接受面相同。循环受以下限制：
+
+    1. 区间写成 ``[start:stop]``，两端含在内，不带步长；边界是整数常量表达式。
+    2. 迭代数不超过 :data:`~qaiji.core.loop.MAX_LOOP_ITERATIONS`，在实例化前由边界算出。
+    3. 程序只有一个量子寄存器，并且在所有循环之前声明。
+    4. 循环体只含门、测量、``if`` 与 ``bit`` 声明；循环不得嵌套，也不得位于 ``if`` 体内。
+    5. 循环变量只能作单个下标；与已声明名称、门名或常量（如 ``x``、``pi``）同名时拒收。
+    6. 循环体的 ``bit`` 寄存器第 ``k`` 轮展开为 ``<名称>__k``，不得与已声明名称相同。
+    7. ``const`` 必须是不带宽度的 ``int``，并且必须用于循环边界。
+
+    Args:
+        src: OpenQASM 3 源码，版本头可缺省。
+
+    Returns:
+        保留循环节点的电路，以及声明的版本。
+
+    Raises:
+        Qasm3ParseError: 语法错误、版本不受支持、表达式嵌套过深，或整数无法写成十进制。
+        Qasm3UnsupportedConstructError: 构造、门或操作数不受支持，或循环超出上述限制。
+    """
+    try:
+        return _parse_source(src, allow_loops=True)
+    except RecursionError as exc:
+        raise Qasm3ParseError("source at 1:1: expression nesting exceeds parser limit") from exc
+
+
+@overload
+def _parse_source(src: str) -> ParsedQasm3: ...
+
+
+@overload
+def _parse_source(src: str, *, allow_loops: Literal[True]) -> ParsedLoopedQasm3: ...
+
+
+def _parse_source(src: str, *, allow_loops: bool = False) -> ParsedQasm3 | ParsedLoopedQasm3:
     try:
         program = openqasm3.parse(src, ignore_version=True)
     except QASM3ParsingError as exc:
@@ -737,6 +1210,8 @@ def _parse_source(src: str) -> ParsedQasm3:
     state = _ParseState(total_qubits=_count_qubits(program.statements))
     for statement_index, statement in enumerate(program.statements):
         state.statement_index = statement_index
+        if allow_loops and _looped_statement(statement, state):
+            continue
         if isinstance(statement, ast.Include):
             _handle_include(statement)
         elif isinstance(statement, ast.QubitDeclaration):
@@ -755,6 +1230,8 @@ def _parse_source(src: str) -> ParsedQasm3:
 
     if state.circuit is None:
         _raise_unsupported(program, "qubit declaration", "program has no qubit declaration")
+    if allow_loops:
+        return ParsedLoopedQasm3(_looped_circuit(state, state.circuit), program.version)
     return ParsedQasm3(state.circuit, tuple(state.origins), program.version)
 
 

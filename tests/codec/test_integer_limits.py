@@ -344,6 +344,24 @@ def test_adversarial_inputs_raise_only_qaiji_errors(surface, value, entry):
 
 
 @pytest.mark.parametrize("value", ADVERSARIAL_VALUES)
+@pytest.mark.parametrize("surface", ("const-declaration", "for-range"))
+def test_looped_entry_adversarial_bounds_raise_only_qaiji_errors(surface, value):
+    """新入口对超大整数只接受或抛 QaijiIRError；只有小十进制边界的循环被接受。
+
+    ``const-declaration`` 的 const 未用于循环边界，所以总被拒收。
+    """
+    from qaiji.codec import parse_looped_qasm3
+
+    try:
+        parse_looped_qasm3(_adversarial_source(surface, value))
+    except QaijiIRError:
+        accepted = False
+    else:
+        accepted = True
+    assert accepted == (surface == "for-range" and value == "decimal-small")
+
+
+@pytest.mark.parametrize("value", ADVERSARIAL_VALUES)
 def test_accepted_programs_round_trip_after_integer_checks(value):
     """仍被接受的程序都能写回并原样读回；曾经接受后在 to_qasm3 外泄的格现在于解析时拒收。"""
     accepted = []

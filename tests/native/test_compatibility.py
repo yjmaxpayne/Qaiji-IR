@@ -17,6 +17,7 @@ import pytest
 from factories import (
     LOOP_ERROR_PUBLIC_NAMES,
     LOOP_PUBLIC_NAMES,
+    LOOPED_CODEC_PUBLIC_NAMES,
     PROGRAM_V1_PUBLIC_NAMES,
     bell_circuit,
     feedforward_circuit,
@@ -133,6 +134,7 @@ def test_old_and_new_public_sets():
         module = importlib.import_module(name)
         additions = {
             "qaiji": LOOP_PUBLIC_NAMES | LOOP_ERROR_PUBLIC_NAMES,
+            "qaiji.codec": LOOPED_CODEC_PUBLIC_NAMES,
             "qaiji.core": LOOP_PUBLIC_NAMES,
             "qaiji.core.program": PROGRAM_V1_PUBLIC_NAMES,
         }.get(name, frozenset())
@@ -280,7 +282,7 @@ def _ledger_errors(baseline, root):
     planned = (
         {f"L6-{i:02d}" for i in range(1, 11)}
         | {f"L7-{i:02d}" for i in range(1, 9)}
-        | {"L8-01", "L8-02"}
+        | {"L8-01", "L8-02", "L9-01"}
     )
     # starts：每条链的起点，创建 hop 的起点是 None；touched：账本顺序中已经出现过的路径。
     seen, touched, starts = set(), set(), dict(origin)
@@ -1069,7 +1071,7 @@ def test_ledger_covers_all_planned_rows():
     planned = (
         {f"L6-{i:02d}" for i in range(1, 11)}
         | {f"L7-{i:02d}" for i in range(1, 9)}
-        | {"L8-01", "L8-02"}
+        | {"L8-01", "L8-02", "L9-01"}
     )
     assert {row["id"] for row in baseline["ledger"]} == planned - _PENDING_L7
 

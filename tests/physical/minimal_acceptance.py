@@ -94,6 +94,7 @@ def check_legacy_contract() -> None:
     }
     additions = {
         "qaiji": loop | {"LoopNotExpandedError", "LoopedCircuitError"},
+        "qaiji.codec": {"ParsedLoopedQasm3", "parse_looped_qasm3"},
         "qaiji.core": loop,
         "qaiji.core.program": {
             "ProgramCall",

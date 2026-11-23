@@ -122,8 +122,8 @@
   ],
   "frozen_sources": {
     "src/qaiji/__init__.py": "93fc5646dd76bb1e18e35e861df09811aca3d798bf793deea330393710693667",
-    "src/qaiji/codec/__init__.py": "1d25d779044c5c6b8d30835bd0042b39e092ba554ba9fee7a2c8590a897dbc9b",
-    "src/qaiji/codec/qasm3.py": "d323c2c2dfae82da1a36bb01e31c20df67cd6d951f32ede4a9062de9b4d50e21",
+    "src/qaiji/codec/__init__.py": "cbe4e75bc1024e24075ba1f7909871438e78d2b93205cc8f08b9430654fbb670",
+    "src/qaiji/codec/qasm3.py": "46438e00420715f08533d3bce84e0140c65de90f9a2f747b2922f5991a52ef65",
     "src/qaiji/constants.py": "c38d491059de235ae71c4351e9dc355a87b6eb450fe46c8a46055f0c365aadd0",
     "src/qaiji/core/__init__.py": "af33db4a43be455b0394cde31526b9506e3574a2043bf3b26cf921c00bd3ea19",
     "src/qaiji/core/circuit.py": "be98a50d34446ae9d3c3a5766b3273d721c6fbd6aa803d4408b08dec2f04cd12",
@@ -640,6 +640,38 @@
         "src/qaiji/core/semantics/summary.py": {
           "before": "39042bde4894b844a98ff7fac8fc368fdd32c46f101db6763a141a3c70276889",
           "after": "7cc2db82af074f679aefba5c646cbfe2af7913f9551969877a0a65f70e4e32b1"
+        }
+      }
+    },
+    {
+      "id": "L9-01",
+      "kind": "extend",
+      "surface": "loop",
+      "decision": "Add a separate loop-aware OpenQASM 3 entry; the strict entries keep their accepted set",
+      "before": "qaiji.codec exported only parse_qasm3, from_qasm3 and to_qasm3 with ParsedQasm3. A for loop, a while loop or a const int declaration was rejected with Qasm3UnsupportedConstructError.",
+      "after": "qaiji.codec also exports parse_looped_qasm3 and ParsedLoopedQasm3. parse_looped_qasm3 accepts a for loop over a closed integer range with literal or const int bounds, at most MAX_LOOP_ITERATIONS iterations, and a body of gates, measurements, bit declarations and if statements. It returns a LoopedCircuit with one BoundedLoop per for statement; loop body registers get a fresh name per iteration. Constructs outside this subset, including while loops, are rejected with Qasm3UnsupportedConstructError. parse_qasm3 and from_qasm3 accept and reject the same sources as before.",
+      "tests_rewritten": [
+        "tests/test_public_api.py::test_public_exports_are_the_exact_contract",
+        "tests/native/test_compatibility.py::test_old_and_new_public_sets",
+        "tests/physical/test_p_fixture_integrity.py::test_p_legacy_baseline_is_explicit",
+        "tests/physical/test_p_public_api.py::test_p_final_public_exports_are_exact",
+        "tests/physical/test_legacy_and_minimal_install.py::test_p_legacy_minimal_install"
+      ],
+      "guard_tests": [
+        "tests/codec/test_looped_parse.py::test_strict_entries_reject_looped_sources",
+        "tests/codec/test_looped_parse.py::test_looped_entry_without_loops_matches_the_strict_entry",
+        "tests/codec/test_looped_parse.py::test_looped_entry_rejects_outside_the_subset",
+        "tests/codec/test_looped_parse.py::test_looped_iteration_limit_admits_exactly_the_core_limit",
+        "tests/codec/test_integer_limits.py::test_looped_entry_adversarial_bounds_raise_only_qaiji_errors"
+      ],
+      "sources": {
+        "src/qaiji/codec/qasm3.py": {
+          "before": "d323c2c2dfae82da1a36bb01e31c20df67cd6d951f32ede4a9062de9b4d50e21",
+          "after": "46438e00420715f08533d3bce84e0140c65de90f9a2f747b2922f5991a52ef65"
+        },
+        "src/qaiji/codec/__init__.py": {
+          "before": "1d25d779044c5c6b8d30835bd0042b39e092ba554ba9fee7a2c8590a897dbc9b",
+          "after": "cbe4e75bc1024e24075ba1f7909871438e78d2b93205cc8f08b9430654fbb670"
         }
       }
     }

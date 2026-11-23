@@ -13,7 +13,12 @@ from pathlib import Path
 
 import pytest
 
-from factories import LOOP_ERROR_PUBLIC_NAMES, LOOP_PUBLIC_NAMES, PROGRAM_V1_PUBLIC_NAMES
+from factories import (
+    LOOP_ERROR_PUBLIC_NAMES,
+    LOOP_PUBLIC_NAMES,
+    LOOPED_CODEC_PUBLIC_NAMES,
+    PROGRAM_V1_PUBLIC_NAMES,
+)
 
 DATA = Path(__file__).with_name("data")
 PHYSICAL = Path(__file__).parents[2] / "src/qaiji/core/physical"
@@ -35,6 +40,7 @@ def test_p_final_public_exports_are_exact() -> None:
         module = importlib.import_module(name)
         additions = {
             "qaiji": LOOP_PUBLIC_NAMES | LOOP_ERROR_PUBLIC_NAMES,
+            "qaiji.codec": LOOPED_CODEC_PUBLIC_NAMES,
             "qaiji.core": LOOP_PUBLIC_NAMES,
             "qaiji.core.program": PROGRAM_V1_PUBLIC_NAMES,
         }.get(name, frozenset())

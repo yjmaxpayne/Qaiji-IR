@@ -37,6 +37,7 @@ LOOP_PUBLIC_NAMES = frozenset(
     }
 )
 LOOP_ERROR_PUBLIC_NAMES = frozenset({"LoopNotExpandedError", "LoopedCircuitError"})
+LOOPED_CODEC_PUBLIC_NAMES = frozenset({"ParsedLoopedQasm3", "parse_looped_qasm3"})
 
 
 def bell_circuit() -> Circuit:

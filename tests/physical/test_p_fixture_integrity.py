@@ -13,7 +13,12 @@ from typing import Any
 
 import pytest
 
-from factories import LOOP_ERROR_PUBLIC_NAMES, LOOP_PUBLIC_NAMES, PROGRAM_V1_PUBLIC_NAMES
+from factories import (
+    LOOP_ERROR_PUBLIC_NAMES,
+    LOOP_PUBLIC_NAMES,
+    LOOPED_CODEC_PUBLIC_NAMES,
+    PROGRAM_V1_PUBLIC_NAMES,
+)
 from qaiji.core import (
     Circuit,
     ClassicalBit,
@@ -323,6 +328,7 @@ def test_p_legacy_baseline_is_explicit() -> None:
         _require(len(exported) == len(set(exported)), f"legacy.public_exports.{module_name}")
         additions = {
             "qaiji": LOOP_PUBLIC_NAMES | LOOP_ERROR_PUBLIC_NAMES,
+            "qaiji.codec": LOOPED_CODEC_PUBLIC_NAMES,
             "qaiji.core": LOOP_PUBLIC_NAMES,
             "qaiji.core.program": PROGRAM_V1_PUBLIC_NAMES,
         }.get(module_name, frozenset())

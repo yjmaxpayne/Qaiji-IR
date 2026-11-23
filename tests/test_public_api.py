@@ -14,7 +14,7 @@ import qaiji.core as core
 import qaiji.core.program as program
 import qaiji.core.semantics as semantics
 import qaiji.core.trace as trace
-from factories import LOOP_PUBLIC_NAMES, PROGRAM_V1_PUBLIC_NAMES
+from factories import LOOP_PUBLIC_NAMES, LOOPED_CODEC_PUBLIC_NAMES, PROGRAM_V1_PUBLIC_NAMES
 from qaiji.constants import DEFAULT_TOLERANCE
 from qaiji.core.program import ProgramValidationError
 from qaiji.exceptions import (
@@ -60,7 +60,7 @@ CORE_PUBLIC_NAMES = LOOP_PUBLIC_NAMES | {
     "GateType",
     "Measure",
 }
-CODEC_PUBLIC_NAMES = {
+CODEC_PUBLIC_NAMES = LOOPED_CODEC_PUBLIC_NAMES | {
     "GateSpec",
     "OperationOrigin",
     "ParsedQasm3",
