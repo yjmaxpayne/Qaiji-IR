@@ -6,7 +6,7 @@ git tags via `poetry-dynamic-versioning`.
 
 ## [Unreleased]
 
-## v0.7.0 (unreleased date)
+## v0.7.0 (2026-11-24)
 
 ### Feat
 
