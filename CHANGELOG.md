@@ -55,6 +55,7 @@ git tags via `poetry-dynamic-versioning`.
   regions. A region is a loop body or a conditional body, with an id such as `loop:0/if:3`.
 - **semantics**: `annotate_looped` sets the new field `SemanticAnnotation.region_id`. The
   semantic summary does not include this field.
+- **semantics**: For a circuit without loops, the semantic-summary hash does not change.
 - **semantics**: `check_preservation(..., region=...)` with `requested_level=UP_TO_LOCAL`
   decides one region. It reports `EXACT`, `UP_TO_PHASE` or `UP_TO_LOCAL`, or returns
   `failed` or `unsupported`.
