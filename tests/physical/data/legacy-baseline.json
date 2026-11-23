@@ -157,7 +157,7 @@
     },
     "compatibility_baseline": {
       "path": "tests/native/compatibility_baseline.json",
-      "sha256": "f141308e9a4ddad83a8f82173e8dff1f33943b35be0ea4037a3dbf734bbaf9a3"
+      "sha256": "12155b4ff1efad3fd63a02ce9725a93047e3837b487b328447d10b1c7fc67868"
     },
     "kernel_ref_cases": [
       {
@@ -191,7 +191,7 @@
     "src/qaiji/core/semantics/annotation.py": "ca3f8fea48d01d87611e5cb7e476976d85ff94b403a0526d0ad0dabfa31834d3",
     "src/qaiji/core/semantics/dataflow.py": "701f4f525eb263c8bcc1f59277137aac82458dba664e298e984a04186f4edf8e",
     "src/qaiji/core/semantics/handle.py": "0c21f817e3adf027b70bc316e3c7faa71774b88f87a543f10c97c97c03cc1a64",
-    "src/qaiji/core/semantics/preservation.py": "c775609270cf470c7f0c1f7fa11cd368fc413309dde4e484d8d156e10fe2e85b",
+    "src/qaiji/core/semantics/preservation.py": "8bc5b3040378a630931c33206bee39581dd0b25dc46a0fca4cf27f04fddd88ee",
     "src/qaiji/core/semantics/registry.py": "04f8cc635e04e2db6f53338cc1f96eb61f4b05808f89a1e6d275da75f5730201",
     "src/qaiji/core/semantics/summary.py": "7cc2db82af074f679aefba5c646cbfe2af7913f9551969877a0a65f70e4e32b1",
     "src/qaiji/core/semantics/types.py": "6f2935054ee1329e7caa37d510d7d727541e6b5689da060fbfb8d011d7b55caf",

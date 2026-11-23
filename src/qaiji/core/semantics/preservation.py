@@ -41,8 +41,11 @@ MAX_LOCAL_QUBITS = 6
 MAX_LOCAL_GATES = 256
 """按 region 判定时，目标 region 全部实例两侧门数总和的上限（含）。"""
 MAX_LOCAL_RESIDUAL = 1e-10
-"""按 region 判定时的残差阈值：W 与（相位）单位阵的逐元偏差，以及各单比特切分的
-归一化第二奇异值，都须不超过此值。"""
+"""按 region 判定时的残差阈值，作用于两个量。
+
+EXACT 与 UP_TO_PHASE 取 ‖W − cI‖_F / √dim（EXACT 时 c = 1，UP_TO_PHASE 时 c 为 tr W 的
+相位）。UP_TO_LOCAL 取各单比特切分的归一化第二奇异值。前者不小于后者，所以 EXACT 或
+UP_TO_PHASE 成立时切分判据也成立。"""
 
 _JACOBI_RELATIVE_TOLERANCE = 1e-15
 _JACOBI_MAX_SWEEPS = 30
@@ -203,9 +206,12 @@ def _same_shell(left: object, right: object, body_position: int | None) -> bool:
     )
 
 
-def _region_operations(circuit: LoopedCircuit, region: str) -> list[Any]:
-    """返回展开后来源为 ``region`` 的操作，按执行顺序排列。"""
-    expanded = circuit.expand()
+def _region_operations(circuit: LoopedCircuit, region: str) -> list[Any] | None:
+    """返回展开后来源为 ``region`` 的操作，按执行顺序排列；展开失败时返回 None。"""
+    try:
+        expanded = circuit.expand()
+    except ValueError:  # LoopedCircuitError 是 ValueError 的子类。
+        return None
     return [
         operation
         for operation, provenance in zip(expanded.circuit.gates, expanded.provenance, strict=True)
@@ -253,6 +259,8 @@ def _region_instances(
             return None
         before = _region_operations(original, region)
         after = _region_operations(transformed, region)
+        if before is None or after is None:
+            return None
         return [(tuple(before), tuple(after))]
     left_template, right_template = left.body[body_position], right.body[body_position]
     assert isinstance(left_template, ConditionalTemplate)
@@ -261,9 +269,11 @@ def _region_instances(
         return None
     if iterations * (len(left_template.body) + len(right_template.body)) > MAX_LOCAL_GATES:
         return None
-    pairs = zip(
-        _region_operations(original, region), _region_operations(transformed, region), strict=True
-    )
+    left_operations = _region_operations(original, region)
+    right_operations = _region_operations(transformed, region)
+    if left_operations is None or right_operations is None:
+        return None
+    pairs = zip(left_operations, right_operations, strict=True)
     return [(tuple(before.body), tuple(after.body)) for before, after in pairs]
 
 
@@ -375,15 +385,18 @@ def _instance_verdict(before: tuple[Gate, ...], after: tuple[Gate, ...]) -> Equi
     dim = len(columns)
 
     def close_to(scalar: complex) -> bool:
-        return all(
-            abs(columns[column][row] - (scalar if row == column else 0)) <= MAX_LOCAL_RESIDUAL
+        """‖W − scalar·I‖_F / √dim 不超过残差阈值；NaN 判为不接近。"""
+        squared = sum(
+            abs(columns[column][row] - (scalar if row == column else 0)) ** 2
             for column in range(dim)
             for row in range(dim)
         )
+        return math.sqrt(squared / dim) <= MAX_LOCAL_RESIDUAL
 
     if close_to(1):
         return EquivLevel.EXACT
-    if close_to(columns[0][0]):
+    trace = sum(columns[index][index] for index in range(dim))
+    if trace != 0 and close_to(trace / abs(trace)):
         return EquivLevel.UP_TO_PHASE
     # 只有 1 个比特时 W 本身是局域算符，没有切分。
     for cut in range(len(qubits) if len(qubits) > 1 else 0):

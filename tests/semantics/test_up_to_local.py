@@ -11,7 +11,8 @@ import pytest
 import qaiji.core.semantics.preservation as preservation
 from factories import CORRECTED_TWO_ROUND_CODE, LOOP_WITH_CONDITIONAL
 from qaiji.codec import from_qasm3, parse_looped_qasm3
-from qaiji.core.circuit import Circuit
+from qaiji.core.circuit import Circuit, GateType
+from qaiji.core.loop import BoundedLoop, GateTemplate, LoopedCircuit, LoopIndex, SourceSpan
 from qaiji.core.semantics.preservation import check_preservation
 from qaiji.core.semantics.region import regions_of
 from qaiji.core.semantics.types import EquivLevel
@@ -129,7 +130,7 @@ def test_local_level_without_region_is_unsupported(make_pair) -> None:
 
 @pytest.mark.parametrize("flat_side", ["original", "transformed"])
 def test_local_level_with_mixed_input_types_is_unsupported(flat_side) -> None:
-    """同一文本的平坦解析与循环解析结构相同，但类型不同，不判定。"""
+    """平坦解析与循环解析的 region 标识相同，但类型不同，不判定。"""
     flat = _flat_conditional("h q[1];")
     looped = parse_looped_qasm3(_conditional_text("h q[1]; t q[1];")).circuit
     assert [r.id for r in regions_of(flat)] == [r.id for r in regions_of(looped)] == ["if:1"]
@@ -156,6 +157,7 @@ def test_local_limits_are_public_constants() -> None:
         pytest.param(4, FOUR, f"{FOUR} {FOUR_LOCAL}", PASSED_LOCAL, id="four_qubit_local"),
         pytest.param(2, U, f"{U} cz q[0], q[1];", FAILED, id="extra_cz"),
         pytest.param(3, "h q[0];", "h q[0]; cz q[1], q[2];", FAILED, id="cz_on_two_of_three"),
+        pytest.param(3, "h q[2];", "h q[2]; cz q[0], q[1];", FAILED, id="cz_on_first_two_of_three"),
         pytest.param(2, CX, f"t q[1]; {CX}", FAILED, id="t_on_target_input"),
         pytest.param(2, U, U, PASSED_EXACT, id="same_body"),
         pytest.param(
@@ -167,6 +169,8 @@ def test_local_limits_are_public_constants() -> None:
         ),
         pytest.param(2, U, f"{U} {LOCALS} {_zz(1e-11)}", PASSED_LOCAL, id="zz_1e-11"),
         pytest.param(2, U, f"{U} {LOCALS} {_zz(1e-9)}", FAILED, id="zz_1e-9"),
+        pytest.param(2, U, f"{U} {LOCALS} {_zz(9e-11)}", PASSED_LOCAL, id="zz_9e-11"),
+        pytest.param(2, U, f"{U} {LOCALS} {_zz(1.1e-10)}", FAILED, id="zz_1.1e-10"),
     ],
 )
 def test_local_verdicts_on_a_single_iteration_body(num_qubits, before, after, expected) -> None:
@@ -332,6 +336,12 @@ def test_gate_budget_counts_iterations_on_both_sides() -> None:
     assert _judge(at_limit, at_limit, "loop:0") == PASSED_EXACT
     assert _judge(over_limit, over_limit, "loop:0") == UNSUPPORTED
 
+    # 两侧不对称：1 个门对 255 或 256 个门。只数一侧或上限差 1 的实现会放行 257。
+    small = _looped(1, "h q[0];")
+    for count, expected in ((255, PASSED_EXACT), (256, UNSUPPORTED)):
+        large = _looped(1, " ".join(["h q[0];"] * count))
+        assert _judge(small, large, "loop:0") == expected, count
+
 
 def test_qubit_budget_is_inclusive() -> None:
     """作用比特并集等于上限时判定，多 1 个比特时不判定。"""
@@ -371,3 +381,197 @@ def test_unconverged_singular_values_are_unsupported(monkeypatch) -> None:
 
     monkeypatch.setattr(preservation, "_JACOBI_MAX_SWEEPS", 0)
     assert _judge(original, transformed, "loop:0") == UNSUPPORTED
+
+
+# --- 循环内条件体的多个实例 -------------------------------------------------
+
+
+def _loop_conditional(num_qubits: int, start: int, stop: int, body: str, value: int = 1):
+    """测量最后一个比特后进入循环（位置 1）；循环体为 ``x``（位置 0）与条件体（位置 1）。
+
+    条件体可用 ``q[i]``，使各次迭代的实例不同。
+    """
+    last = num_qubits - 1
+    text = (
+        f"{HEADER}qubit[{num_qubits}] q;\nbit[1] c;\nc[0] = measure q[{last}];\n"
+        f"for int i in [{start}:{stop}] {{ x q[{last}]; if (c[0] == {value}) {{ {body} }} }}\n"
+    )
+    return parse_looped_qasm3(text).circuit
+
+
+def _h_body(count: int, qubit: int = 0) -> str:
+    return " ".join([f"h q[{qubit}];"] * count)
+
+
+def test_loop_conditional_takes_the_weakest_instance_level() -> None:
+    """i = 0 的实例为 Z0·Z0 = I（EXACT），i = 1 的实例为 Z1·Z0（局域）；结果取最弱等级。"""
+    original = _loop_conditional(3, 0, 1, "x q[2];")
+    transformed = _loop_conditional(3, 0, 1, "x q[2]; z q[i]; z q[0];")
+    assert _judge(original, transformed, "loop:1/if:1") == PASSED_LOCAL
+
+
+def test_loop_conditional_fails_when_a_later_instance_fails() -> None:
+    """i = 1 在 CX 控制比特输入侧加 T（局域），i = 2 在目标比特输入侧加 T（失败）。"""
+    original = _loop_conditional(3, 1, 2, "cx q[1], q[2];")
+    transformed = _loop_conditional(3, 1, 2, "t q[i]; cx q[1], q[2];")
+    first_only = _loop_conditional(3, 1, 1, "t q[i]; cx q[1], q[2];")
+    assert _judge(_loop_conditional(3, 1, 1, "cx q[1], q[2];"), first_only, "loop:1/if:1") == (
+        PASSED_LOCAL
+    )
+    assert _judge(original, transformed, "loop:1/if:1") == FAILED
+
+
+def test_loop_conditional_qubit_cap_checks_every_instance() -> None:
+    """i = 5 的实例作用 6 个比特，i = 6 的实例作用 7 个比特，超过上限。"""
+    six = " ".join(f"h q[{qubit}];" for qubit in range(6))
+    assert preservation.MAX_LOCAL_QUBITS == 6
+    original = _loop_conditional(8, 5, 6, six)
+    transformed = _loop_conditional(8, 5, 6, f"{six} rz(0.3) q[i];")
+    assert _judge(original, transformed, "loop:1/if:1") == UNSUPPORTED
+
+
+def test_failed_instance_outranks_unsupported_instance(monkeypatch) -> None:
+    """第 1 个实例的奇异值迭代被替身判为未收敛，第 2 个实例失败；失败优先。"""
+    original = _loop_conditional(3, 1, 2, "cx q[1], q[2];")
+    transformed = _loop_conditional(3, 1, 2, "t q[i]; cx q[1], q[2];")
+    real = preservation._singular_values
+    calls = []
+
+    def first_call_unconverged(rows):
+        calls.append(rows)
+        return None if len(calls) == 1 else real(rows)
+
+    monkeypatch.setattr(preservation, "_singular_values", first_call_unconverged)
+    assert _judge(original, transformed, "loop:1/if:1") == FAILED
+    assert len(calls) > 1
+
+
+def test_different_condition_inside_loop_is_unsupported() -> None:
+    original = _loop_conditional(2, 0, 1, "h q[0];", value=1)
+    transformed = _loop_conditional(2, 0, 1, "h q[0];", value=0)
+    assert _judge(original, original, "loop:1/if:1") == PASSED_EXACT
+    assert _judge(original, transformed, "loop:1/if:1") == UNSUPPORTED
+
+
+# --- 条件体的门数上限 -------------------------------------------------------
+
+
+def test_gate_budget_on_a_top_level_conditional() -> None:
+    """顶层条件体只有 1 个实例：128 对 128 个门可判定，128 对 129 个门不判定。"""
+    half = preservation.MAX_LOCAL_GATES // 2
+    original = _flat_conditional(_h_body(half, qubit=1))
+    assert _judge(original, original, "if:1") == PASSED_EXACT
+    over = _flat_conditional(_h_body(half + 1, qubit=1))
+    assert _judge(original, over, "if:1") == UNSUPPORTED
+
+
+def test_gate_budget_on_a_loop_conditional_counts_iterations() -> None:
+    """2 次迭代：每侧 64 个门合计 256，可判定；64 对 65 个门合计 258，不判定。"""
+    quarter = preservation.MAX_LOCAL_GATES // 4
+    original = _loop_conditional(2, 0, 1, _h_body(quarter))
+    assert _judge(original, original, "loop:1/if:1") == PASSED_EXACT
+    over = _loop_conditional(2, 0, 1, _h_body(quarter + 1))
+    assert _judge(original, over, "loop:1/if:1") == UNSUPPORTED
+
+
+def test_over_cap_inputs_build_no_operator(monkeypatch) -> None:
+    """超过门数或比特上限的输入在取任何门矩阵之前就判为不判定。"""
+    calls = []
+    real = preservation.source_operator
+
+    def counting(gate):
+        calls.append(gate)
+        return real(gate)
+
+    monkeypatch.setattr(preservation, "source_operator", counting)
+    seven = range(preservation.MAX_LOCAL_QUBITS + 1)
+    wide = " ".join(f"h q[{qubit}];" for qubit in seven)
+    cases = [
+        (_looped(1, "h q[0];"), _looped(1, _h_body(256)), "loop:0"),
+        (_flat_conditional(_h_body(128, 1)), _flat_conditional(_h_body(129, 1)), "if:1"),
+        (
+            _loop_conditional(2, 0, 1, _h_body(64)),
+            _loop_conditional(2, 0, 1, _h_body(65)),
+            "loop:1/if:1",
+        ),
+        (_looped(7, wide), _looped(7, f"{wide} rz(0.3) q[0];"), "loop:0"),
+    ]
+    for original, transformed, region in cases:
+        assert _judge(original, transformed, region) == UNSUPPORTED, region
+    assert calls == []
+
+
+# --- 判定结果的其他字段 -----------------------------------------------------
+
+
+def test_region_path_leaves_morphism_fields_unset() -> None:
+    """按 region 判定不填态射字段；只有 passed 带等级。"""
+    cases = [
+        ("passed", LOCAL, _looped(2, U), _looped(2, f"{U} {LOCALS}")),
+        ("failed", None, _looped(2, U), _looped(2, f"{U} cz q[0], q[1];")),
+        ("unsupported", None, _looped(1, "h q[0];", stop=1), _looped(1, "h q[0];", stop=2)),
+    ]
+    for status, level, original, transformed in cases:
+        summary = check_preservation(original, transformed, requested_level=LOCAL, region="loop:0")
+        fields = (summary.status, summary.equiv_level)
+        morphisms = (summary.original_morphism, summary.lowered_morphism)
+        assert (fields, morphisms) == ((status, level), (None, None))
+
+
+# --- 展开失败 ---------------------------------------------------------------
+
+
+def test_loop_expansion_failure_is_unsupported() -> None:
+    """循环变量下标越界的电路无法展开；按 region 判定返回不判定，不外抛异常。"""
+    span = SourceSpan(1, 0, 1, 0)
+    body = (GateTemplate(GateType.X, (LoopIndex(),)),)
+    circuit = LoopedCircuit(2, (), (BoundedLoop("i", 0, 2, (), body, span),))
+    with pytest.raises(ValueError):
+        circuit.expand()
+    assert [region.id for region in regions_of(circuit)] == ["loop:0"]
+
+    assert _judge(circuit, circuit, "loop:0") == UNSUPPORTED
+
+
+# --- 等级之间的单调性 -------------------------------------------------------
+
+_X_STRINGS = ((0, 1), (0, 2), (1, 2), (0, 1, 2))
+
+
+def _x_string(qubits: tuple[int, ...], delta: float) -> str:
+    """exp(-i δ X⊗…⊗X)：H 换基，CX 阶梯求奇偶，RZ(2δ)，再逆序还原。"""
+    *controls, target = qubits
+    basis = " ".join(f"h q[{qubit}];" for qubit in qubits)
+    ladder = [f"cx q[{control}], q[{target}];" for control in controls]
+    rotation = f"rz({2 * delta!r}) q[{target}];"
+    return " ".join([basis, *ladder, rotation, *reversed(ladder), basis])
+
+
+@pytest.mark.parametrize(
+    ("phase", "strongest"),
+    [("", PASSED_EXACT), (f"rz({math.tau!r}) q[0];", ("passed", EquivLevel.UP_TO_PHASE))],
+    ids=["none", "global_phase"],
+)
+def test_exact_and_phase_verdicts_never_exceed_the_cut_residual(phase, strongest) -> None:
+    """W = exp(-iδ(X0X1 + X0X2 + X1X2 + X0X1X2))，δ 增大时等级不得变强。
+
+    各项对易，每个单比特切分的算符 Schmidt 秩为 2，归一化第二奇异值
+    ε = √3·δ·(1 + O(δ²))。EXACT 或 UP_TO_PHASE 须蕴含 ε 不超过残差阈值。
+    δ = 0.9e-10 时逐元偏差约 9e-11，ε 约 1.56e-10，须判失败。
+    """
+    order = [PASSED_EXACT, ("passed", EquivLevel.UP_TO_PHASE), PASSED_LOCAL, FAILED]
+    deltas = [0.0, 2e-11, 4e-11, 6e-11, 0.9e-10, 1.2e-10, 1e-9, 1e-6]
+    verdicts = []
+    for delta in deltas:
+        rotation = " ".join(_x_string(qubits, delta) for qubits in _X_STRINGS)
+        transformed = _looped(3, f"h q[0]; {rotation} {phase}")
+        verdict = _judge(_looped(3, "h q[0];"), transformed, "loop:0")
+        verdicts.append(verdict)
+        if verdict[1] in FLAT_LEVELS:
+            limit = preservation.MAX_LOCAL_RESIDUAL * (1 + 1e-6)
+            assert math.sqrt(3) * delta <= limit, (delta, verdict)
+
+    ranks = [order.index(verdict) for verdict in verdicts]
+    assert ranks == sorted(ranks), verdicts
+    assert (verdicts[0], verdicts[-1]) == (strongest, FAILED)
+    assert verdicts[deltas.index(0.9e-10)] == FAILED
