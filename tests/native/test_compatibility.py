@@ -154,8 +154,15 @@ def test_old_schema_kernel_goldens_and_preservation():
     assert [compute_kernel_ref(c) for c in (bell_circuit(), feedforward_circuit(), rz)] == baseline[
         "kernel_goldens"
     ]
-    # v1 扩展了程序导出与检查入口。其他历史源码继续使用原字节指纹。
-    evolved = {"src/qaiji/core/program/__init__.py", "src/qaiji/core/program/validation.py"}
+    # v1 扩展了程序导出与检查入口。有界循环扩展了包导出与异常类型。
+    # 其他历史源码继续使用原字节指纹。
+    evolved = {
+        "src/qaiji/__init__.py",
+        "src/qaiji/core/__init__.py",
+        "src/qaiji/core/program/__init__.py",
+        "src/qaiji/core/program/validation.py",
+        "src/qaiji/exceptions.py",
+    }
     assert evolved <= set(baseline["frozen_sources"])
     for path, expected in baseline["frozen_sources"].items():
         if path not in evolved:

@@ -2,9 +2,17 @@
 # SPDX-License-Identifier: Apache-2.0
 """有界循环容器与展开的契约。"""
 
+import json
+import math
+import re
+from pathlib import Path
+from typing import Any
+
 import pytest
 
+from _fresh_process import run_fresh_process
 from qaiji import from_qasm3
+from qaiji.core._codec import canonical_json, f64_to_hex
 from qaiji.core.circuit import Circuit, Gate, GateType
 from qaiji.core.classical import ClassicalBit, ClassicalRegister, Conditional, Measure
 from qaiji.core.loop import (
@@ -200,3 +208,138 @@ def test_changing_the_upper_bound_changes_the_identity() -> None:
     assert compute_kernel_ref(three_rounds) != compute_kernel_ref(two_rounds)
     assert summary_hash(three_rounds) != summary_hash(two_rounds)
     assert three_rounds == hand_written_flat(3)
+
+
+SPAN_A = SourceSpan(line=3, column=5, end_line=7, end_column=11)
+SPAN_B = SourceSpan(line=13, column=2, end_line=17, end_column=19)
+
+
+def rich_looped_circuit() -> LoopedCircuit:
+    """Build a program that touches every JSON node kind and breaks ordering regularities."""
+    z, a, m = ClassicalRegister("z", 1), ClassicalRegister("a", 2), ClassicalRegister("m", 3)
+    body = (
+        GateTemplate(GateType.RX, (INDEX,), (0.7,)),
+        GateTemplate(GateType.CZ, (0, INDEX)),
+        MeasureTemplate(INDEX, "t", INDEX),
+        MeasureTemplate(0, "t", 0),
+        ConditionalTemplate("t", 1, (GateTemplate(GateType.RZ, (INDEX,), (-1.25,)),), bit=INDEX),
+        ConditionalTemplate("a", 0, (GateTemplate(GateType.X, (1,)),)),
+    )
+    operations = (
+        Gate(GateType.U3, (0,), (0.1, -2 * math.pi / 3, 1e-300)),
+        Measure(1, ClassicalBit(m, 2)),
+        Conditional(a, 3, (Gate(GateType.RY, (2,), (0.3,)),)),
+        BoundedLoop("r", 2, 4, (ClassicalRegister("t", 5),), body, SPAN_A),
+        Conditional(m, 1, (Gate(GateType.X, (5,)),), bit_index=1),
+        BoundedLoop("k", 5, 4, (), (GateTemplate(GateType.H, (INDEX,)),), SPAN_B),
+    )
+    return LoopedCircuit(6, (z, a, m), operations)
+
+
+def _node(tree: Any, path: tuple[str | int, ...]) -> Any:
+    for key in path:
+        tree = tree[key]
+    return tree
+
+
+def test_json_is_canonical_and_names_the_schema() -> None:
+    data = rich_looped_circuit().to_json()
+
+    assert data == canonical_json(json.loads(data))
+    assert json.loads(data)["schema"] == "qaiji.looped_circuit/0.1"
+
+
+def _leaves(tree: Any) -> list[Any]:
+    if isinstance(tree, dict):
+        return [leaf for value in tree.values() for leaf in _leaves(value)]
+    if isinstance(tree, list):
+        return [leaf for value in tree for leaf in _leaves(value)]
+    return [tree]
+
+
+def test_json_writes_float_parameters_as_binary64_hex() -> None:
+    tree = json.loads(rich_looped_circuit().to_json())
+    operations = tree["operations"]
+
+    def hexes(*values: float) -> list[str]:
+        return [f64_to_hex(value) for value in values]
+
+    assert not [leaf for leaf in _leaves(tree) if isinstance(leaf, float)]
+    assert operations[0]["params"] == hexes(0.1, -2 * math.pi / 3, 1e-300)
+    assert operations[2]["body"][0]["params"] == hexes(0.3)
+    assert operations[3]["body"][0]["params"] == hexes(0.7)
+    assert operations[3]["body"][4]["body"][0]["params"] == hexes(-1.25)
+
+
+def test_json_round_trip_restores_the_circuit_and_spans() -> None:
+    original = rich_looped_circuit()
+    loop = original.operations[3]
+    assert isinstance(loop, BoundedLoop)
+    assert loop.start != 0 and loop.stop != loop.start
+    data = original.to_json()
+
+    restored = LoopedCircuit.from_json(data)
+
+    assert restored == original
+    assert restored.to_json() == data
+    spans = [node.span for node in restored.operations if isinstance(node, BoundedLoop)]
+    assert spans == [SPAN_A, SPAN_B]
+    assert restored.expand() == original.expand()
+
+
+# Each case names a JSON object inside the encoded rich circuit and a key it must carry.
+NODE_KEYS = [
+    pytest.param((), "num_qubits", id="circuit"),
+    pytest.param(("cregs", 0), "size", id="register"),
+    pytest.param(("operations", 0), "params", id="gate"),
+    pytest.param(("operations", 1), "bit", id="measure"),
+    pytest.param(("operations", 2), "bit", id="conditional"),
+    pytest.param(("operations", 3), "stop", id="loop"),
+    pytest.param(("operations", 3, "span"), "end_column", id="span"),
+    pytest.param(("operations", 3, "body", 0), "qubits", id="gate-template"),
+    pytest.param(("operations", 3, "body", 0, "qubits", 0), "kind", id="loop-index"),
+    pytest.param(("operations", 3, "body", 2), "register", id="measure-template"),
+    pytest.param(("operations", 3, "body", 4), "bit", id="conditional-template"),
+]
+
+
+@pytest.mark.parametrize(("path", "key"), NODE_KEYS)
+def test_from_json_rejects_unknown_fields(path: tuple[str | int, ...], key: str) -> None:
+    tree = json.loads(rich_looped_circuit().to_json())
+    _node(tree, path)["extra_field"] = 0
+
+    with pytest.raises(LoopedCircuitError, match=re.escape("unknown ['extra_field']")):
+        LoopedCircuit.from_json(canonical_json(tree))
+
+
+@pytest.mark.parametrize(("path", "key"), NODE_KEYS)
+def test_from_json_rejects_missing_fields(path: tuple[str | int, ...], key: str) -> None:
+    tree = json.loads(rich_looped_circuit().to_json())
+    del _node(tree, path)[key]
+
+    with pytest.raises(LoopedCircuitError, match=re.escape(f"missing keys ['{key}']")):
+        LoopedCircuit.from_json(canonical_json(tree))
+
+
+def test_from_json_rejects_another_schema() -> None:
+    tree = json.loads(rich_looped_circuit().to_json())
+    tree["schema"] = "qaiji.looped_circuit/0.2"
+
+    with pytest.raises(LoopedCircuitError, match=re.escape("qaiji.looped_circuit/0.2")):
+        LoopedCircuit.from_json(canonical_json(tree))
+
+
+def test_json_bytes_are_identical_across_processes(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Different hash seeds expose output that follows set order or object identity."""
+    here = Path(__file__).resolve().parent
+    script = (
+        f"import sys; sys.path[:0] = [{str(here)!r}, {str(here.parent)!r}]\n"
+        "from test_loop import rich_looped_circuit\n"
+        "print(rich_looped_circuit().to_json().hex())\n"
+    )
+    outputs = []
+    for seed in ("1", "2"):
+        monkeypatch.setenv("PYTHONHASHSEED", seed)
+        outputs.append(run_fresh_process(script).strip())
+
+    assert outputs == [rich_looped_circuit().to_json().hex()] * 2
