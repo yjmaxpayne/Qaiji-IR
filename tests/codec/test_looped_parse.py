@@ -32,6 +32,15 @@ def _loop(body: str, head: str = "for int i in [0:1]") -> str:
     return f"{H}{head} {{\n  {body}\n}}\n"
 
 
+def _while(
+    body: str = "x q[i];",
+    head: str = "int i = 1;\nwhile (i <= 3)",
+    step: str = "i += 1;",
+    tail: str = "",
+) -> str:
+    return f"{H}{head} {{\n  {body}\n  {step}\n}}\n{tail}"
+
+
 def _loops(parsed) -> list[BoundedLoop]:
     return [node for node in parsed.circuit.operations if isinstance(node, BoundedLoop)]
 
@@ -133,6 +142,51 @@ REJECTED = {
         "for",
         "",
     ),
+    "while-equality-condition": (_while(head="int i = 0;\nwhile (c[0] == 1)"), _UC, "while", ""),
+    "while-greater-than-condition": (_while(head="int i = 1;\nwhile (i > 0)"), _UC, "while", ""),
+    "while-condition-on-register-bit": (
+        _while(head="int i = 1;\nwhile (c[0] < 2)"),
+        _UC,
+        "while",
+        "",
+    ),
+    "while-decrement-step": (_while(step="i -= 1;"), _UC, "while", ""),
+    "while-plain-assignment-step": (_while(step="i = i + 1;"), _UC, "while", ""),
+    "while-step-of-two": (_while(step="i += 2;"), _UC, "while", ""),
+    "while-missing-step": (_while(step=""), _UC, "while", ""),
+    "while-step-not-last": (_while(body="i += 1;", step="x q[0];"), _UC, "while", ""),
+    "while-without-counter-declaration": (_while(head="while (i <= 3)"), _UC, "while", ""),
+    "while-counter-used-twice": (
+        _while(tail="while (i <= 3) {\n  x q[i];\n  i += 1;\n}\n"),
+        _UC,
+        "while",
+        "",
+    ),
+    "while-sized-counter": (_while(head="int[8] i = 1;\nwhile (i <= 3)"), _UC, "int", ""),
+    "while-uninitialized-counter": (_while(head="int i;\nwhile (i <= 3)"), _UC, "int", ""),
+    "while-counter-shadows-declared-name": (
+        _while(body="x q[c];", head="int c = 1;\nwhile (c <= 3)", step="c += 1;"),
+        _UC,
+        "int",
+        "",
+    ),
+    "while-counter-followed-by-gate": (
+        _while(head="int i = 1;\nx q[0];\nwhile (i <= 3)"),
+        _UC,
+        "int",
+        "",
+    ),
+    "while-counter-at-end": (H + "x q[0];\nint i = 1;\n", _UC, "int", ""),
+    "while-second-step": (_while(body="x q[i];\n  i += 1;"), _UC, "while", ""),
+    "while-measure-into-counter": (_while(body="i = measure q[0];"), _UC, "while", ""),
+    "while-counter-read-after-loop": (_while(tail="x q[i];\n"), _UC, "x", ""),
+    "while-reset-in-body": (_while(body="reset q[i];"), _UC, "while", ""),
+    "while-above-iteration-limit": (
+        _while(body="x q[0];", head="int i = 0;\nwhile (i <= 1024)"),
+        _UC,
+        "while",
+        "1024",
+    ),
 }
 
 # (源码, 等价的平坦正文, 循环节点的 (start, stop))。
@@ -154,6 +208,35 @@ EXPANDED = {
     ),
 }
 
+# (计数器 while 源码, 等价的 for 源码, 等价的平坦正文, 循环节点的 (start, stop))。
+WHILE_EXPANDED = {
+    "less-or-equal": (
+        _while(),
+        _loop("x q[i];", "for int i in [1:3]"),
+        "x q[1];\nx q[2];\nx q[3];\n",
+        (1, 3),
+    ),
+    "less-than": (
+        _while(head="int i = 1;\nwhile (i < 3)"),
+        _loop("x q[i];", "for int i in [1:2]"),
+        "x q[1];\nx q[2];\n",
+        (1, 2),
+    ),
+    "const-bound-with-register": (
+        H + "const int N = 3;\nint i = 1;\n"
+        "while (i < N) {\n  bit[1] s;\n  s[0] = measure q[i];\n  i += 1;\n}\n",
+        H + "const int N = 3;\nfor int i in [1:N-1] {\n  bit[1] s;\n  s[0] = measure q[i];\n}\n",
+        "bit[1] s__0;\ns__0[0] = measure q[1];\nbit[1] s__1;\ns__1[0] = measure q[2];\n",
+        (1, 2),
+    ),
+}
+
+# 迭代 n 次的循环；循环体不依赖 i，所以去掉上限后 n 次都能实例化。
+LIMIT_LOOPS = {
+    "for": lambda n: _loop("x q[0];", f"for int i in [0:{n - 1}]"),
+    "while": lambda n: _while(body="x q[0];", head=f"int i = 0;\nwhile (i < {n})"),
+}
+
 EMPTY_RANGE = _loop("x q[i];", "for int i in [1:0]")
 AT_LIMIT = _loop("x q[0];", "for int i in [0:1023]")
 HUGE_RANGE = _loop("x q[0];", "for int i in [0:9999999]")
@@ -170,6 +253,7 @@ FLAT_TWO_REGISTERS = (
 LOOPED_SAMPLES = {
     **{name: case[0] for name, case in REJECTED.items()},
     **{name: case[0] for name, case in EXPANDED.items()},
+    **{f"while-{name}": case[0] for name, case in WHILE_EXPANDED.items()},
     "empty-range": EMPTY_RANGE,
     "at-limit": AT_LIMIT,
     "huge-range": HUGE_RANGE,
@@ -201,6 +285,29 @@ def test_looped_for_expands_the_closed_range_with_the_loop_value(case):
     (loop,) = _loops(parsed)
     assert (loop.start, loop.stop) == bounds
     assert parsed.circuit.expand().circuit == from_qasm3(H + flat_body)
+
+
+@pytest.mark.parametrize("case", WHILE_EXPANDED)
+def test_looped_counter_while_equals_the_equivalent_for(case):
+    """计数器 while 的起点取声明的初值，``<`` 不含右端、``<=`` 含右端，与等价的 for 得同一个循环节点。"""
+    source, for_source, flat_body, bounds = WHILE_EXPANDED[case]
+    parsed = _entry()(source)
+    (loop,) = _loops(parsed)
+    assert (loop.start, loop.stop) == bounds
+    assert parsed.circuit == _entry()(for_source).circuit
+    assert parsed.circuit.expand().circuit == from_qasm3(H + flat_body)
+
+
+@pytest.mark.parametrize("kind", LIMIT_LOOPS)
+def test_looped_iteration_limit_follows_the_parser_constant(kind, monkeypatch):
+    """上限比较读解析器模块的上限常量：常量改为 4 时 5 次迭代拒收，4 次迭代接受。"""
+    monkeypatch.setattr(qasm3_module, "MAX_LOOP_ITERATIONS", 4)
+    with pytest.raises(QaijiIRError) as raised:
+        _entry()(LIMIT_LOOPS[kind](5))
+    assert type(raised.value) is Qasm3UnsupportedConstructError
+    assert str(raised.value).startswith(f"{kind} at ")
+    parsed = _entry()(LIMIT_LOOPS[kind](4))
+    assert len(parsed.circuit.expand().circuit.gates) == 4
 
 
 def test_looped_empty_range_has_no_operations():

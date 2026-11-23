@@ -157,7 +157,7 @@
     },
     "compatibility_baseline": {
       "path": "tests/native/compatibility_baseline.json",
-      "sha256": "8b2d54fe056c3d83866507491d27d7f0e08b41112987a9f1392f5bf08d5c6a5a"
+      "sha256": "dd57f110bf975174921263c4c31ce838041240af54e084d4000b9ad711f94754"
     },
     "kernel_ref_cases": [
       {
@@ -178,7 +178,7 @@
   "source_digests": {
     "src/qaiji/__init__.py": "93fc5646dd76bb1e18e35e861df09811aca3d798bf793deea330393710693667",
     "src/qaiji/codec/__init__.py": "cbe4e75bc1024e24075ba1f7909871438e78d2b93205cc8f08b9430654fbb670",
-    "src/qaiji/codec/qasm3.py": "46438e00420715f08533d3bce84e0140c65de90f9a2f747b2922f5991a52ef65",
+    "src/qaiji/codec/qasm3.py": "59f74c83701a1deb81a4988f6cd7c7b2833069ff1ce3dd8bc2f74f8a0afe29f7",
     "src/qaiji/constants.py": "c38d491059de235ae71c4351e9dc355a87b6eb450fe46c8a46055f0c365aadd0",
     "src/qaiji/core/__init__.py": "af33db4a43be455b0394cde31526b9506e3574a2043bf3b26cf921c00bd3ea19",
     "src/qaiji/core/circuit.py": "be98a50d34446ae9d3c3a5766b3273d721c6fbd6aa803d4408b08dec2f04cd12",
