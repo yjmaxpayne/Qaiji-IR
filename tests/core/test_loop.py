@@ -149,8 +149,8 @@ def test_provenance_is_aligned_with_gates_and_names_region_and_iteration() -> No
     flag = ClassicalRegister("c", 1)
     loop = BoundedLoop(
         "i",
-        0,
-        1,
+        3,
+        4,
         (ClassicalRegister("s", 1),),
         (
             GateTemplate(GateType.X, (INDEX,)),
@@ -159,14 +159,16 @@ def test_provenance_is_aligned_with_gates_and_names_region_and_iteration() -> No
         ),
         SPAN,
     )
+    # Loop values differ from iteration numbers, so recording the value would fail.
+    assert loop.values != (0, 1)
     top_conditional = Conditional(flag, 1, (Gate(GateType.Z, (0,)),))
-    looped = LoopedCircuit(2, (flag,), (Gate(GateType.H, (0,)), loop, top_conditional))
+    looped = LoopedCircuit(5, (flag,), (Gate(GateType.H, (0,)), loop, top_conditional))
 
     expanded = looped.expand()
 
     assert len(expanded.provenance) == len(expanded.circuit.gates)
     # The first loop-body gate sits at gate index 1 but at body position 0.
-    assert expanded.circuit.gates[1] == Gate(GateType.X, (0,))
+    assert expanded.circuit.gates[1] == Gate(GateType.X, (3,))
     assert expanded.provenance == (
         OperationProvenance(None, None),
         OperationProvenance("loop:1", 0),
@@ -343,3 +345,190 @@ def test_json_bytes_are_identical_across_processes(monkeypatch: pytest.MonkeyPat
         outputs.append(run_fresh_process(script).strip())
 
     assert outputs == [rich_looped_circuit().to_json().hex()] * 2
+
+
+def _edited_bytes(old: bytes, new: bytes) -> bytes:
+    data = rich_looped_circuit().to_json()
+    assert data.count(old) == 1
+    return data.replace(old, new)
+
+
+DEPTH = 100_000
+STRICT_PARSER_CASES = [
+    pytest.param(b"{", "not valid JSON", id="not-json"),
+    pytest.param(
+        _edited_bytes(b'"num_qubits":6', b'"num_qubits":6,"num_qubits":6'),
+        "DUPLICATE",
+        id="duplicate-key",
+    ),
+    pytest.param(
+        _edited_bytes(b'"operations":[', b'"operations":[' + b"[" * DEPTH + b"]" * DEPTH + b","),
+        "DEPTH",
+        id="deep-nesting",
+    ),
+    pytest.param(
+        _edited_bytes(b'"num_qubits":6', b'"num_qubits":6.0'),
+        "NUMBER_ENCODING",
+        id="float-in-integer-field",
+    ),
+    pytest.param(
+        _edited_bytes(b'"num_qubits":6', b'"num_qubits":9223372036854775808'),
+        "INTEGER",
+        id="beyond-signed64",
+    ),
+]
+
+
+@pytest.mark.parametrize(("data", "fragment"), STRICT_PARSER_CASES)
+def test_from_json_rejects_what_the_strict_parser_refuses(data: bytes, fragment: str) -> None:
+    with pytest.raises(LoopedCircuitError, match=re.escape(fragment)):
+        LoopedCircuit.from_json(data)
+
+
+WRONG_TYPES = [
+    pytest.param((), "num_qubits", True, "integer", id="num-qubits-bool"),
+    pytest.param(("operations", 3), "start", False, "integer", id="start-bool"),
+    pytest.param((), "operations", "", "list", id="operations-string"),
+    pytest.param(("operations", 3, "body", 0, "qubits"), 0, True, "integer", id="qubit-bool"),
+    pytest.param(("operations", 3), "variable", 5, "string", id="variable-int"),
+    pytest.param(("operations", 3, "body", 2), "register", 5, "string", id="template-register-int"),
+    pytest.param(("cregs", 0), "name", 5, "string", id="register-name-int"),
+]
+
+
+@pytest.mark.parametrize(("path", "key", "value", "fragment"), WRONG_TYPES)
+def test_from_json_rejects_values_of_the_wrong_type(
+    path: tuple[str | int, ...], key: str | int, value: Any, fragment: str
+) -> None:
+    tree = json.loads(rich_looped_circuit().to_json())
+    _node(tree, path)[key] = value
+
+    with pytest.raises(LoopedCircuitError, match=f"must be an? {fragment}"):
+        LoopedCircuit.from_json(canonical_json(tree))
+
+
+def test_from_json_accepts_a_null_conditional_bit() -> None:
+    data = rich_looped_circuit().to_json()
+    tree = json.loads(data)
+    assert tree["operations"][2]["bit"] is None
+    assert tree["operations"][3]["body"][5]["bit"] is None
+
+    assert LoopedCircuit.from_json(data) == rich_looped_circuit()
+
+
+NON_FINITE_HEX = {"nan": "7ff8000000000000", "inf": "7ff0000000000000", "-inf": "fff0000000000000"}
+
+
+@pytest.mark.parametrize("hex_value", NON_FINITE_HEX.values(), ids=NON_FINITE_HEX.keys())
+@pytest.mark.parametrize(
+    "path",
+    [("operations", 3, "body", 0), ("operations", 3, "body", 4, "body", 0)],
+    ids=["loop-gate", "loop-conditional-gate"],
+)
+def test_from_json_rejects_non_finite_parameters(
+    path: tuple[str | int, ...], hex_value: str
+) -> None:
+    tree = json.loads(rich_looped_circuit().to_json())
+    _node(tree, path)["params"][0] = hex_value
+
+    with pytest.raises(LoopedCircuitError, match="finite"):
+        LoopedCircuit.from_json(canonical_json(tree))
+
+
+@pytest.mark.parametrize("value", [math.nan, math.inf, -math.inf], ids=["nan", "inf", "-inf"])
+def test_gate_template_rejects_non_finite_parameters(value: float) -> None:
+    with pytest.raises(LoopedCircuitError, match="finite"):
+        GateTemplate(GateType.RX, (0,), (value,))
+
+
+def test_loop_iteration_count_is_limited_to_1024() -> None:
+    from qaiji.core.loop import MAX_LOOP_ITERATIONS
+
+    assert MAX_LOOP_ITERATIONS == 1024
+    assert len(BoundedLoop("i", 0, 1023, (), (), SPAN).values) == 1024
+    with pytest.raises(LoopedCircuitError, match="1025 iterations"):
+        BoundedLoop("i", 0, 1024, (), (), SPAN)
+
+
+def test_from_json_rejects_a_huge_loop_without_expanding_it() -> None:
+    tree = json.loads(rich_looped_circuit().to_json())
+    tree["operations"][3]["stop"] = 10**18
+
+    with pytest.raises(LoopedCircuitError, match="1024"):
+        LoopedCircuit.from_json(canonical_json(tree))
+
+
+def test_a_reversed_huge_range_is_an_empty_loop() -> None:
+    loop = BoundedLoop("i", 5, -(10**18), (), (GateTemplate(GateType.H, (INDEX,)),), SPAN)
+
+    assert loop.values == ()
+    assert LoopedCircuit(1, (), (loop,)).expand().circuit.gates == []
+
+
+def test_expansion_rejects_a_loop_register_named_like_a_top_level_register() -> None:
+    loop = BoundedLoop("i", 0, 1, (ClassicalRegister("s", 1),), (), SPAN)
+    looped = LoopedCircuit(1, (ClassicalRegister("s", 1),), (loop,))
+
+    with pytest.raises(LoopedCircuitError, match="'s'"):
+        looped.expand()
+
+
+def test_a_loop_body_condition_reads_the_top_level_register() -> None:
+    a = ClassicalRegister("a", 1)
+    body = (ConditionalTemplate("a", 1, (GateTemplate(GateType.X, (0,)),)),)
+    loop = BoundedLoop("i", 7, 7, (ClassicalRegister("t", 1),), body, SPAN)
+    expected = Circuit(1)
+    expected.add_register(a)
+    expected.add_register(ClassicalRegister("t__0", 1))
+    expected.add_conditional(Conditional(a, 1, (Gate(GateType.X, (0,)),)))
+
+    assert LoopedCircuit(1, (a,), (loop,)).expand().circuit == expected
+
+
+def _set(path: tuple[str | int, ...], key: str | int, value: Any) -> Any:
+    def edit(tree: Any) -> None:
+        _node(tree, path)[key] = value(tree) if callable(value) else value
+
+    return edit
+
+
+MALFORMED_NODES = [
+    pytest.param(_set(("cregs",), 0, []), "must be a JSON object", id="register-not-object"),
+    pytest.param(_set(("operations", 0), "kind", "swap"), "unknown node kind", id="unknown-kind"),
+    pytest.param(
+        _set(("operations", 3, "body", 0, "qubits", 0), "kind", "x"),
+        "unknown index kind",
+        id="unknown-index-kind",
+    ),
+    pytest.param(
+        _set(("operations", 2, "body"), 0, lambda tree: tree["operations"][1]),
+        "expected 'gate'",
+        id="measure-in-conditional",
+    ),
+    pytest.param(_set(("operations", 0, "params"), 0, "0.5"), "binary64 hex", id="param-not-hex"),
+    pytest.param(
+        _set(("operations", 3, "body"), 0, lambda tree: tree["operations"][5]),
+        "cannot hold a loop",
+        id="loop-in-loop",
+    ),
+    pytest.param(
+        _set(("operations", 0), "gate_type", "BOGUS"), "malformed document", id="bogus-gate-type"
+    ),
+    pytest.param(_set(("cregs", 0), "size", -1), "malformed document", id="negative-size"),
+]
+
+
+@pytest.mark.parametrize(("edit", "fragment"), MALFORMED_NODES)
+def test_from_json_rejects_malformed_nodes(edit: Any, fragment: str) -> None:
+    tree = json.loads(rich_looped_circuit().to_json())
+    edit(tree)
+
+    with pytest.raises(LoopedCircuitError, match=re.escape(fragment)):
+        LoopedCircuit.from_json(canonical_json(tree))
+
+
+def test_expansion_rejects_an_undeclared_loop_body_register() -> None:
+    loop = BoundedLoop("i", 0, 0, (), (MeasureTemplate(0, "nope", 0),), SPAN)
+
+    with pytest.raises(LoopedCircuitError, match="undeclared register 'nope'"):
+        LoopedCircuit(1, (), (loop,)).expand()

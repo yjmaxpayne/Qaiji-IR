@@ -4,11 +4,11 @@
 
 from __future__ import annotations
 
-import json
+import math
 from dataclasses import dataclass, field
 from typing import Any, Never
 
-from qaiji.core._codec import canonical_json, f64_from_hex, f64_to_hex
+from qaiji.core._codec import CodecFault, canonical_json, f64_from_hex, f64_to_hex, parse_json
 from qaiji.core.circuit import Circuit, Gate, GateType
 from qaiji.core.classical import ClassicalBit, ClassicalRegister, Conditional, Measure
 from qaiji.exceptions import LoopedCircuitError, LoopNotExpandedError
@@ -26,6 +26,8 @@ __all__ = [
 ]
 
 LOOPED_CIRCUIT_SCHEMA = "qaiji.looped_circuit/0.1"
+MAX_LOOP_ITERATIONS = 1024
+"""一个循环最多迭代的次数。容器与解析器共用此上限。"""
 
 
 @dataclass(frozen=True, slots=True)
@@ -44,6 +46,10 @@ class GateTemplate:
     gate_type: GateType
     qubits: tuple[QubitRef, ...]
     params: tuple[float, ...] = ()
+
+    def __post_init__(self) -> None:
+        if not all(math.isfinite(param) for param in self.params):
+            raise LoopedCircuitError("Gate template parameters must be finite")
 
 
 @dataclass(frozen=True, slots=True)
@@ -80,7 +86,7 @@ BodyNode = GateTemplate | MeasureTemplate | ConditionalTemplate
 
 @dataclass(frozen=True, slots=True)
 class BoundedLoop:
-    """整数区间上的有界循环。区间含两端。"""
+    """整数区间上的有界循环。区间含两端，迭代数不超过 :data:`MAX_LOOP_ITERATIONS`。"""
 
     variable: str
     start: int
@@ -90,6 +96,14 @@ class BoundedLoop:
     """循环体声明的寄存器。第 ``k`` 次迭代展开为 ``<名称>__k``。"""
     body: tuple[BodyNode, ...]
     span: SourceSpan = field(compare=False)
+
+    def __post_init__(self) -> None:
+        count = max(0, self.stop - self.start + 1)
+        if count > MAX_LOOP_ITERATIONS:
+            raise LoopedCircuitError(
+                f"Loop over [{self.start}:{self.stop}] has {count} iterations; "
+                f"the limit is {MAX_LOOP_ITERATIONS}"
+            )
 
     @property
     def values(self) -> tuple[int, ...]:
@@ -150,7 +164,10 @@ class LoopedCircuit:
             平坦电路，以及与 ``circuit.gates`` 对齐的来源。
 
         Raises:
-            LoopedCircuitError: 展开名与已声明名称或其他展开名相同。
+            LoopedCircuitError: 展开名与已声明名称或其他展开名相同，循环寄存器与顶层寄存器同名，
+                或循环体引用未声明的寄存器。
+            ValueError: 门、测量或条件体不合法，例如比特越界（由 ``Circuit``、``Gate``、
+                ``ClassicalBit`` 校验）。
         """
         circuit = Circuit(self.num_qubits)
         for register in self.cregs:
@@ -183,6 +200,12 @@ class LoopedCircuit:
             for position, node in enumerate(self.operations)
             if isinstance(node, BoundedLoop)
         ]
+        for _, loop in loops:
+            for register in loop.registers:
+                if register.name in top_level:
+                    raise LoopedCircuitError(
+                        f"Loop register {register.name!r} has the name of a top-level register"
+                    )
         taken = set(top_level)
         taken.update(register.name for _, loop in loops for register in loop.registers)
 
@@ -230,13 +253,14 @@ class LoopedCircuit:
             与编码前相等的电路，``span`` 一并恢复。
 
         Raises:
-            LoopedCircuitError: 文档不是合法 JSON、schema 不同、某个对象有未知键或缺键，
-                或字段值不合法。
+            LoopedCircuitError: 严格解析器拒收文档（重复键、嵌套过深、非整数数值等），schema
+                不同，某个对象有未知键或缺键，字段类型或值不合法，参数非有限，
+                或循环迭代数超过上限。
         """
         try:
-            tree = json.loads(data)
-        except ValueError as exc:
-            raise LoopedCircuitError(f"document is not valid JSON: {exc}") from exc
+            tree = parse_json(data)
+        except CodecFault as fault:
+            raise LoopedCircuitError(f"document is not valid JSON: {fault}") from fault
         found = tree.get("schema") if isinstance(tree, dict) else None
         if found != LOOPED_CIRCUIT_SCHEMA:
             raise LoopedCircuitError(
@@ -245,9 +269,9 @@ class LoopedCircuit:
         tree = _object("circuit", tree, {"schema", "num_qubits", "cregs", "operations"})
         try:
             return cls(
-                tree["num_qubits"],
-                tuple(_register_of(item) for item in tree["cregs"]),
-                tuple(_operation_of(item) for item in tree["operations"]),
+                _int("num_qubits", tree["num_qubits"]),
+                tuple(_register_of(item) for item in _list("cregs", tree["cregs"])),
+                tuple(_operation_of(item) for item in _list("operations", tree["operations"])),
             )
         except LoopedCircuitError:
             raise
@@ -334,6 +358,24 @@ _KEYS = {
 }
 
 
+def _int(where: str, value: Any) -> int:
+    if type(value) is not int:
+        raise LoopedCircuitError(f"{where} must be an integer, got {value!r}")
+    return value
+
+
+def _str(where: str, value: Any) -> str:
+    if type(value) is not str:
+        raise LoopedCircuitError(f"{where} must be a string, got {value!r}")
+    return value
+
+
+def _list(where: str, value: Any) -> list[Any]:
+    if type(value) is not list:
+        raise LoopedCircuitError(f"{where} must be a list, got {value!r}")
+    return value
+
+
 def _object(where: str, tree: Any, keys: set[str]) -> dict[str, Any]:
     if not isinstance(tree, dict):
         raise LoopedCircuitError(f"{where} must be a JSON object")
@@ -354,12 +396,14 @@ def _node(tree: Any) -> tuple[str, dict[str, Any]]:
 
 def _register_of(tree: Any) -> ClassicalRegister:
     tree = _object("register", tree, {"name", "size"})
-    return ClassicalRegister(tree["name"], tree["size"])
+    return ClassicalRegister(
+        _str("register name", tree["name"]), _int("register size", tree["size"])
+    )
 
 
 def _ref_of(tree: Any) -> int | LoopIndex:
-    if isinstance(tree, int):
-        return tree
+    if not isinstance(tree, dict):
+        return _int("index", tree)
     tree = _object("loop index", tree, {"kind"})
     if tree["kind"] != "loop_index":
         raise LoopedCircuitError(f"unknown index kind {tree['kind']!r}")
@@ -373,25 +417,29 @@ def _gate_node(tree: Any) -> dict[str, Any]:
     return node
 
 
-def _params_of(tree: list[Any]) -> tuple[float, ...]:
+def _params_of(tree: Any) -> tuple[float, ...]:
     params = []
-    for text in tree:
+    for text in _list("params", tree):
         value = f64_from_hex(text)
         if value is None:
             raise LoopedCircuitError(f"params must be 16-digit binary64 hex strings, got {text!r}")
+        if not math.isfinite(value):
+            raise LoopedCircuitError(f"params must be finite binary64, got {text!r}")
         params.append(value)
     return tuple(params)
 
 
 def _gate_of(tree: Any) -> Gate:
     tree = _gate_node(tree)
-    return Gate(GateType(tree["gate_type"]), tuple(tree["qubits"]), _params_of(tree["params"]))
+    qubits = tuple(_int("qubit", qubit) for qubit in _list("qubits", tree["qubits"]))
+    return Gate(GateType(_str("gate_type", tree["gate_type"])), qubits, _params_of(tree["params"]))
 
 
 def _gate_template_of(tree: Any) -> GateTemplate:
     tree = _gate_node(tree)
-    qubits = tuple(_ref_of(qubit) for qubit in tree["qubits"])
-    return GateTemplate(GateType(tree["gate_type"]), qubits, _params_of(tree["params"]))
+    qubits = tuple(_ref_of(qubit) for qubit in _list("qubits", tree["qubits"]))
+    gate_type = GateType(_str("gate_type", tree["gate_type"]))
+    return GateTemplate(gate_type, qubits, _params_of(tree["params"]))
 
 
 def _template_of(tree: Any) -> BodyNode:
@@ -399,11 +447,13 @@ def _template_of(tree: Any) -> BodyNode:
     if kind == "gate":
         return _gate_template_of(tree)
     if kind == "measure":
-        return MeasureTemplate(_ref_of(tree["qubit"]), tree["register"], _ref_of(tree["bit"]))
+        register = _str("register", tree["register"])
+        return MeasureTemplate(_ref_of(tree["qubit"]), register, _ref_of(tree["bit"]))
     if kind == "if":
         bit = None if tree["bit"] is None else _ref_of(tree["bit"])
-        body = tuple(_gate_template_of(item) for item in tree["body"])
-        return ConditionalTemplate(tree["register"], tree["value"], body, bit)
+        body = tuple(_gate_template_of(item) for item in _list("body", tree["body"]))
+        register = _str("register", tree["register"])
+        return ConditionalTemplate(register, _int("value", tree["value"]), body, bit)
     raise LoopedCircuitError("a loop body cannot hold a loop")
 
 
@@ -412,19 +462,21 @@ def _operation_of(tree: Any) -> Operation:
     if kind == "gate":
         return _gate_of(tree)
     if kind == "measure":
-        target = ClassicalBit(_register_of(tree["register"]), tree["bit"])
-        return Measure(tree["qubit"], target)
+        target = ClassicalBit(_register_of(tree["register"]), _int("bit", tree["bit"]))
+        return Measure(_int("qubit", tree["qubit"]), target)
     if kind == "if":
-        body = tuple(_gate_of(item) for item in tree["body"])
-        return Conditional(_register_of(tree["register"]), tree["value"], body, tree["bit"])
+        body = tuple(_gate_of(item) for item in _list("body", tree["body"]))
+        bit = None if tree["bit"] is None else _int("bit", tree["bit"])
+        value = _int("value", tree["value"])
+        return Conditional(_register_of(tree["register"]), value, body, bit)
     span = _object("span", tree["span"], {"line", "column", "end_line", "end_column"})
     return BoundedLoop(
-        tree["variable"],
-        tree["start"],
-        tree["stop"],
-        tuple(_register_of(item) for item in tree["registers"]),
-        tuple(_template_of(item) for item in tree["body"]),
-        SourceSpan(span["line"], span["column"], span["end_line"], span["end_column"]),
+        _str("variable", tree["variable"]),
+        _int("start", tree["start"]),
+        _int("stop", tree["stop"]),
+        tuple(_register_of(item) for item in _list("registers", tree["registers"])),
+        tuple(_template_of(item) for item in _list("body", tree["body"])),
+        SourceSpan(*(_int(key, span[key]) for key in ("line", "column", "end_line", "end_column"))),
     )
 
 
