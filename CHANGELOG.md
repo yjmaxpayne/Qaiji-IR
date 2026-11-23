@@ -6,6 +6,83 @@ git tags via `poetry-dynamic-versioning`.
 
 ## [Unreleased]
 
+## v0.7.0 (unreleased date)
+
+### Feat
+
+- **semantics**: decide local equivalence inside a region
+- **semantics**: add structural regions and looped annotations
+- **core**: reject looped circuits at circuit consumers
+- **codec**: accept counter while loops and write looped circuits back
+- **codec**: parse bounded for loops and const ints
+- **core**: serialise looped circuits to canonical JSON
+- **core**: add bounded-loop container and expansion
+
+### Fix
+
+- **semantics**: nest local-equivalence tolerances and cover multi-instance regions
+- **semantics**: list regions by structure and keep headers in the parent region
+- **codec**: reserve loop names and validate looped write-back
+- **core**: validate looped-circuit documents and iteration bounds
+
+### Release notes
+
+- **core**: The new `LoopedCircuit` container keeps bounded loops. It is separate from
+  `Circuit`, and `Circuit` does not change.
+- **core**: A `BoundedLoop` runs over the inclusive integer range `[start:stop]`. A range with
+  `stop < start` has zero iterations.
+- **core**: A loop body holds `GateTemplate`, `MeasureTemplate` and `ConditionalTemplate`
+  nodes. A qubit or bit index in a template can be the loop variable `LoopIndex`.
+- **core**: A loop has at most `MAX_LOOP_ITERATIONS` (1024) iterations. The constant is in
+  `qaiji.core.loop`. A longer `BoundedLoop` raises `LoopedCircuitError`.
+- **core**: `LoopedCircuit.expand()` returns an `ExpandedCircuit`. It holds the flat `Circuit`
+  and one `OperationProvenance` for each operation, with the region path and the iteration.
+- **core**: Expansion renames a register that the loop body declares to `<name>__k` for
+  iteration `k`.
+- **core**: `LoopedCircuit.gates` always raises `LoopNotExpandedError`. Call `expand()` first.
+- **core**: `LoopedCircuit.to_json()` and `LoopedCircuit.from_json()` write and read canonical
+  JSON with the schema `qaiji.looped_circuit/0.1`. The JSON keeps the source span. Equality
+  ignores the span.
+- **codec**: The new `parse_looped_qasm3` parses bounded `for` loops, counter `while` loops and
+  `const int` bounds. It returns a `ParsedLoopedQasm3` with the circuit and the declared version.
+- **codec**: `from_qasm3` and `parse_qasm3` still reject loops.
+- **codec**: `to_qasm3` also accepts a `LoopedCircuit` and writes each loop as a `for`
+  statement. It raises `LoopedCircuitError` when `parse_looped_qasm3` would reject the text.
+- **codec**: For a `Circuit` without loops, `to_qasm3` writes the same bytes as before.
+- **core**: `check_invariants` raises `LoopNotExpandedError` when the L5 called kernel, the L4
+  circuit or the L2 circuit is an unexpanded `LoopedCircuit`.
+- **semantics**: The new `Region`, `regions_of` and `annotate_looped` describe structural
+  regions. A region is a loop body or a conditional body, with an id such as `loop:0/if:3`.
+- **semantics**: `annotate_looped` sets the new field `SemanticAnnotation.region_id`. The
+  semantic summary does not include this field.
+- **semantics**: `check_preservation(..., region=...)` with `requested_level=UP_TO_LOCAL`
+  decides one region. It reports `EXACT`, `UP_TO_PHASE` or `UP_TO_LOCAL`, or returns
+  `failed` or `unsupported`.
+- **semantics**: The region verdict returns `unsupported` when the circuits differ outside the
+  region. It also returns `unsupported` above 6 qubits per instance or 256 gates in total.
+- **semantics**: An `UP_TO_LOCAL` request without `region` returns `unsupported`. A `region`
+  with `EXACT` or `UP_TO_PHASE` also returns `unsupported`.
+- **semantics**: An `ENTANGLEMENT` request still raises `UnsupportedEquivLevelError`.
+- **semantics**: Without `region`, `check_preservation` raises `LoopNotExpandedError` when one
+  side is a `LoopedCircuit`.
+- **trace**: Preservation certificates still accept only `EXACT` and `UP_TO_PHASE`.
+  `UP_TO_LOCAL` is not a certificate level.
+- **native**: `NativeInputError` now inherits from `QaijiIRError` and `ValueError`.
+- The package root `qaiji` exports 11 new names: the nine loop types, `LoopNotExpandedError`
+  and `LoopedCircuitError`.
+
+### Compatibility
+
+- `check_preservation` has a new keyword-only argument `region`, default `None`. Calls without
+  `region` that request `EXACT` or `UP_TO_PHASE` keep the 0.6.1 pipeline.
+- `SemanticAnnotation.region_id` is the last field and defaults to `None`. Positional
+  construction does not change.
+- `except QaijiIRError` now also catches `NativeInputError`. `except ValueError` still catches
+  it.
+- In 0.6.1, an `UP_TO_LOCAL` request raised `UnsupportedEquivLevelError`. In 0.7.0 it returns
+  `unsupported`. With a `region`, it returns a region verdict.
+- The runtime dependencies do not change.
+
 ## v0.6.1 (2026-11-23)
 
 ### Fix

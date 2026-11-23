@@ -13,9 +13,8 @@
 - :class:`~qaiji.core.physical.PContractError`，见 :doc:`physical`。
 - :class:`~qaiji.core.pulse.PulseContractError`，见 :doc:`pulse`。
 - :class:`~qaiji.core.waveform.WaveformContractError`，见 :doc:`waveform`。
-
-:class:`~qaiji.core.native.NativeInputError` 继承 ``ValueError``，不继承
-:class:`qaiji.QaijiIRError`。``except QaijiIRError`` 不会捕获它。
+- :class:`~qaiji.core.native.NativeInputError`，见 :doc:`native`。它同时继承 ``ValueError``，
+  所以 ``except QaijiIRError`` 与 ``except ValueError`` 都捕获它。
 
 .. autoclass:: qaiji.QaijiIRError
    :show-inheritance:
@@ -33,4 +32,15 @@
    :show-inheritance:
 
 .. autoclass:: qaiji.UnsupportedEquivLevelError
+   :show-inheritance:
+
+两个循环异常从包根 ``qaiji`` 导入。在未展开的 :class:`qaiji.LoopedCircuit` 上读取平坦
+操作序列时抛出 ``LoopNotExpandedError``。读取 ``gates``、调用 ``check_invariants``，以及不带
+``region`` 调用 ``check_preservation`` 都属于这种情况。循环容器、循环 JSON 或循环电路的写出
+不合法时抛出 ``LoopedCircuitError``，它同时继承 ``ValueError``。
+
+.. autoclass:: qaiji.LoopNotExpandedError
+   :show-inheritance:
+
+.. autoclass:: qaiji.LoopedCircuitError
    :show-inheritance:

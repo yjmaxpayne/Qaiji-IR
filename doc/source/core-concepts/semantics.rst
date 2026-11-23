@@ -17,8 +17,9 @@ L4 记录
      - 字段与含义
    * - 标注
      - ``gate_index``、``body_offset``、``morphism``、``equiv_level``、``cartan``、
-       ``notes``。``gate_index`` 指向顶层节点；``body_offset`` 指向条件体内的门。
-       条件节点和它体内的门各有一条标注。
+       ``notes``、``region_id``。``gate_index`` 指向顶层节点；``body_offset`` 指向条件体内的门。
+       条件节点和它体内的门各有一条标注。``region_id`` 是所在最内层 region 的结构路径，
+       只有 ``annotate_looped`` 填写，其余入口为 ``None``；它不进入语义摘要。
    * - 测量句柄
      - ``measurement_id``、``qubit_index``、``creg_name``、``creg_index``、``source``。
        句柄保留寄存器名和位索引。

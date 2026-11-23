@@ -2,7 +2,8 @@ OpenQASM 3 编解码器接口
 =======================
 
 ``from_qasm3`` 与 ``to_qasm3`` 从包根 ``qaiji`` 导入；``parse_qasm3``、``ParsedQasm3``、
-``OperationOrigin`` 与 ``GateSpec`` 从 ``qaiji.codec`` 导入。
+``OperationOrigin``、``GateSpec``、``parse_looped_qasm3`` 与 ``ParsedLoopedQasm3`` 从
+``qaiji.codec`` 导入。
 
 编解码器把受支持的 OpenQASM 2/3 文本转换为电路级 IR，并把可序列化电路统一
 输出为 OpenQASM 3.0。它接受门名展开、寄存器广播和整寄存器相等条件
@@ -60,6 +61,30 @@ OpenQASM 3 只是前端适配器：一次变换是否保持语义，不以 OpenQ
    :members:
 
 .. autoclass:: qaiji.codec.OperationOrigin
+
+有界循环入口
+------------
+
+``parse_looped_qasm3`` 解析含有界 ``for`` 循环、计数器 ``while`` 循环与 ``const int`` 的
+程序，返回保留循环结构的 :class:`qaiji.LoopedCircuit`。不含循环的程序与 ``parse_qasm3``
+的接受面相同。``from_qasm3`` 与 ``parse_qasm3`` 的接受面不变，仍拒收循环。
+``to_qasm3`` 也接受 ``LoopedCircuit``，循环写成 ``for`` 语句。循环容器见 :doc:`core`。
+
+.. doctest::
+
+   >>> from qaiji import to_qasm3
+   >>> from qaiji.codec import parse_looped_qasm3
+   >>> parsed = parse_looped_qasm3("qubit[2] q; for int i in [0:1] { x q[i]; }")
+   >>> expanded = parsed.circuit.expand()
+   >>> [(p.region_id, p.iteration) for p in expanded.provenance]
+   [('loop:0', 0), ('loop:0', 1)]
+   >>> print(to_qasm3(parsed.circuit).splitlines()[3])
+   for int i in [0:1] {
+
+.. autofunction:: qaiji.codec.parse_looped_qasm3
+
+.. autoclass:: qaiji.codec.ParsedLoopedQasm3
+   :members:
 
 支持边界
 --------

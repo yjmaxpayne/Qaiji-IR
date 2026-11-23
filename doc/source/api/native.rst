@@ -15,7 +15,7 @@ L2 原生调度接口
 ``qubic_mapping(circuit, schedule, config)`` 重新认证后返回 ``NativeProjection``。
 配置始终由调用者提供，没有设备默认值。
 
-``NativeInputError`` 继承 ``ValueError``，含 ``code``、``path``；构造记录时，
+``NativeInputError`` 继承 ``QaijiIRError`` 与 ``ValueError``，含 ``code``、``path``；构造记录时，
 以及 JSON、来源或配置中出现的结构错误，使用此异常。``NativeValidationError`` 继承
 ``QaijiIRError``，含 ``report`` 与展平的 ``issues``；生成调度或投影
 遇到认证失败时抛出。调用方应分别捕获输入错误与认证失败；JSON 解码成功不表示认证成功。
