@@ -14,7 +14,15 @@ from pathlib import Path
 
 import pytest
 
-from factories import PROGRAM_V1_PUBLIC_NAMES, bell_circuit, feedforward_circuit
+from factories import (
+    LOOP_ERROR_PUBLIC_NAMES,
+    LOOP_PUBLIC_NAMES,
+    LOOPED_CODEC_PUBLIC_NAMES,
+    PROGRAM_V1_PUBLIC_NAMES,
+    REGION_PUBLIC_NAMES,
+    bell_circuit,
+    feedforward_circuit,
+)
 from qaiji import Circuit, ClassicalBit, ClassicalRegister, Gate, GateType, Measure
 from qaiji.codec import to_qasm3
 from qaiji.core.program import compute_kernel_ref
@@ -125,7 +133,13 @@ def test_old_and_new_public_sets():
     assert len(frozen) == 7
     for name, expected in frozen.items():
         module = importlib.import_module(name)
-        additions = PROGRAM_V1_PUBLIC_NAMES if name == "qaiji.core.program" else frozenset()
+        additions = {
+            "qaiji": LOOP_PUBLIC_NAMES | LOOP_ERROR_PUBLIC_NAMES,
+            "qaiji.codec": LOOPED_CODEC_PUBLIC_NAMES,
+            "qaiji.core": LOOP_PUBLIC_NAMES,
+            "qaiji.core.program": PROGRAM_V1_PUBLIC_NAMES,
+            "qaiji.core.semantics": REGION_PUBLIC_NAMES,
+        }.get(name, frozenset())
         assert len(module.__all__) == len(set(module.__all__))
         assert set(module.__all__) == set(expected) | additions, name
         assert all(hasattr(module, member) for member in expected)
@@ -144,8 +158,18 @@ def test_old_schema_kernel_goldens_and_preservation():
     assert [compute_kernel_ref(c) for c in (bell_circuit(), feedforward_circuit(), rz)] == baseline[
         "kernel_goldens"
     ]
-    # v1 扩展了程序导出与检查入口。其他历史源码继续使用原字节指纹。
-    evolved = {"src/qaiji/core/program/__init__.py", "src/qaiji/core/program/validation.py"}
+    # v1 扩展了程序导出与检查入口。有界循环扩展了包导出与异常类型。
+    # 其他历史源码继续使用原字节指纹。
+    evolved = {
+        "src/qaiji/__init__.py",
+        "src/qaiji/core/__init__.py",
+        "src/qaiji/core/program/__init__.py",
+        "src/qaiji/core/program/validation.py",
+        # region 扩展了语义包导出与注解的可选字段。
+        "src/qaiji/core/semantics/__init__.py",
+        "src/qaiji/core/semantics/annotation.py",
+        "src/qaiji/exceptions.py",
+    }
     assert evolved <= set(baseline["frozen_sources"])
     for path, expected in baseline["frozen_sources"].items():
         if path not in evolved:
@@ -263,7 +287,7 @@ def _ledger_errors(baseline, root):
     planned = (
         {f"L6-{i:02d}" for i in range(1, 11)}
         | {f"L7-{i:02d}" for i in range(1, 9)}
-        | {"L8-01", "L8-02"}
+        | {"L8-01", "L8-02", "L9-01", "L9-02", "L9-03", "L9-04", "L9-05"}
     )
     # starts：每条链的起点，创建 hop 的起点是 None；touched：账本顺序中已经出现过的路径。
     seen, touched, starts = set(), set(), dict(origin)
@@ -1052,7 +1076,7 @@ def test_ledger_covers_all_planned_rows():
     planned = (
         {f"L6-{i:02d}" for i in range(1, 11)}
         | {f"L7-{i:02d}" for i in range(1, 9)}
-        | {"L8-01", "L8-02"}
+        | {"L8-01", "L8-02", "L9-01", "L9-02", "L9-03", "L9-04", "L9-05"}
     )
     assert {row["id"] for row in baseline["ledger"]} == planned - _PENDING_L7
 

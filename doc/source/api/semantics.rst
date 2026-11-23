@@ -10,6 +10,7 @@ L4 的保持性判决不认证 L2 的展开、资源或时序；这些由 :doc:`
 
 相关页面：分类与判决的定义见 :doc:`/core-concepts/semantics`；分类、摘要与哈希的
 可运行示例见 :doc:`/getting-started/semantics`。
+region 标识与带 region 的标注见 :doc:`region`。
 
 分类枚举与语义标注
 ------------------

@@ -30,8 +30,9 @@ class MorphismType(StrEnum):
 class EquivLevel(StrEnum):
     """保持性裁决可以断言的等价强度。
 
-    只有 ``EXACT`` 与 ``UP_TO_PHASE`` 是可判定的；``UP_TO_LOCAL`` 与
-    ``ENTANGLEMENT`` 是为后续层预留的词汇，会在判定入口处被拒绝。
+    ``EXACT`` 与 ``UP_TO_PHASE`` 可对整个电路判定。``UP_TO_LOCAL`` 只在
+    ``region`` 指定的范围内判定，不进入证书的可判定集合。``ENTANGLEMENT``
+    是为后续层预留的词汇，会在判定入口处被拒绝。
     """
 
     EXACT = "EXACT"

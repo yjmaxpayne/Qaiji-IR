@@ -10,10 +10,9 @@ from dataclasses import dataclass
 
 from qaiji.core.circuit import Gate
 from qaiji.core.classical import Measure
+from qaiji.core.gate_matrix import _axis_rotation, _identity, _Matrix, _rz, source_operator
 
 from .model import NativeOperation
-
-_Matrix = tuple[tuple[complex, ...], ...]
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
@@ -38,7 +37,7 @@ def _check_local_matrix(
     domain = node.qubits
     if any(op.kind == "MEASURE" or any(q not in domain for q in op.qubits) for op in operations):
         return _MatrixCheck(status="fail", code="operand_domain")
-    expected = _source_operator(node)
+    expected = source_operator(node)
     actual = _identity(len(expected))
     for op in operations:
         local = _native_operator(op)
@@ -59,10 +58,6 @@ def _check_local_matrix(
         max_abs_residual=max(error for error, _ in residuals),
         expected_phase_rad=delta,
     )
-
-
-def _identity(size: int) -> _Matrix:
-    return tuple(tuple(complex(i == j) for j in range(size)) for i in range(size))
 
 
 def _multiply(left: _Matrix, right: _Matrix) -> _Matrix:
@@ -86,18 +81,6 @@ def _embed(operator: _Matrix, position: int) -> _Matrix:
     )
 
 
-def _rz(angle: float) -> _Matrix:
-    return ((cmath.exp(-0.5j * angle), 0j), (0j, cmath.exp(0.5j * angle)))
-
-
-def _axis_rotation(angle: float, axis: float) -> _Matrix:
-    c, s = math.cos(angle / 2), math.sin(angle / 2)
-    return (
-        (complex(c), -1j * s * cmath.exp(-1j * axis)),
-        (-1j * s * cmath.exp(1j * axis), complex(c)),
-    )
-
-
 def _native_operator(op: NativeOperation) -> _Matrix:
     """原生算符直接定义，源门不通过原生路线求值。"""
     if op.kind == "I":
@@ -111,49 +94,6 @@ def _native_operator(op: NativeOperation) -> _Matrix:
     if op.kind == "CZ":
         return ((1, 0, 0, 0), (0, 1, 0, 0), (0, 0, 1, 0), (0, 0, 0, -1))
     raise ValueError("Unknown unitary native operation.")
-
-
-def _source_operator(node: Gate) -> _Matrix:
-    """按源门直接矩阵定义求值，不展开为原生门。"""
-    name = node.gate_type.value
-    params = tuple(float(p) for p in node.params)
-    if name == "I":
-        return _identity(2)
-    if name == "X":
-        return ((0, 1), (1, 0))
-    if name == "Y":
-        return ((0, -1j), (1j, 0))
-    if name == "Z":
-        return ((1, 0), (0, -1))
-    if name == "H":
-        s = 1 / math.sqrt(2)
-        return ((s, s), (s, -s))
-    if name in {"S", "T"}:
-        return ((1, 0), (0, cmath.exp(1j * math.pi / (2 if name == "S" else 4))))
-    if name == "RZ":
-        return _rz(params[0])
-    if name in {"RX", "RY"}:
-        c, s = math.cos(params[0] / 2), math.sin(params[0] / 2)
-        return ((c, -1j * s), (-1j * s, c)) if name == "RX" else ((c, -s), (s, c))
-    if name in {"RX90", "RX180"}:
-        return _axis_rotation(math.pi / 2 if name == "RX90" else math.pi, params[0])
-    if name == "U3":
-        theta, phi, lam = params
-        c, s = math.cos(theta / 2), math.sin(theta / 2)
-        return (
-            (c, -cmath.exp(1j * lam) * s),
-            (cmath.exp(1j * phi) * s, cmath.exp(1j * (phi + lam)) * c),
-        )
-    if name in {"CX", "CNOT"}:
-        return ((1, 0, 0, 0), (0, 1, 0, 0), (0, 0, 0, 1), (0, 0, 1, 0))
-    if name == "CZ":
-        return ((1, 0, 0, 0), (0, 1, 0, 0), (0, 0, 1, 0), (0, 0, 0, -1))
-    if name == "SWAP":
-        return ((1, 0, 0, 0), (0, 0, 1, 0), (0, 1, 0, 0), (0, 0, 0, 1))
-    if name in {"ISWAP", "SQISWAP"}:
-        c, s = (0.0, 1.0) if name == "ISWAP" else (1 / math.sqrt(2), 1 / math.sqrt(2))
-        return ((1, 0, 0, 0), (0, c, 1j * s, 0), (0, 1j * s, c, 0), (0, 0, 0, 1))
-    raise ValueError("Unknown source gate kind.")
 
 
 def _expected_delta(node: Gate, conditional: bool) -> float:

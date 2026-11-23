@@ -10,23 +10,47 @@ UP_TO_PHASE（代数上差一个 -1 因子），因为这是两条正交的 L4 �
 
 from __future__ import annotations
 
+import dataclasses
+import math
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import Any
 
-from qaiji.core.circuit import _ROTATION_GATES, Gate, GateType, _node_eq, _tau_multiple_exponent
+from qaiji.core.circuit import (
+    _ROTATION_GATES,
+    Circuit,
+    Gate,
+    GateType,
+    _node_eq,
+    _tau_multiple_exponent,
+)
 from qaiji.core.classical import Conditional, Measure
+from qaiji.core.gate_matrix import _Matrix, source_operator
+from qaiji.core.loop import BoundedLoop, ConditionalTemplate, GateTemplate, LoopedCircuit
+from qaiji.core.semantics.region import regions_of
 from qaiji.core.semantics.registry import annotate_circuit
 from qaiji.core.semantics.types import EquivLevel, MorphismType
-from qaiji.exceptions import UnsupportedEquivLevelError
-
-if TYPE_CHECKING:
-    from qaiji.core.circuit import Circuit
+from qaiji.exceptions import LoopNotExpandedError, UnsupportedEquivLevelError
 
 __all__ = ["PreservationSummary", "check_preservation"]
 
 _KNOWN_STAGES = frozenset({"canonicalize", "codec_roundtrip", "unspecified_transform"})
 _STATUS_VALUES = frozenset({"passed", "warning", "failed", "unsupported", "planned"})
-_UNDECIDABLE_REQUEST_LEVELS = frozenset({EquivLevel.UP_TO_LOCAL, EquivLevel.ENTANGLEMENT})
+
+MAX_LOCAL_QUBITS = 6
+"""按 region 判定时，一个实例两侧作用比特并集的上限（含）。"""
+MAX_LOCAL_GATES = 256
+"""按 region 判定时，目标 region 全部实例两侧门数总和的上限（含）。"""
+MAX_LOCAL_RESIDUAL = 1e-10
+"""按 region 判定时的残差阈值，作用于两个量。
+
+EXACT 与 UP_TO_PHASE 取 ‖W − cI‖_F / √dim（EXACT 时 c = 1，UP_TO_PHASE 时 c 为 tr W 的
+相位）。UP_TO_LOCAL 取各单比特切分的归一化第二奇异值。前者不小于后者，所以 EXACT 或
+UP_TO_PHASE 成立时切分判据也成立。"""
+
+_JACOBI_RELATIVE_TOLERANCE = 1e-15
+_JACOBI_MAX_SWEEPS = 30
+_LEVEL_STRENGTH = (EquivLevel.EXACT, EquivLevel.UP_TO_PHASE, EquivLevel.UP_TO_LOCAL)
+_UNSUPPORTED: tuple[str, EquivLevel | None] = ("unsupported", None)
 
 _MORPHISM_DOMINANCE = (
     MorphismType.MEASUREMENT,
@@ -136,12 +160,287 @@ def _gate_diff_exponent(left: Gate, right: Gate) -> int | None:
     return None
 
 
+_Instance = tuple[tuple[Gate, ...], tuple[Gate, ...]]
+_Columns = list[list[complex]]
+
+
+def _top_nodes(circuit: Circuit | LoopedCircuit) -> tuple[object, ...]:
+    return tuple(circuit.gates) if isinstance(circuit, Circuit) else circuit.operations
+
+
+def _same_node(left: object, right: object) -> bool:
+    if isinstance(left, BoundedLoop) or isinstance(right, BoundedLoop):
+        return left == right
+    assert isinstance(left, Gate | Measure | Conditional)
+    assert isinstance(right, Gate | Measure | Conditional)
+    return _node_eq(left, right)
+
+
+def _same_condition(left: object, right: object) -> bool:
+    if isinstance(left, Conditional) and isinstance(right, Conditional):
+        return (left.register, left.value, left.bit_index) == (
+            right.register,
+            right.value,
+            right.bit_index,
+        )
+    if isinstance(left, ConditionalTemplate) and isinstance(right, ConditionalTemplate):
+        return (left.register, left.value, left.bit) == (right.register, right.value, right.bit)
+    return False
+
+
+def _same_shell(left: object, right: object, body_position: int | None) -> bool:
+    """比较目标 region 所在的顶层节点：条件与循环边界相同，region 之外的循环体节点相同。"""
+    if not (isinstance(left, BoundedLoop) and isinstance(right, BoundedLoop)):
+        return _same_condition(left, right)
+    if dataclasses.replace(left, body=()) != dataclasses.replace(right, body=()):
+        return False
+    if body_position is None:
+        return True
+    if len(left.body) != len(right.body):
+        return False
+    return all(
+        _same_condition(left_node, right_node)
+        if position == body_position
+        else left_node == right_node
+        for position, (left_node, right_node) in enumerate(zip(left.body, right.body, strict=True))
+    )
+
+
+def _region_operations(circuit: LoopedCircuit, region: str) -> list[Any] | None:
+    """返回展开后来源为 ``region`` 的操作，按执行顺序排列；展开失败时返回 None。"""
+    try:
+        expanded = circuit.expand()
+    except ValueError:  # LoopedCircuitError 是 ValueError 的子类。
+        return None
+    return [
+        operation
+        for operation, provenance in zip(expanded.circuit.gates, expanded.provenance, strict=True)
+        if provenance.region_id == region
+    ]
+
+
+def _region_instances(
+    original: Circuit | LoopedCircuit, transformed: Circuit | LoopedCircuit, region: str
+) -> list[_Instance] | None:
+    """按结构前提与门数上限取目标 region 的实例；不满足时返回 None。
+
+    门数在展开之前按「迭代数 × 体门数」计算，两侧合计。
+    """
+    regions = regions_of(original)
+    if (
+        original.num_qubits != transformed.num_qubits
+        or original.cregs != transformed.cregs
+        or regions != regions_of(transformed)
+        or region not in {candidate.id for candidate in regions}
+    ):
+        return None
+    head, _, leaf = region.partition("/")
+    position = int(head.split(":")[1])
+    body_position = int(leaf.split(":")[1]) if leaf else None
+    left_nodes, right_nodes = _top_nodes(original), _top_nodes(transformed)
+    if len(left_nodes) != len(right_nodes) or not all(
+        _same_shell(left, right, body_position) if index == position else _same_node(left, right)
+        for index, (left, right) in enumerate(zip(left_nodes, right_nodes, strict=True))
+    ):
+        return None
+
+    left, right = left_nodes[position], right_nodes[position]
+    if isinstance(left, Conditional) and isinstance(right, Conditional):
+        if len(left.body) + len(right.body) > MAX_LOCAL_GATES:
+            return None
+        return [(tuple(left.body), tuple(right.body))]
+    assert isinstance(original, LoopedCircuit) and isinstance(transformed, LoopedCircuit)
+    assert isinstance(left, BoundedLoop) and isinstance(right, BoundedLoop)
+    iterations = len(left.values)
+    if body_position is None:
+        if not all(isinstance(node, GateTemplate) for node in left.body + right.body):
+            return None
+        if iterations * (len(left.body) + len(right.body)) > MAX_LOCAL_GATES:
+            return None
+        before = _region_operations(original, region)
+        after = _region_operations(transformed, region)
+        if before is None or after is None:
+            return None
+        return [(tuple(before), tuple(after))]
+    left_template, right_template = left.body[body_position], right.body[body_position]
+    assert isinstance(left_template, ConditionalTemplate)
+    assert isinstance(right_template, ConditionalTemplate)
+    if iterations == 0:
+        return None
+    if iterations * (len(left_template.body) + len(right_template.body)) > MAX_LOCAL_GATES:
+        return None
+    left_operations = _region_operations(original, region)
+    right_operations = _region_operations(transformed, region)
+    if left_operations is None or right_operations is None:
+        return None
+    pairs = zip(left_operations, right_operations, strict=True)
+    return [(tuple(before.body), tuple(after.body)) for before, after in pairs]
+
+
+def _dagger(operator: _Matrix) -> _Matrix:
+    size = len(operator)
+    return tuple(
+        tuple(complex(operator[column][row]).conjugate() for column in range(size))
+        for row in range(size)
+    )
+
+
+def _apply(columns: _Columns, operator: _Matrix, positions: list[int]) -> None:
+    """把门左乘到每一列上；门矩阵下标以首个比特为高位。"""
+    arity = len(positions)
+    mask = sum(1 << position for position in positions)
+    offsets = [
+        sum(((local >> (arity - 1 - k)) & 1) << position for k, position in enumerate(positions))
+        for local in range(1 << arity)
+    ]
+    bases = [base for base in range(len(columns)) if not base & mask]
+    for column in columns:
+        for base in bases:
+            indices = [base | offset for offset in offsets]
+            amplitudes = [column[index] for index in indices]
+            for row, index in zip(operator, indices, strict=True):
+                column[index] = sum(
+                    (entry * amplitude for entry, amplitude in zip(row, amplitudes, strict=True)),
+                    0j,
+                )
+
+
+def _relative_operator(
+    before: list[tuple[_Matrix, list[int]]], after: list[tuple[_Matrix, list[int]]], size: int
+) -> _Columns:
+    """返回 ``W = U_after·U_before†`` 的列表示：``columns[c][r] = W[r][c]``。"""
+    dim = 1 << size
+    columns = [[complex(row == column) for row in range(dim)] for column in range(dim)]
+    for operator, positions in reversed(before):
+        _apply(columns, _dagger(operator), positions)
+    for operator, positions in after:
+        _apply(columns, operator, positions)
+    return columns
+
+
+def _singular_values(rows: list[list[complex]]) -> list[float] | None:
+    """单边 Jacobi 求行向量组的奇异值，降序；轮数用尽仍未收敛时返回 None。
+
+    收敛判据是相对内积 ``|<r_i, r_j>| <= 1e-15·|r_i|·|r_j|``，它保留小奇异值的相对精度。
+    ``M·M†`` 的特征值把小奇异值平方，平方后低于舍入误差。
+    范数不超过总范数 1e-15 倍的行按零行处理，不再旋转：这样的行只剩舍入残差，
+    它与另一行的相对内积不会下降。
+    """
+    rows = [list(row) for row in rows]
+    negligible = _JACOBI_RELATIVE_TOLERANCE**2 * sum(abs(x) ** 2 for row in rows for x in row)
+    for _ in range(_JACOBI_MAX_SWEEPS):
+        rotated = False
+        for i in range(len(rows) - 1):
+            for j in range(i + 1, len(rows)):
+                left, right = rows[i], rows[j]
+                a = sum(abs(x) ** 2 for x in left)
+                b = sum(abs(x) ** 2 for x in right)
+                c = sum((x.conjugate() * y for x, y in zip(left, right, strict=True)), 0j)
+                if min(a, b) <= negligible or abs(c) <= _JACOBI_RELATIVE_TOLERANCE * math.sqrt(
+                    a * b
+                ):
+                    continue
+                rotated = True
+                phase = c / abs(c)
+                zeta = (b - a) / (2 * abs(c))
+                tangent = (
+                    math.copysign(1.0, zeta) / (abs(zeta) + math.sqrt(1 + zeta * zeta))
+                    if zeta
+                    else 1.0
+                )
+                cosine = 1 / math.sqrt(1 + tangent * tangent)
+                sine = cosine * tangent
+                rows[i] = [
+                    cosine * x - sine * phase.conjugate() * y
+                    for x, y in zip(left, right, strict=True)
+                ]
+                rows[j] = [sine * phase * x + cosine * y for x, y in zip(left, right, strict=True)]
+        if not rotated:
+            return sorted((math.sqrt(sum(abs(x) ** 2 for x in row)) for row in rows), reverse=True)
+    return None
+
+
+def _cut_rows(columns: _Columns, position: int) -> list[list[complex]]:
+    """把 W 按（比特 ``position`` | 其余比特）重排成 4 行矩阵。"""
+    bit = 1 << position
+    rest = [index for index in range(len(columns)) if not index & bit]
+    return [
+        [columns[column | column_bit][row | row_bit] for column in rest for row in rest]
+        for row_bit in (0, bit)
+        for column_bit in (0, bit)
+    ]
+
+
+def _instance_verdict(before: tuple[Gate, ...], after: tuple[Gate, ...]) -> EquivLevel | str:
+    """判定一个实例；返回等级，或 ``"failed"``、``"unsupported"``。"""
+    qubits = sorted({qubit for gate in before + after for qubit in gate.qubits})
+    if not qubits:
+        return EquivLevel.EXACT
+    index_of = {qubit: index for index, qubit in enumerate(qubits)}
+
+    def placed(gates: tuple[Gate, ...]) -> list[tuple[_Matrix, list[int]]]:
+        return [(source_operator(gate), [index_of[q] for q in gate.qubits]) for gate in gates]
+
+    columns = _relative_operator(placed(before), placed(after), len(qubits))
+    dim = len(columns)
+
+    def close_to(scalar: complex) -> bool:
+        """‖W − scalar·I‖_F / √dim 不超过残差阈值；NaN 判为不接近。"""
+        squared = sum(
+            abs(columns[column][row] - (scalar if row == column else 0)) ** 2
+            for column in range(dim)
+            for row in range(dim)
+        )
+        return math.sqrt(squared / dim) <= MAX_LOCAL_RESIDUAL
+
+    if close_to(1):
+        return EquivLevel.EXACT
+    trace = sum(columns[index][index] for index in range(dim))
+    if trace != 0 and close_to(trace / abs(trace)):
+        return EquivLevel.UP_TO_PHASE
+    # 只有 1 个比特时 W 本身是局域算符，没有切分。
+    for cut in range(len(qubits) if len(qubits) > 1 else 0):
+        values = _singular_values(_cut_rows(columns, cut))
+        if values is None:
+            return "unsupported"
+        if not values[1] / math.sqrt(sum(v * v for v in values)) <= MAX_LOCAL_RESIDUAL:
+            return "failed"
+    return EquivLevel.UP_TO_LOCAL
+
+
+def _region_verdict(
+    original: Circuit | LoopedCircuit, transformed: Circuit | LoopedCircuit, region: str
+) -> tuple[str, EquivLevel | None]:
+    """按 region 判定 UP_TO_LOCAL，返回 ``(status, equiv_level)``。"""
+    if type(original) is not type(transformed):
+        return _UNSUPPORTED
+    instances = _region_instances(original, transformed, region)
+    if instances is None:
+        return _UNSUPPORTED
+    for before, after in instances:
+        if len({qubit for gate in before + after for qubit in gate.qubits}) > MAX_LOCAL_QUBITS:
+            return _UNSUPPORTED
+        try:
+            for gate in before + after:
+                source_operator(gate)
+        except ValueError:
+            return _UNSUPPORTED
+    verdicts = [_instance_verdict(before, after) for before, after in instances]
+    if "failed" in verdicts:
+        return ("failed", None)
+    if "unsupported" in verdicts:
+        return _UNSUPPORTED
+    levels = [verdict for verdict in verdicts if isinstance(verdict, EquivLevel)]
+    return ("passed", max(levels, key=_LEVEL_STRENGTH.index, default=EquivLevel.EXACT))
+
+
 def check_preservation(
-    original: Circuit,
-    transformed: Circuit,
+    original: Circuit | LoopedCircuit,
+    transformed: Circuit | LoopedCircuit,
     *,
     stage: str = "unspecified_transform",
     requested_level: EquivLevel = EquivLevel.UP_TO_PHASE,
+    region: str | None = None,
 ) -> PreservationSummary:
     """判定 ``transformed`` 是否保持了 ``original`` 的算符语义。
 
@@ -154,22 +453,37 @@ def check_preservation(
         transformed: 变换后的电路。
         stage: 本次裁决针对的是哪一个受检变换。
         requested_level: 调用方能接受的等价上限。``EXACT`` 要求全局相位已抵消；
-            ``UP_TO_PHASE`` 为默认值，两者皆可接受。
+            ``UP_TO_PHASE`` 为默认值，两者皆可接受。``UP_TO_LOCAL`` 只在给出
+            ``region`` 时判定，未给出时判为 ``unsupported``。
+        region: 要判定的 region 标识，取自 ``regions_of``。给出时只按该 region
+            判定 ``UP_TO_LOCAL``：两侧在该 region 之外须逐个节点相同，否则判为
+            ``unsupported``。与 ``EXACT``、``UP_TO_PHASE`` 同用时判为 ``unsupported``。
 
     Returns:
-        一个 ``PreservationSummary``，在包括 ``failed``/``unsupported`` 在内的每条
-        分支上都填好了诊断用的态射字段。
+        一个 ``PreservationSummary``。现有流水线在包括 ``failed``/``unsupported``
+        在内的每条分支上都填好诊断用的态射字段。``UP_TO_LOCAL`` 与 ``region``
+        的分支不填态射字段，两者保持 ``None``。
 
     Raises:
-        UnsupportedEquivLevelError: ``requested_level`` 为 ``UP_TO_LOCAL`` 或
-            ``ENTANGLEMENT`` —— 本流水线无法判定。
+        UnsupportedEquivLevelError: ``requested_level`` 为 ``ENTANGLEMENT``。
+        LoopNotExpandedError: 未给出 ``region``、``requested_level`` 为 ``EXACT`` 或
+            ``UP_TO_PHASE``，且任一侧是未展开的 ``LoopedCircuit``。
         ValueError: ``stage`` 不属于已知的 stage 字面量（由本次调用构造的第一个
             裁决在 ``PreservationSummary.__post_init__`` 中抛出）。
     """
-    if requested_level in _UNDECIDABLE_REQUEST_LEVELS:
+    if requested_level is EquivLevel.ENTANGLEMENT:
         raise UnsupportedEquivLevelError(
             f"check_preservation cannot decide requested_level={requested_level.value}"
         )
+    if region is not None or requested_level is EquivLevel.UP_TO_LOCAL:
+        status, equiv_level = (
+            _region_verdict(original, transformed, region)
+            if region is not None and requested_level is EquivLevel.UP_TO_LOCAL
+            else _UNSUPPORTED
+        )
+        return PreservationSummary(stage=stage, status=status, equiv_level=equiv_level)
+    if not (isinstance(original, Circuit) and isinstance(transformed, Circuit)):
+        raise LoopNotExpandedError("Expand the looped circuit before checking preservation")
 
     original_morphism = _dominant_morphism(original)
     lowered_morphism = _dominant_morphism(transformed)

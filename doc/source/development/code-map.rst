@@ -74,6 +74,9 @@ L3 没有独立的子包：条件节点在 ``core/classical.py`` 中定义，依
 ``src/qaiji/core/_codec.py`` 是 L1、L0 与 P 层共用的私有模块，提供编码原语与严格 JSON 解析。
 它不在 ``qaiji`` 或 ``qaiji.core`` 的 ``__all__`` 中。各层的编解码测试覆盖它。
 
+``src/qaiji/core/gate_matrix.py`` 是 L2 与 L4 共用的中立模块，提供源门的矩阵定义。
+L2 的原生检验与 L4 的 region 判决都用它。它不在 ``qaiji`` 或 ``qaiji.core`` 的 ``__all__`` 中。
+
 测试共用的电路工厂在 ``tests/factories.py`` 中。``tests/conftest.py`` 在运行任何测试之前
 执行约定自检 ``self_check``\ ；自检失败时，每个测试都在准备阶段报错。
 

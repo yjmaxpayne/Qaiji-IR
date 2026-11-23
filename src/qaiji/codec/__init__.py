@@ -5,8 +5,10 @@
 from qaiji.codec.qasm3 import (
     GateSpec,
     OperationOrigin,
+    ParsedLoopedQasm3,
     ParsedQasm3,
     from_qasm3,
+    parse_looped_qasm3,
     parse_qasm3,
     to_qasm3,
 )
@@ -14,8 +16,10 @@ from qaiji.codec.qasm3 import (
 __all__ = [
     "GateSpec",
     "OperationOrigin",
+    "ParsedLoopedQasm3",
     "ParsedQasm3",
     "from_qasm3",
+    "parse_looped_qasm3",
     "parse_qasm3",
     "to_qasm3",
 ]

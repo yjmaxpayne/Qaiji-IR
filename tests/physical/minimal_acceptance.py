@@ -80,15 +80,30 @@ def check_legacy_contract() -> None:
     from qaiji.core.program import compute_kernel_ref
 
     baseline = json.loads((DATA / "legacy-baseline.json").read_bytes())
-    # 旧快照保持不变；结构化程序接口是显式批准的新增导出。
+    # 旧快照保持不变；结构化程序接口与有界循环接口是显式批准的新增导出。
+    loop = {
+        "BoundedLoop",
+        "ConditionalTemplate",
+        "ExpandedCircuit",
+        "GateTemplate",
+        "LoopIndex",
+        "LoopedCircuit",
+        "MeasureTemplate",
+        "OperationProvenance",
+        "SourceSpan",
+    }
     additions = {
+        "qaiji": loop | {"LoopNotExpandedError", "LoopedCircuitError"},
+        "qaiji.codec": {"ParsedLoopedQasm3", "parse_looped_qasm3"},
+        "qaiji.core": loop,
         "qaiji.core.program": {
             "ProgramCall",
             "ProgramIf",
             "ProgramIRV1",
             "dump_program",
             "load_program",
-        }
+        },
+        "qaiji.core.semantics": {"Region", "annotate_looped", "regions_of"},
     }
     for module, exports in baseline["public_exports"].items():
         exports = set(exports) | additions.get(module, set())

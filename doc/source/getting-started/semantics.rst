@@ -55,8 +55,9 @@ L4 操作语义：摘要与保持性判决
 ----------------
 
 ``check_preservation`` 逐位置比较变换前后的两个电路。规则 R1–R4 覆盖结构相等、
-CNOT 与 CX 别名、同位置的整圈旋转等情形。可判定的级别只有 ``EXACT`` 与
-``UP_TO_PHASE``。规则不能确立关系时，判决为 ``unsupported``；不要把 ``unsupported``
+CNOT 与 CX 别名、同位置的整圈旋转等情形。整电路判决可判定的级别只有 ``EXACT`` 与
+``UP_TO_PHASE``。给出 region 时，``UP_TO_LOCAL`` 可以在该 region 内判定。
+证书的可判定级别仍只有 ``EXACT`` 与 ``UP_TO_PHASE``。规则不能确立关系时，判决为 ``unsupported``；不要把 ``unsupported``
 当作通过。把一个门展开为多个门、一般的重新排序，都不在逐位置判决的范围内。
 判决的步骤与完整规则见 :doc:`/core-concepts/semantics`。
 

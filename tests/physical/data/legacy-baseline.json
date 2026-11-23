@@ -157,7 +157,7 @@
     },
     "compatibility_baseline": {
       "path": "tests/native/compatibility_baseline.json",
-      "sha256": "a7fc120d00345e3840c8287e0e0dd3c2bff6b510746e7ffbb6aced029539b84f"
+      "sha256": "12155b4ff1efad3fd63a02ce9725a93047e3837b487b328447d10b1c7fc67868"
     },
     "kernel_ref_cases": [
       {
@@ -177,8 +177,8 @@
   "source_digest_basis": "源文件清单取自 `tests/native/compatibility_baseline.json` 的 `frozen_sources`。另含 `native` 与 `program_native` 的包入口文件。",
   "source_digests": {
     "src/qaiji/__init__.py": "93fc5646dd76bb1e18e35e861df09811aca3d798bf793deea330393710693667",
-    "src/qaiji/codec/__init__.py": "1d25d779044c5c6b8d30835bd0042b39e092ba554ba9fee7a2c8590a897dbc9b",
-    "src/qaiji/codec/qasm3.py": "d323c2c2dfae82da1a36bb01e31c20df67cd6d951f32ede4a9062de9b4d50e21",
+    "src/qaiji/codec/__init__.py": "cbe4e75bc1024e24075ba1f7909871438e78d2b93205cc8f08b9430654fbb670",
+    "src/qaiji/codec/qasm3.py": "f7a7d69cd99d9f83487c24246094a87b266b7b4de5835c552ad6d470f0a4e7e4",
     "src/qaiji/constants.py": "c38d491059de235ae71c4351e9dc355a87b6eb450fe46c8a46055f0c365aadd0",
     "src/qaiji/core/__init__.py": "af33db4a43be455b0394cde31526b9506e3574a2043bf3b26cf921c00bd3ea19",
     "src/qaiji/core/circuit.py": "be98a50d34446ae9d3c3a5766b3273d721c6fbd6aa803d4408b08dec2f04cd12",
@@ -191,10 +191,10 @@
     "src/qaiji/core/semantics/annotation.py": "ca3f8fea48d01d87611e5cb7e476976d85ff94b403a0526d0ad0dabfa31834d3",
     "src/qaiji/core/semantics/dataflow.py": "701f4f525eb263c8bcc1f59277137aac82458dba664e298e984a04186f4edf8e",
     "src/qaiji/core/semantics/handle.py": "0c21f817e3adf027b70bc316e3c7faa71774b88f87a543f10c97c97c03cc1a64",
-    "src/qaiji/core/semantics/preservation.py": "de2c08c6304e4699bfd4c33696ae4fa2fbb3083f7fd35219b0e182690e6f539e",
+    "src/qaiji/core/semantics/preservation.py": "8bc5b3040378a630931c33206bee39581dd0b25dc46a0fca4cf27f04fddd88ee",
     "src/qaiji/core/semantics/registry.py": "04f8cc635e04e2db6f53338cc1f96eb61f4b05808f89a1e6d275da75f5730201",
     "src/qaiji/core/semantics/summary.py": "7cc2db82af074f679aefba5c646cbfe2af7913f9551969877a0a65f70e4e32b1",
-    "src/qaiji/core/semantics/types.py": "819cfad698a45550f2b65b8d4a2d90147669dfcb591d55e7f34812a502854aa7",
+    "src/qaiji/core/semantics/types.py": "6f2935054ee1329e7caa37d510d7d727541e6b5689da060fbfb8d011d7b55caf",
     "src/qaiji/exceptions.py": "20256139b7f3361989e7be1985ba870a08ae587f73f028bb24fcda50cdae56f8",
     "src/qaiji/version.py": "39a2fa1ba47a0d4e301aa1c241a6add1e95296a1b484947f0af4c14eec2b5adf",
     "src/qaiji/codec/_stdgates.py": "b1738a3335907d5475279edd952c98a91ffb254193cbeab867700909137fcda7",

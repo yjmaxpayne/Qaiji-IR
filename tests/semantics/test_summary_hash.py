@@ -3,11 +3,13 @@
 """规范化语义摘要 schema，及其抗碰撞的内容哈希。"""
 
 import math
+from collections.abc import Callable
 from types import MappingProxyType
 
 import pytest
 
-from factories import bell_circuit, feedforward_circuit
+from factories import bell_circuit, feedforward_circuit, ghz_circuit
+from qaiji.codec.qasm3 import from_qasm3
 from qaiji.core.circuit import Circuit, Gate, GateType
 from qaiji.core.classical import ClassicalBit, ClassicalRegister, Conditional, Measure
 from qaiji.core.semantics.registry import annotate_circuit
@@ -349,3 +351,55 @@ def test_freeze_summary_output_hashes_identically_to_the_plain_dict() -> None:
     summary = build_semantic_summary(circuit=circuit, annotations=annotate_circuit(circuit))
 
     assert canonical_summary_hash(freeze_summary(summary)) == canonical_summary_hash(summary)
+
+
+REPETITION_CODE_X_ERROR_ON_Q0 = """OPENQASM 3.0;
+include "stdgates.inc";
+qubit[4] q;
+bit[2] c;
+x q[0];
+h q[3];
+cz q[0], q[3];
+cz q[3], q[1];
+h q[3];
+c[0] = measure q[3];
+h q[3];
+cz q[1], q[3];
+cz q[2], q[3];
+h q[3];
+c[1] = measure q[3];
+if (c == 3) { x q[0]; }
+if (c == 1) { x q[1]; }
+if (c == 2) { x q[2]; }
+"""
+
+
+@pytest.mark.parametrize(
+    ("circuit_factory", "source_language", "expected"),
+    [
+        pytest.param(
+            ghz_circuit,
+            None,
+            "sha256:ad352617891996f8db8d83b08fb01cfa7db7162af5dd854ac0fc3854404deaa1",
+            id="ghz",
+        ),
+        pytest.param(
+            lambda: from_qasm3(REPETITION_CODE_X_ERROR_ON_Q0),
+            "openqasm3",
+            "sha256:bee3464df1c57cdb21a30350f1c33cc7c62aae4de0986cf8e09a62d7046d1674",
+            id="repetition-x-q0",
+        ),
+    ],
+)
+def test_flat_program_summary_hash_matches_reference(
+    circuit_factory: Callable[[], Circuit], source_language: str | None, expected: str
+) -> None:
+    """Pin whole-summary hashes of loop-free programs to values from an independent release."""
+    circuit = circuit_factory()
+    summary = build_semantic_summary(
+        circuit=circuit,
+        annotations=annotate_circuit(circuit),
+        source_language=source_language,
+    )
+
+    assert canonical_summary_hash(summary) == expected

@@ -10,6 +10,7 @@ from dataclasses import dataclass, field
 from typing import Literal
 
 from qaiji.core.circuit import Circuit
+from qaiji.core.loop import LoopedCircuit
 from qaiji.core.native import (
     NativeInputError,
     NativeScheduleIR,
@@ -46,6 +47,7 @@ from qaiji.core.pulse import (
     load_pulse_program,
 )
 from qaiji.core.waveform import WaveformContractError, WaveformIR, dump_waveform, load_waveform
+from qaiji.exceptions import LoopNotExpandedError
 
 type Layer = Literal["L5", "L4", "L2", "L1", "L0", "P", "X"]
 
@@ -282,6 +284,11 @@ def _pointer(path: str) -> str:
     return "".join("/" + part.replace("~", "~0").replace("/", "~1") for part in parts)
 
 
+def _reject_looped(*circuits: object) -> None:
+    if any(isinstance(circuit, LoopedCircuit) for circuit in circuits):
+        raise LoopNotExpandedError("Expand the looped circuit before checking invariants")
+
+
 def _program(source: object) -> list[tuple[str, str, str]]:
     if isinstance(source, (ProgramIR, ProgramIRV1, bytes)):
         source = ProgramInvariantInput(program=source)
@@ -301,9 +308,11 @@ def _program(source: object) -> list[tuple[str, str, str]]:
         return [("L5_INPUT_MISSING", "/program/control_flow", "缺少权威控制树。")]
     if source.kernels is None:
         return [("L5_INPUT_MISSING", "/kernels", "缺少内核解析表。")]
+    refs = [call.kernel_ref for call in program.quantum_invocations]
+    if isinstance(source.kernels, Mapping):
+        _reject_looped(*(source.kernels[ref] for ref in refs if ref in source.kernels))
     if not isinstance(source.kernels, Mapping) or any(
-        ref in source.kernels and not isinstance(source.kernels[ref], Circuit)
-        for ref in (call.kernel_ref for call in program.quantum_invocations)
+        ref in source.kernels and not isinstance(source.kernels[ref], Circuit) for ref in refs
     ):
         raise TypeError("Expected a mapping from kernel references to Circuit")
     try:
@@ -335,6 +344,7 @@ def _program(source: object) -> list[tuple[str, str, str]]:
 def _summary(source: object) -> list[tuple[str, str, str]]:
     if isinstance(source, bytes):
         return [("L4_INPUT_MISSING", "/circuit", "字节输入未绑定电路与独立摘要。")]
+    _reject_looped(source)
     if isinstance(source, Circuit):
         source = L4InvariantInput(circuit=source)
     if not isinstance(source, L4InvariantInput):
@@ -343,6 +353,7 @@ def _summary(source: object) -> list[tuple[str, str, str]]:
         return [("L4_INPUT_MISSING", "/circuit", "缺少电路。")]
     if source.recorded_summary_hash is None:
         return [("L4_INPUT_MISSING", "/recorded_summary_hash", "缺少记录摘要。")]
+    _reject_looped(source.circuit)
     if not isinstance(source.circuit, Circuit):
         raise TypeError("Expected Circuit")
     expected = source.recorded_summary_hash
@@ -363,6 +374,7 @@ def _timing(source: object) -> list[tuple[str, str, str]]:
     for name in ("circuit", "schedule", "config"):
         if getattr(source, name) is None:
             return [("L2_INPUT_MISSING", "/" + name, "缺少时序检查输入。")]
+    _reject_looped(source.circuit)
     if not isinstance(source.circuit, Circuit) or not isinstance(source.config, ScheduleConfig):
         raise TypeError("Expected Circuit and ScheduleConfig")
     if not isinstance(source.schedule, (NativeScheduleIR, bytes)):
@@ -409,7 +421,19 @@ def _pulse(source: object) -> list[tuple[str, str, str]]:
 
 
 def check_invariants(source: object | bytes, *, layer: Layer) -> InvariantReport:
-    """检查指定层的绑定输入。违规写入报告，类型不符时抛 TypeError。"""
+    """检查指定层的绑定输入。违规写入报告，类型不符时抛 TypeError。
+
+    下列电路是未展开的 ``LoopedCircuit`` 时抛 ``LoopNotExpandedError``：
+
+    1. L5：解析表中被调用引用的内核。
+    2. L4：直接传入的电路，或 ``L4InvariantInput.circuit``。
+    3. L2：``L2InvariantInput.circuit``。
+
+    下列情况不抛该错误：
+
+    1. 解析表中未被调用引用的表项。该层不检查这些表项。
+    2. 输入缺项，例如 L4 缺记录摘要、L2 缺 schedule。该层先返回缺项报告。
+    """
     checks = {
         "L5": _program,
         "L4": _summary,

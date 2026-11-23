@@ -40,6 +40,9 @@
    * - ``qaiji.core.semantics``
      - L4
      - :doc:`semantics`
+   * - ``qaiji.core.semantics``\ （region）
+     - L4
+     - :doc:`region`
    * - ``qaiji.core.program``
      - L5
      - :doc:`program`
@@ -67,8 +70,8 @@ T 层没有公开接口。各层的实现状态见 :doc:`/core-concepts/architec
 包根冻结导出
 ------------
 
-``qaiji.__all__`` 当前包含 17 个名称：版本与格式元数据、七个核心类型、六个异常
-类型，以及两个 OpenQASM 编解码函数。各名称的权威说明分布在下面的接口页面中。
+``qaiji.__all__`` 当前包含 28 个名称：版本与格式元数据、七个核心类型、九个循环类型、
+八个异常类型，以及两个 OpenQASM 编解码函数。各名称的权威说明分布在下面的接口页面中。
 
 .. list-table:: 包根公共入口
    :header-rows: 1
@@ -82,12 +85,18 @@ T 层没有公开接口。各层的实现状态见 :doc:`/core-concepts/architec
      - :class:`qaiji.Gate`、:class:`qaiji.GateType`、:class:`qaiji.Circuit`、
        :class:`qaiji.ClassicalRegister`、:class:`qaiji.ClassicalBit`、
        :class:`qaiji.Measure`、:class:`qaiji.Conditional`
+   * - 循环类型
+     - :class:`qaiji.LoopedCircuit`、:class:`qaiji.BoundedLoop`、:class:`qaiji.LoopIndex`、
+       :class:`qaiji.GateTemplate`、:class:`qaiji.MeasureTemplate`、
+       :class:`qaiji.ConditionalTemplate`、:class:`qaiji.SourceSpan`、
+       :class:`qaiji.ExpandedCircuit`、:class:`qaiji.OperationProvenance`
    * - 异常
      - :class:`qaiji.QaijiIRError`、:class:`qaiji.Qasm3ParseError`、
        :class:`qaiji.Qasm3UnsupportedConstructError`、
        :class:`qaiji.Qasm3UnsupportedGateError`、
        :class:`qaiji.ConventionViolationError`、
-       :class:`qaiji.UnsupportedEquivLevelError`
+       :class:`qaiji.UnsupportedEquivLevelError`、:class:`qaiji.LoopNotExpandedError`、
+       :class:`qaiji.LoopedCircuitError`
    * - 编解码器
      - :func:`qaiji.from_qasm3`、:func:`qaiji.to_qasm3`
 
@@ -101,6 +110,7 @@ T 层没有公开接口。各层的实现状态见 :doc:`/core-concepts/architec
    pulse
    native
    semantics
+   region
    program
    program_native
    physical

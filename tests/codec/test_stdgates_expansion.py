@@ -18,8 +18,8 @@ import pytest
 
 from qaiji.codec.qasm3 import _GATE_REGISTRY, from_qasm3, to_qasm3
 from qaiji.core.circuit import Circuit, Gate, GateType
+from qaiji.core.gate_matrix import source_operator as _source_operator
 from qaiji.core.native.matrix import _embed as qaiji_embed
-from qaiji.core.native.matrix import _source_operator
 
 pytestmark = pytest.mark.physics
 ATOL = 1e-10

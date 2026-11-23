@@ -13,7 +13,13 @@ from typing import Any
 
 import pytest
 
-from factories import PROGRAM_V1_PUBLIC_NAMES
+from factories import (
+    LOOP_ERROR_PUBLIC_NAMES,
+    LOOP_PUBLIC_NAMES,
+    LOOPED_CODEC_PUBLIC_NAMES,
+    PROGRAM_V1_PUBLIC_NAMES,
+    REGION_PUBLIC_NAMES,
+)
 from qaiji.core import (
     Circuit,
     ClassicalBit,
@@ -321,7 +327,13 @@ def test_p_legacy_baseline_is_explicit() -> None:
         module = importlib.import_module(module_name)
         exported = list(module.__all__)
         _require(len(exported) == len(set(exported)), f"legacy.public_exports.{module_name}")
-        additions = PROGRAM_V1_PUBLIC_NAMES if module_name == "qaiji.core.program" else frozenset()
+        additions = {
+            "qaiji": LOOP_PUBLIC_NAMES | LOOP_ERROR_PUBLIC_NAMES,
+            "qaiji.codec": LOOPED_CODEC_PUBLIC_NAMES,
+            "qaiji.core": LOOP_PUBLIC_NAMES,
+            "qaiji.core.program": PROGRAM_V1_PUBLIC_NAMES,
+            "qaiji.core.semantics": REGION_PUBLIC_NAMES,
+        }.get(module_name, frozenset())
         _require(set(exported) == set(expected) | additions, f"legacy.public_exports.{module_name}")
         _require(
             all(hasattr(module, name) for name in expected),
@@ -385,8 +397,18 @@ def test_p_legacy_baseline_is_explicit() -> None:
     source_digests = baseline.get("source_digests")
     _require(isinstance(source_digests, dict), "legacy.source_digests")
     _require(len(source_digests) == 25, "legacy.source_digests.count")
-    # v1 扩展了这两个程序入口。其余历史源码继续逐字节检查。
-    evolved_sources = {"src/qaiji/core/program/__init__.py", "src/qaiji/core/program/validation.py"}
+    # v1 扩展了这两个程序入口。有界循环扩展了包导出与异常类型。
+    # 其余历史源码继续逐字节检查。
+    evolved_sources = {
+        "src/qaiji/__init__.py",
+        "src/qaiji/core/__init__.py",
+        "src/qaiji/core/program/__init__.py",
+        "src/qaiji/core/program/validation.py",
+        # region 扩展了语义包导出与注解的可选字段。
+        "src/qaiji/core/semantics/__init__.py",
+        "src/qaiji/core/semantics/annotation.py",
+        "src/qaiji/exceptions.py",
+    }
     _require(evolved_sources <= set(source_digests), "legacy.source_digests.evolved")
     for path, digest in source_digests.items():
         if path not in evolved_sources:
