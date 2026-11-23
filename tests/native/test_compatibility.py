@@ -14,7 +14,13 @@ from pathlib import Path
 
 import pytest
 
-from factories import PROGRAM_V1_PUBLIC_NAMES, bell_circuit, feedforward_circuit
+from factories import (
+    LOOP_ERROR_PUBLIC_NAMES,
+    LOOP_PUBLIC_NAMES,
+    PROGRAM_V1_PUBLIC_NAMES,
+    bell_circuit,
+    feedforward_circuit,
+)
 from qaiji import Circuit, ClassicalBit, ClassicalRegister, Gate, GateType, Measure
 from qaiji.codec import to_qasm3
 from qaiji.core.program import compute_kernel_ref
@@ -125,7 +131,11 @@ def test_old_and_new_public_sets():
     assert len(frozen) == 7
     for name, expected in frozen.items():
         module = importlib.import_module(name)
-        additions = PROGRAM_V1_PUBLIC_NAMES if name == "qaiji.core.program" else frozenset()
+        additions = {
+            "qaiji": LOOP_PUBLIC_NAMES | LOOP_ERROR_PUBLIC_NAMES,
+            "qaiji.core": LOOP_PUBLIC_NAMES,
+            "qaiji.core.program": PROGRAM_V1_PUBLIC_NAMES,
+        }.get(name, frozenset())
         assert len(module.__all__) == len(set(module.__all__))
         assert set(module.__all__) == set(expected) | additions, name
         assert all(hasattr(module, member) for member in expected)

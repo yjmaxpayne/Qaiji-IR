@@ -14,7 +14,7 @@ import qaiji.core as core
 import qaiji.core.program as program
 import qaiji.core.semantics as semantics
 import qaiji.core.trace as trace
-from factories import PROGRAM_V1_PUBLIC_NAMES
+from factories import LOOP_PUBLIC_NAMES, PROGRAM_V1_PUBLIC_NAMES
 from qaiji.constants import DEFAULT_TOLERANCE
 from qaiji.core.program import ProgramValidationError
 from qaiji.exceptions import (
@@ -26,7 +26,7 @@ from qaiji.exceptions import (
     UnsupportedEquivLevelError,
 )
 
-ROOT_PUBLIC_NAMES = {
+ROOT_PUBLIC_NAMES = LOOP_PUBLIC_NAMES | {
     "Circuit",
     "ClassicalBit",
     "ClassicalRegister",
@@ -35,6 +35,8 @@ ROOT_PUBLIC_NAMES = {
     "Gate",
     "GateType",
     "IR_SCHEMA_VERSION",
+    "LoopNotExpandedError",
+    "LoopedCircuitError",
     "Measure",
     "QaijiIRError",
     "Qasm3ParseError",
@@ -45,7 +47,7 @@ ROOT_PUBLIC_NAMES = {
     "from_qasm3",
     "to_qasm3",
 }
-CORE_PUBLIC_NAMES = {
+CORE_PUBLIC_NAMES = LOOP_PUBLIC_NAMES | {
     "CANONICAL_ALIASES",
     "PARAM_REQUIREMENTS",
     "SINGLE_QUBIT_GATES",

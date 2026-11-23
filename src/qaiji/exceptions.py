@@ -25,3 +25,11 @@ class ConventionViolationError(QaijiIRError):
 
 class UnsupportedEquivLevelError(QaijiIRError):
     """在我们无法判定的等价级别上请求了保持性判定。"""
+
+
+class LoopNotExpandedError(QaijiIRError):
+    """在含循环的电路上读取平坦操作序列。调用方须先展开。"""
+
+
+class LoopedCircuitError(QaijiIRError, ValueError):
+    """循环容器不合法，例如展开名与已声明名称相同。"""

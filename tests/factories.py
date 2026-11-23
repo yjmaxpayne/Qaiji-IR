@@ -23,6 +23,20 @@ PROGRAM_V1_PUBLIC_NAMES = frozenset(
         "load_program",
     }
 )
+LOOP_PUBLIC_NAMES = frozenset(
+    {
+        "BoundedLoop",
+        "ConditionalTemplate",
+        "ExpandedCircuit",
+        "GateTemplate",
+        "LoopIndex",
+        "LoopedCircuit",
+        "MeasureTemplate",
+        "OperationProvenance",
+        "SourceSpan",
+    }
+)
+LOOP_ERROR_PUBLIC_NAMES = frozenset({"LoopNotExpandedError", "LoopedCircuitError"})
 
 
 def bell_circuit() -> Circuit:
