@@ -6,6 +6,29 @@ git tags via `poetry-dynamic-versioning`.
 
 ## [Unreleased]
 
+## v0.6.1 (2026-11-23)
+
+### Fix
+
+- **trace**: check log conflicts, tolerance rule and same-layer coverage
+
+### Release notes
+
+- **trace**: `check_certificate` reports `TRACE_LOG_CONFLICT` when two trace logs with the
+  same `source.digest` have different bytes. Byte-identical copies of a log stay accepted.
+- **trace**: `check_certificate` reports `TOLERANCE_SOURCE_MISMATCH` when the certificate's
+  `tolerance_source.rule` differs from the `rule` of the tolerance table.
+- **trace**: `check_certificate` reports `SAME_LAYER_TOLERANCE_PRESENT` when a same-layer
+  comparison states a tolerance. A tolerance of `0.0` also counts.
+- **trace**: `check_certificate` reports `COMPARISON_SET_MISMATCH` when the certificate has
+  no same-layer comparison. The checker groups the given trace logs by
+  `(layer, program_ref)` and counts each copy that the caller passes. Each group with two or
+  more logs needs one same-layer comparison that cites every digest of the group. Otherwise
+  the checker reports `EVIDENCE_INCOMPLETE`. The two rules apply independently.
+- The two new failure codes come after the 16 released codes in the fixed order. The
+  position of each released code does not change. A certificate that 0.6.0 accepted can
+  fail these new checks.
+
 ## v0.6.0 (2026-11-16)
 
 ### Feat

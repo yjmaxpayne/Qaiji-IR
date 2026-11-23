@@ -260,7 +260,8 @@ def test_pair_from_wrong_layers_reports_input_mismatch() -> None:
     """A cross-layer comparison whose two sides both come from l1."""
     l1_copy = _log(L1_COPY, "l1", L0_WEIGHTS, L0_POP)
     certificate = _certificate(_comparisons(l1_copy, LOG_L1))
-    assert _check(certificate, (l1_copy, LOG_L1)) == ("INPUT_MISMATCH",)
+    # the second l1 run is not covered by the same-layer comparison either
+    assert _check(certificate, (l1_copy, LOG_L1)) == ("INPUT_MISMATCH", "EVIDENCE_INCOMPLETE")
 
 
 @pytest.mark.parametrize("case", ["different_injection", "same_layer_across_layers"])

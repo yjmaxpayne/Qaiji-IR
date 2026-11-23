@@ -13,7 +13,7 @@ from collections.abc import Iterable, Mapping
 from dataclasses import replace
 from typing import Any
 
-from qaiji.core.trace.codec import _LADDER, load_tolerances
+from qaiji.core.trace.codec import _LADDER, dump_trace_log, load_tolerances
 from qaiji.core.trace.model import (
     _DECIDABLE_LEVELS,
     Comparison,
@@ -47,6 +47,8 @@ _FAILURE_CODES = (
     "DOCUMENT_MISSING",
     "DOCUMENT_DIGEST_MISMATCH",
     "OBSERVATION_MISMATCH",
+    "TRACE_LOG_CONFLICT",
+    "SAME_LAYER_TOLERANCE_PRESENT",
 )
 
 
@@ -99,6 +101,37 @@ def _comparison_codes(
     verdicts[comparison.name] = _verdict_of(comparison, delta)
     if delta != comparison.delta or verdicts[comparison.name] != comparison.verdict:
         codes.add("VERDICT_MISMATCH")
+    return codes
+
+
+def _conflict_codes(items: Iterable[TraceLog]) -> set[str]:
+    """同一 ``source.digest`` 的日志字节不同时，返回 ``TRACE_LOG_CONFLICT``。"""
+    seen: dict[str, bytes] = {}
+    for log in items:
+        data = dump_trace_log(log)
+        if seen.setdefault(log.source.digest, data) != data:
+            return {"TRACE_LOG_CONFLICT"}
+    return set()
+
+
+def _same_layer_codes(certificate: PreservationCertificate, items: Iterable[TraceLog]) -> set[str]:
+    """返回同层比较的存在、容差与覆盖失败码。
+
+    证书没有同层比较时，返回 ``COMPARISON_SET_MISMATCH``；同层比较写了容差时，
+    返回 ``SAME_LAYER_TOLERANCE_PRESENT``。传入日志按 ``(layer, program_ref)`` 分组，
+    组内日志按传入份数计（字节相同的副本也计入）；份数 ≥ 2 的组，须有一项同层比较
+    引用该组的全部 digest，否则返回 ``EVIDENCE_INCOMPLETE``。各条规则独立判定。
+    """
+    same = [c for c in certificate.comparisons if c.kind == "same_layer"]
+    codes: set[str] = set() if same else {"COMPARISON_SET_MISMATCH"}
+    if any(c.tolerance is not None for c in same):
+        codes.add("SAME_LAYER_TOLERANCE_PRESENT")
+    groups: dict[tuple[str, str], list[str]] = {}
+    for log in items:
+        groups.setdefault((log.source.layer, log.source.program_ref), []).append(log.source.digest)
+    cited = [{digest for digest, _ in c.evidence_refs} for c in same]
+    if any(len(g) >= 2 and not any(set(g) <= refs for refs in cited) for g in groups.values()):
+        codes.add("EVIDENCE_INCOMPLETE")
     return codes
 
 
@@ -251,6 +284,8 @@ def _tolerance_codes(certificate: PreservationCertificate, document: bytes) -> s
     except TraceInputError:
         return {"TOLERANCE_SOURCE_MISMATCH"}
     codes: set[str] = set()
+    if table.rule != certificate.tolerance_source.rule:
+        codes.add("TOLERANCE_SOURCE_MISMATCH")
     cross = {c.name: c for c in certificate.comparisons if c.kind == "cross_layer"}
     if set(cross) != set(table.comparisons):
         codes.add("COMPARISON_SET_MISMATCH")
@@ -277,7 +312,8 @@ def check_certificate(
 
     Args:
         certificate: 待检查的证书。
-        trace_logs: 引用所指的轨迹日志，按 ``source.digest`` 查找。
+        trace_logs: 引用所指的轨迹日志，按 ``source.digest`` 查找。同一 digest
+            可传多份，各份字节须相同。同层覆盖检查按传入份数计数。
         expected_key: 理想主导键，由调用方计算。
         tolerance_document: 冻结容差文件的字节。
         result_documents: 观测定义与叶结果文档，按 ``sha256:<hex>`` 摘要索引。
@@ -291,7 +327,8 @@ def check_certificate(
     """
     if not isinstance(certificate, PreservationCertificate):
         raise TraceInputError("certificate must be a PreservationCertificate")
-    logs = {log.source.digest: log for log in _items("trace_logs", trace_logs, TraceLog)}
+    items = _items("trace_logs", trace_logs, TraceLog)
+    logs = {log.source.digest: log for log in items}
     _bits("expected_key", expected_key)
     if not isinstance(tolerance_document, bytes):
         raise TraceInputError("tolerance_document must be bytes")
@@ -300,7 +337,7 @@ def check_certificate(
         or not all(isinstance(data, bytes) for data in result_documents.values())
     ):
         raise TraceInputError("result_documents must map digests to bytes")
-    codes: set[str] = set()
+    codes = _conflict_codes(items) | _same_layer_codes(certificate, items)
     verdicts: dict[str, str] = {}
     observed = {
         (log.source.digest, e.id): (log, e)
