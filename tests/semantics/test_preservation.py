@@ -67,13 +67,22 @@ def test_failed_gate_indices_are_tuple_ized() -> None:
 # --- 第 0 步：请求域拒绝（AC-Q7 的带类型错误那一半）------------------------
 
 
-@pytest.mark.parametrize("level", [EquivLevel.UP_TO_LOCAL, EquivLevel.ENTANGLEMENT])
+@pytest.mark.parametrize("level", [EquivLevel.ENTANGLEMENT])
 def test_out_of_domain_request_raises_typed_error(level: EquivLevel) -> None:
     circuit = Circuit(1)
     circuit.h(0)
 
     with pytest.raises(UnsupportedEquivLevelError):
         check_preservation(circuit, circuit, requested_level=level)
+
+
+def test_local_request_is_decided_not_rejected() -> None:
+    """UP_TO_LOCAL 已进入判定域：不给 region 时返回 unsupported，不抛错。"""
+    circuit = Circuit(1)
+    circuit.h(0)
+
+    summary = check_preservation(circuit, circuit, requested_level=EquivLevel.UP_TO_LOCAL)
+    assert (summary.status, summary.equiv_level) == ("unsupported", None)
 
 
 # --- 第 1 步：测量湮灭压过其他一切裁决（AC-Q5, I-Q4.5）---------------------

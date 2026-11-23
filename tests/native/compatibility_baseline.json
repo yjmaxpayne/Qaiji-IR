@@ -139,7 +139,7 @@
     "src/qaiji/core/semantics/preservation.py": "c775609270cf470c7f0c1f7fa11cd368fc413309dde4e484d8d156e10fe2e85b",
     "src/qaiji/core/semantics/registry.py": "04f8cc635e04e2db6f53338cc1f96eb61f4b05808f89a1e6d275da75f5730201",
     "src/qaiji/core/semantics/summary.py": "7cc2db82af074f679aefba5c646cbfe2af7913f9551969877a0a65f70e4e32b1",
-    "src/qaiji/core/semantics/types.py": "819cfad698a45550f2b65b8d4a2d90147669dfcb591d55e7f34812a502854aa7",
+    "src/qaiji/core/semantics/types.py": "6f2935054ee1329e7caa37d510d7d727541e6b5689da060fbfb8d011d7b55caf",
     "src/qaiji/exceptions.py": "20256139b7f3361989e7be1985ba870a08ae587f73f028bb24fcda50cdae56f8",
     "src/qaiji/version.py": "39a2fa1ba47a0d4e301aa1c241a6add1e95296a1b484947f0af4c14eec2b5adf",
     "src/qaiji/codec/_stdgates.py": "b1738a3335907d5475279edd952c98a91ffb254193cbeab867700909137fcda7",
@@ -747,6 +747,31 @@
         "src/qaiji/core/semantics/preservation.py": {
           "before": "de2c08c6304e4699bfd4c33696ae4fa2fbb3083f7fd35219b0e182690e6f539e",
           "after": "c775609270cf470c7f0c1f7fa11cd368fc413309dde4e484d8d156e10fe2e85b"
+        }
+      }
+    },
+    {
+      "id": "L9-05",
+      "kind": "extend",
+      "surface": "preservation",
+      "decision": "Rewrite the EquivLevel docstring so it states that UP_TO_LOCAL is decided inside a region and stays outside the certificate's decidable levels",
+      "before": "The EquivLevel docstring said only EXACT and UP_TO_PHASE are decidable and that UP_TO_LOCAL and ENTANGLEMENT are rejected at the decision entry.",
+      "after": "The EquivLevel docstring says EXACT and UP_TO_PHASE are decided on the whole circuit, UP_TO_LOCAL is decided only inside the range a region names and is not a decidable level of the certificate, and ENTANGLEMENT is still rejected at the decision entry. The enum members and values are unchanged; only the docstring text changes.",
+      "tests_rewritten": [
+        "tests/semantics/test_preservation.py::test_out_of_domain_request_raises_typed_error"
+      ],
+      "guard_tests": [
+        "tests/test_public_api.py::test_public_exports_are_the_exact_contract",
+        "tests/native/test_compatibility.py::test_docs_rows_preserve_stripped_ast",
+        "tests/semantics/test_preservation.py::test_out_of_domain_request_raises_typed_error",
+        "tests/semantics/test_preservation.py::test_local_request_is_decided_not_rejected",
+        "tests/conformance/test_preservation_conformance.py::test_local_region_fixture_matches_its_path",
+        "tests/trace/test_trace_check.py::test_undecidable_symbolic_level_reports_symbolic_level_undecidable"
+      ],
+      "sources": {
+        "src/qaiji/core/semantics/types.py": {
+          "before": "819cfad698a45550f2b65b8d4a2d90147669dfcb591d55e7f34812a502854aa7",
+          "after": "6f2935054ee1329e7caa37d510d7d727541e6b5689da060fbfb8d011d7b55caf"
         }
       }
     }
