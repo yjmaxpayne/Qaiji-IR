@@ -481,3 +481,38 @@ def test_strict_entries_reject_looped_sources(entry, sample):
     """两个严格入口对任何含循环或 const 的程序仍然拒收。"""
     with pytest.raises(QaijiIRError):
         STRICT_ENTRIES[entry](LOOPED_SAMPLES[sample])
+
+
+# 修饰符语句、拦截时报告的门名、去掉修饰符后的合法语句。
+MODIFIED_GATES = {
+    "ctrl": ("ctrl @ x q[0], q[1];", "x", "x q[1];"),
+    "negctrl": ("negctrl @ x q[0], q[1];", "x", "x q[1];"),
+    "inv": ("inv @ s q[0];", "s", "s q[0];"),
+    "pow": ("pow(2) @ x q[0];", "x", "x q[0];"),
+}
+MODIFIER_PLACES = {
+    "top-level": "{}\n",
+    "loop-body": "for int i in [0:1] {{ {} }}\n",
+    "conditional-body": "if (c[0] == 1) {{ {} }}\n",
+}
+MODIFIER_HEAD = 'OPENQASM 3.0;\ninclude "stdgates.inc";\nqubit[4] q;\nbit[2] c;\n'
+
+
+@pytest.mark.parametrize("modifier", MODIFIED_GATES)
+@pytest.mark.parametrize("place", MODIFIER_PLACES)
+def test_looped_entry_rejects_gate_modifiers_in_every_place(place, modifier):
+    """顶层、循环体、条件体中的门修饰符都由同一个修饰符检查拒收。"""
+    statement, gate, _ = MODIFIED_GATES[modifier]
+    source = MODIFIER_HEAD + MODIFIER_PLACES[place].format(statement)
+    with pytest.raises(Qasm3UnsupportedGateError) as raised:
+        _entry()(source)
+    assert str(raised.value).startswith(f"{gate} at ")
+    assert "gate modifiers are not supported" in str(raised.value)
+
+
+@pytest.mark.parametrize("modifier", MODIFIED_GATES)
+@pytest.mark.parametrize("place", MODIFIER_PLACES)
+def test_looped_entry_accepts_the_unmodified_gate_in_every_place(place, modifier):
+    """去掉修饰符后同一位置被接受，所以上面的拒收来自修饰符，而不是位置本身。"""
+    _, _, bare = MODIFIED_GATES[modifier]
+    _entry()(MODIFIER_HEAD + MODIFIER_PLACES[place].format(bare))

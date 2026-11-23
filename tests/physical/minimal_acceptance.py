@@ -103,6 +103,7 @@ def check_legacy_contract() -> None:
             "dump_program",
             "load_program",
         },
+        "qaiji.core.semantics": {"Region", "annotate_looped", "regions_of"},
     }
     for module, exports in baseline["public_exports"].items():
         exports = set(exports) | additions.get(module, set())

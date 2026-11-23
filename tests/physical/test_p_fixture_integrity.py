@@ -18,6 +18,7 @@ from factories import (
     LOOP_PUBLIC_NAMES,
     LOOPED_CODEC_PUBLIC_NAMES,
     PROGRAM_V1_PUBLIC_NAMES,
+    REGION_PUBLIC_NAMES,
 )
 from qaiji.core import (
     Circuit,
@@ -331,6 +332,7 @@ def test_p_legacy_baseline_is_explicit() -> None:
             "qaiji.codec": LOOPED_CODEC_PUBLIC_NAMES,
             "qaiji.core": LOOP_PUBLIC_NAMES,
             "qaiji.core.program": PROGRAM_V1_PUBLIC_NAMES,
+            "qaiji.core.semantics": REGION_PUBLIC_NAMES,
         }.get(module_name, frozenset())
         _require(set(exported) == set(expected) | additions, f"legacy.public_exports.{module_name}")
         _require(
@@ -402,6 +404,9 @@ def test_p_legacy_baseline_is_explicit() -> None:
         "src/qaiji/core/__init__.py",
         "src/qaiji/core/program/__init__.py",
         "src/qaiji/core/program/validation.py",
+        # region 扩展了语义包导出与注解的可选字段。
+        "src/qaiji/core/semantics/__init__.py",
+        "src/qaiji/core/semantics/annotation.py",
         "src/qaiji/exceptions.py",
     }
     _require(evolved_sources <= set(source_digests), "legacy.source_digests.evolved")

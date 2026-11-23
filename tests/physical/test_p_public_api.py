@@ -18,6 +18,7 @@ from factories import (
     LOOP_PUBLIC_NAMES,
     LOOPED_CODEC_PUBLIC_NAMES,
     PROGRAM_V1_PUBLIC_NAMES,
+    REGION_PUBLIC_NAMES,
 )
 
 DATA = Path(__file__).with_name("data")
@@ -43,6 +44,7 @@ def test_p_final_public_exports_are_exact() -> None:
             "qaiji.codec": LOOPED_CODEC_PUBLIC_NAMES,
             "qaiji.core": LOOP_PUBLIC_NAMES,
             "qaiji.core.program": PROGRAM_V1_PUBLIC_NAMES,
+            "qaiji.core.semantics": REGION_PUBLIC_NAMES,
         }.get(name, frozenset())
         assert len(module.__all__) == len(set(module.__all__))
         assert set(module.__all__) == set(exports) | additions

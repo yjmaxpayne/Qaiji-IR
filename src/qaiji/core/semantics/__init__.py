@@ -15,6 +15,7 @@ from qaiji.core.semantics.annotation import SemanticAnnotation
 from qaiji.core.semantics.dataflow import ClassicalEdge, MeasurementHandle, build_dataflow_summary
 from qaiji.core.semantics.handle import HandleStatus, JSONValue, SemanticIRHandle, freeze_summary
 from qaiji.core.semantics.preservation import PreservationSummary, check_preservation
+from qaiji.core.semantics.region import Region, annotate_looped, regions_of
 from qaiji.core.semantics.registry import annotate_circuit, classify_operation
 from qaiji.core.semantics.summary import (
     GATE_COVERAGE_TOTAL,
@@ -36,13 +37,16 @@ __all__ = [
     "MeasurementHandle",
     "MorphismType",
     "PreservationSummary",
+    "Region",
     "SemanticAnnotation",
     "SemanticIRHandle",
     "annotate_circuit",
+    "annotate_looped",
     "build_dataflow_summary",
     "build_semantic_summary",
     "canonical_summary_hash",
     "check_preservation",
     "classify_operation",
     "freeze_summary",
+    "regions_of",
 ]

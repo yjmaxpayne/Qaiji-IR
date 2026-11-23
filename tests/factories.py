@@ -38,6 +38,7 @@ LOOP_PUBLIC_NAMES = frozenset(
 )
 LOOP_ERROR_PUBLIC_NAMES = frozenset({"LoopNotExpandedError", "LoopedCircuitError"})
 LOOPED_CODEC_PUBLIC_NAMES = frozenset({"ParsedLoopedQasm3", "parse_looped_qasm3"})
+REGION_PUBLIC_NAMES = frozenset({"Region", "annotate_looped", "regions_of"})
 
 
 def bell_circuit() -> Circuit:

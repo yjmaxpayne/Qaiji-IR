@@ -14,7 +14,12 @@ import qaiji.core as core
 import qaiji.core.program as program
 import qaiji.core.semantics as semantics
 import qaiji.core.trace as trace
-from factories import LOOP_PUBLIC_NAMES, LOOPED_CODEC_PUBLIC_NAMES, PROGRAM_V1_PUBLIC_NAMES
+from factories import (
+    LOOP_PUBLIC_NAMES,
+    LOOPED_CODEC_PUBLIC_NAMES,
+    PROGRAM_V1_PUBLIC_NAMES,
+    REGION_PUBLIC_NAMES,
+)
 from qaiji.constants import DEFAULT_TOLERANCE
 from qaiji.core.program import ProgramValidationError
 from qaiji.exceptions import (
@@ -68,7 +73,7 @@ CODEC_PUBLIC_NAMES = LOOPED_CODEC_PUBLIC_NAMES | {
     "parse_qasm3",
     "to_qasm3",
 }
-SEMANTICS_PUBLIC_NAMES = {
+SEMANTICS_PUBLIC_NAMES = REGION_PUBLIC_NAMES | {
     "CartanRole",
     "ClassicalEdge",
     "ConditionModel",

@@ -19,6 +19,7 @@ from factories import (
     LOOP_PUBLIC_NAMES,
     LOOPED_CODEC_PUBLIC_NAMES,
     PROGRAM_V1_PUBLIC_NAMES,
+    REGION_PUBLIC_NAMES,
     bell_circuit,
     feedforward_circuit,
 )
@@ -137,6 +138,7 @@ def test_old_and_new_public_sets():
             "qaiji.codec": LOOPED_CODEC_PUBLIC_NAMES,
             "qaiji.core": LOOP_PUBLIC_NAMES,
             "qaiji.core.program": PROGRAM_V1_PUBLIC_NAMES,
+            "qaiji.core.semantics": REGION_PUBLIC_NAMES,
         }.get(name, frozenset())
         assert len(module.__all__) == len(set(module.__all__))
         assert set(module.__all__) == set(expected) | additions, name
@@ -163,6 +165,9 @@ def test_old_schema_kernel_goldens_and_preservation():
         "src/qaiji/core/__init__.py",
         "src/qaiji/core/program/__init__.py",
         "src/qaiji/core/program/validation.py",
+        # region 扩展了语义包导出与注解的可选字段。
+        "src/qaiji/core/semantics/__init__.py",
+        "src/qaiji/core/semantics/annotation.py",
         "src/qaiji/exceptions.py",
     }
     assert evolved <= set(baseline["frozen_sources"])

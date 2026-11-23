@@ -33,6 +33,8 @@ class SemanticAnnotation:
     cartan: CartanRole = CartanRole.NONE
     body_offset: int | None = None
     notes: tuple[str, ...] = ()
+    region_id: str | None = None
+    """所在 region 的结构路径。只有 ``annotate_looped`` 填写；不进入语义摘要。"""
 
     def __post_init__(self) -> None:
         """归一化 notes，并拒绝指向不存在节点的坐标。"""
