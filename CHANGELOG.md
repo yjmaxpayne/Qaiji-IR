@@ -6,9 +6,13 @@ git tags via `poetry-dynamic-versioning`.
 
 ## [Unreleased]
 
-## v0.6.1 (unreleased)
+## v0.6.1 (2026-11-23)
 
 ### Fix
+
+- **trace**: check log conflicts, tolerance rule and same-layer coverage
+
+### Release notes
 
 - **trace**: `check_certificate` reports `TRACE_LOG_CONFLICT` when two trace logs with the
   same `source.digest` have different bytes. Byte-identical copies of a log stay accepted.
